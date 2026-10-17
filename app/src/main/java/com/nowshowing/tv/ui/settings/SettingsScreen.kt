@@ -125,7 +125,12 @@ fun SettingsScreen(
                 Text("Use your own authorized OMDb key. Stored locally on this TV; APK keys are not secret. No key pooling or quota multiplication.", color = TextMuted, fontSize = 15.sp)
                 OutlinedTextField(value = metadataKey, onValueChange = { metadataKey = it },
                     label = { Text("Your OMDb key (blank restores demo key)") }, singleLine = true,
-                    visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
+                    visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(),
+                    colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary,
+                        focusedBorderColor = AccentCyan, unfocusedBorderColor = TextMuted,
+                        focusedLabelColor = AccentCyan, unfocusedLabelColor = TextMuted,
+                        cursorColor = AccentCyan, focusedContainerColor = SurfaceDark, unfocusedContainerColor = SurfaceDark))
                 TvPlayerActionButton("Save metadata key", null) { viewModel.saveMetadataKey(metadataKey); metadataKey = "" }
                 TvPlayerActionButton("Retry metadata", null) { viewModel.retryMetadata() }
                 TvPlayerActionButton(if (uiState.isClearingCache) "Clearing caches…" else "Clear metadata & image caches", null) { viewModel.clearCaches() }

@@ -6,10 +6,10 @@ Keep the existing web-provider playback path and all discovery routes. This pass
 ## Viewing history
 - Home has a Recently opened shelf with the last 30 opened web-provider titles.
 - Reopen uses the remembered episode and per-title source. Opened means the provider page was requested, not confirmed video playback.
-- Manage history offers remove, Mark watched, and Mark unwatched. Watched is an explicit manual label for the last opened movie/episode.
+- Manage history offers remove, Mark watched, and Mark unwatched. Watched is an explicit manual title-level label, including for series.
 - Per-title source preferences are shared by Details and Player. Invalid or removed source IDs fall back to the global preference.
 - Native Continue Watching remains separate and removable. Web-player timestamps and subtitles remain provider-managed.
-- Reopening a title clears its manual watched label, reflecting a new open action.
+- Reopening a title or another episode preserves the manual watched label until explicitly changed.
 - History stays on the TV. Removing a history entry clears its remembered episode; source preferences remain separate.
 - SQLite schema v2 adds recently_opened without dropping or rewriting v1 tables.
 
@@ -17,7 +17,7 @@ Keep the existing web-provider playback path and all discovery routes. This pass
 - Home publishes each shelf independently and reads local history without waiting for metadata requests.
 - Previously displayed content remains while refresh runs. Refresh shelves retries unavailable metadata.
 - A shared 128-entry access-order metadata cache expires entries after 24 hours.
-- Disk cache expiry remains authoritative on disk reads. Matching requests use bounded striped mutexes; metadata network requests are limited to four at a time.
+- Disk cache expiry remains authoritative on disk reads. Matching requests use bounded striped mutexes; metadata network requests are limited to two at a time.
 - Title fetches also populate IMDb-keyed cache entries for navigation into Details.
 - Shelf results deduplicate IMDb IDs. Superseded search, browse, title, and season jobs are cancelled where applicable; cancellation propagates through repository network operations.
 - Details displays title metadata before season/recommendation work finishes.
@@ -27,7 +27,7 @@ Keep the existing web-provider playback path and all discovery routes. This pass
 - Navigation entries save the selected card/action and lazy-list/grid position.
 - Home, browse, search, watchlist, and title cards restore selection when returning from details/playback; title Play and episode actions are included.
 - Invalid/removed targets fall back to regular D-pad focus behavior.
-- Player implementation and provider-specific remote behavior are unchanged.
+- Play now enters provider pointer input directly; series controls prominently expose Next episode. Provider-required interaction remains provider-dependent.
 
 ## Verification
 Automated: existing JVM suites plus cache LRU/TTL/replacement/concurrency and history-label regression tests. GitHub Actions assembles debug and release APKs.
