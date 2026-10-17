@@ -57,8 +57,10 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
     LaunchedEffect(state.webEmbedUrl, attempt, ready) {
         if (ready && state.webEmbedUrl != null) {
             kotlinx.coroutines.delay(25_000)
-            loading = false
-            menu = true
+            if (loading) {
+                loading = false
+                menu = true
+            }
         }
     }
     DisposableEffect(lifecycle, host) {
