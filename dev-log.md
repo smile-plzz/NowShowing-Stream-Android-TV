@@ -145,6 +145,23 @@
   - `README.md`: Added direct reference to Claude Handoff Guide.
 - **Status**: Complete and staged for push.
 
+## [2026-10-17 22:30] - Phase 6: Standalone Android TV Repository Restructuring
+- **Task**: Purge legacy web application files and promote Android TV project to repository root.
+- **Actions Taken**:
+  - Removed all web application assets (`css/`, `js/`, `public/`, `index.html`) from git.
+  - Promoted `android-tv/` contents to repository root (`app/`, `gradle/`, `build.gradle.kts`, `settings.gradle.kts`, `gradle.properties`, `gradlew`, `gradlew.bat`).
+  - Rewrote root `.gitignore` to standard Android specification (ignoring `build/`, `.gradle/`, `local.properties`, `*.apk`, etc.).
+  - Rewrote root `README.md` to exclusively document NowShowing TV Android application.
+  - Updated all paths in `docs/CLAUDE_HANDOFF.md`.
+- **Verification Results**:
+  - `testDebugUnitTest` from root: **100% PASS** (22 tasks executed, 33/33 tests passed).
+  - `assembleDebug` and `assembleRelease` from root: **BUILD SUCCESSFUL**.
+  - Generated APKs at `app/build/outputs/apk/`:
+    - `app-debug.apk`: 22,229,313 bytes
+    - `app-release.apk`: 15,810,848 bytes
+- **Status**: Repository is 100% pure native Android TV codebase; ready to commit and push to remote.
+
+
 
 
 

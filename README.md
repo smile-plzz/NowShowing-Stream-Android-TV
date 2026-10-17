@@ -1,109 +1,109 @@
-# NowShowing
+# NowShowing TV
 
-A minimalist movie & TV discovery app. Search titles via [OMDb](https://www.omdbapi.com/), browse trending/genre rows, and stream from multiple free third-party embed sources with one-click switching if a source is blank or blocked.
+A dedicated, TV-native movie and television discovery and streaming application designed specifically for **Android TV** and **Google TV** (API 26 to 35).
 
-**[No build step required](#architecture) — open `index.html` or serve the folder statically.**
-
-## Features
-
-- **Discovery** — home page with Continue Watching, Trending, genre rows (Action, Sci-Fi, Drama, Comedy, Thriller), Popular Movies/TV
-- **Mood-based recommendations** — pick from 29 moods (or describe how you're feeling in a few words); searches several genre/keyword angles per mood, verifies each candidate's real OMDb genre via a cached detail lookup, and ranks by genre-match count + rating — not just titles whose name happens to contain the word. Ported from [MovieRecommendationBasedOnMood](https://github.com/smile-plzz/MovieRecommendationBasedOnMood)'s client-only recommendation engine (`js/moods.js`); results open directly in this app's streaming player rather than linking out.
-- **Search** — hero + nav search (submit on Enter or click), movie/TV type filter, paginated results
-- **Streaming** — multi-source iframe player with instant source switching, season/episode selector for TV, "open in new tab" fallback, and the last working source is remembered
-- **Watchlist & Continue Watching** — stored locally in `localStorage`, never leaves the device
-- **Light/dark theme** toggle (persisted, respects system preference by default)
-- **Keyboard shortcuts** — `/` focuses search, `Esc` closes modals
-- Responsive, accessible (keyboard-navigable cards, focus management in modals), PWA-ready manifest
-
-## Architecture
-
-Rebuilt from a single 1,046-line HTML file into modular, dependency-free **vanilla JS (ES modules) + CSS** — no React/Vite/npm required, so it deploys exactly like before (push static files to GitHub Pages or any static host).
-
-```
-index.html            Shell — mount points populated by JS, no inline markup for pages
-css/
-  tokens.css           Design tokens (color, type, spacing, motion) incl. light theme
-  base.css              Reset + base element styles
-  layout.css            Nav, hero, section/page layout, footer
-  components.css         Cards, rows, modal, player, sources bar, toasts, etc.
-js/
-  config.js             API key, catalog seed lists, video source registry
-  api.js                 OMDb client with in-memory TTL cache + request de-dupe
-  sources.js              Embed URL builder per provider quirk + "last used source" memory
-  moods.js                 Mood → genre/keyword map + the precision recommendation engine
-  storage.js                 localStorage: watchlist, continue-watching, theme, recent searches, mood detail cache
-  store.js                  DOM helpers (`qs`, `qsa`, `el`)
-  router.js                 Hash-based router
-  pages.js                   Page renderers (home, browse, genre, mood, search, watchlist, continue)
-  main.js                     Bootstrap — wires router → pages, global keyboard shortcuts
-  components/
-    icons.js                  Inline SVG icon set (no icon-font/CDN dependency)
-    toast.js, card.js, row.js  Small reusable UI pieces
-    navbar.js, hero.js          Nav + mobile menu + theme toggle; hero search
-    modal.js                     Detail modal: player, source switcher, season/episode, recs
-    about.js                      About dialog
-```
-
-## Local development
-
-No Node.js needed — any static file server works:
-
-```bash
-python3 -m http.server 8000
-# then open http://localhost:8000
-```
-
-## Data source
-
-Uses OMDb's public demo API key by default. If you hit rate limits, get a free key from [omdbapi.com/apikey.aspx](https://www.omdbapi.com/apikey.aspx) and swap it into `js/config.js` (`OMDB_KEY`).
-
-## Streaming sources
-
-Playback is provided by embedding third-party free streaming aggregators (vidsrc, 2embed, etc.) — this app does not host or proxy any video itself. Source availability varies by provider and region; if a player stays blank, switch sources or use **Open in Tab**.
-
-## Deploying
-
-Since there's no build step, deployment is just publishing the repo's static files — e.g. GitHub Pages pointed at the repo root/`main` branch.
+Built with **Jetpack Compose for TV**, **AndroidX Media3 (ExoPlayer)**, **Room Database**, and **Retrofit/OkHttp**.
 
 ---
 
-## NowShowing TV (Native Android TV / Google TV)
+## Features
 
-A native television application for Android TV & Google TV located in [`android-tv/`](android-tv/):
+- **Cinematic 10-Foot UI**: Remote-controlled interface optimized for standard D-pad television remotes, Google TV voice remotes, and HDMI-CEC controllers.
+- **29-Mood Recommendation Engine**: Precision recommendation system ported from the web client. Explores multi-genre candidate seeds, verifies real genre tags against cached OMDb lookups, and ranks candidates using composite score heuristics.
+- **Mandatory Native Playback**: All video streams run exclusively through native AndroidX Media3 / ExoPlayer (HLS, DASH, MP4). Zero third-party WebViews, zero iframe players, and zero browser pop-ups.
+- **Media Source Resolution & Validation**: Dedicated resolver layer that identifies direct playable streams, validates HTTPS transport, isolates redirect chains (max 5 hops), and safely rejects legacy web-only embeds.
+- **Native Brave-Inspired Privacy Shields**: Network request filtering against Adblock Plus and EasyPrivacy rule syntax with a thread-safe 1,000-entry LRU decision cache (<0.05ms evaluation time), live security metrics, and a dedicated TV settings screen.
+- **Local Persistence**: Watchlist, Continue Watching (with genuine playback progress tracking), Search History, and OMDb request caching stored securely in SQLite via Room.
+- **Launcher Integration**: Declares `android.intent.category.LEANBACK_LAUNCHER` with a 320x180 TV banner (`@drawable/banner`) for seamless discovery on Google TV, standard Android TV, and the Nook TV launcher.
 
-- **10-foot remote experience**: Complete navigation with directional D-pad, OK, Back, and Media buttons.
-- **Ported recommendation engine**: Full 29-mood engine with real genre verification and composite score ranking.
-- **Mandatory Native Playback**: 100% native AndroidX Media3 (ExoPlayer) for HLS, DASH, and MP4 streams with zero third-party WebViews in playback.
-- **Media Source Resolution & Validation**: Dedicated resolver classifying streams (`NATIVE_STREAM` vs `UNSUPPORTED_WEB_EMBED`), enforcing HTTPS, and isolating redirect chains (max 5 hops).
-- **Native Brave-Inspired Privacy Shields**: Network request domain filtering against Adblock Plus / EasyPrivacy rulesets, live metrics, and television settings screen.
-- **Launcher Integration**: Declares `LEANBACK_LAUNCHER` with 320x180 high-res TV banner and seamless discovery on Google TV, Android TV, and Nook TV launcher.
-- **Complete documentation suite**:
-  - [Android TV PRD](docs/ANDROID_TV_PRD.md)
-  - [System Architecture](docs/ARCHITECTURE.md)
-  - [Remote Navigation & Focus](docs/REMOTE_NAVIGATION.md)
-  - [Privacy & Network Isolation](docs/PRIVACY_AND_BLOCKING.md)
-  - [Playback Compatibility](docs/PLAYBACK_COMPATIBILITY.md)
-  - [QA Test Plan](docs/QA_TEST_PLAN.md)
-  - [Installation & Sideloading](docs/INSTALLATION.md)
-  - [Release Checklist](docs/RELEASE_CHECKLIST.md)
-  - [Claude Handoff Guide](docs/CLAUDE_HANDOFF.md)
+---
 
-### Building the Android TV Application
+## Project Structure
+
+```
+├── app/
+│   ├── src/main/
+│   │   ├── AndroidManifest.xml       # Leanback launcher declaration & permissions
+│   │   ├── assets/filters/           # Bundled ABP ad and tracker blocklists
+│   │   ├── java/com/nowshowing/tv/
+│   │   │   ├── data/                 # Room database, OMDb Retrofit client, repository
+│   │   │   ├── domain/               # 29-mood engine, video source registry
+│   │   │   ├── playback/             # MediaSourceResolver, SourceValidation, PlaybackCoordinator
+│   │   │   ├── privacy/              # ContentBlockEngine, FilterListManager, BlockingStatistics
+│   │   │   └── ui/                   # Jetpack Compose for TV screens (Home, Browse, Mood, Player, Search, Settings)
+│   │   └── res/                      # TV banner, launcher icons, theme colors, strings
+│   ├── src/test/                     # 33 unit tests across 7 suites (100% pass)
+│   ├── build.gradle.kts              # App dependencies, Compose TV, Media3, signing config
+│   └── proguard-rules.pro            # R8 obfuscation & keep rules for Room and Media3
+├── docs/                             # Complete architecture & engineering documentation
+│   ├── ANDROID_TV_PRD.md             # Product requirements & TV ergonomics
+│   ├── ARCHITECTURE.md               # Clean architecture & subsystem boundaries
+│   ├── REMOTE_NAVIGATION.md          # Remote key matrix & spatial focus guide
+│   ├── PRIVACY_AND_BLOCKING.md       # Network isolation & redirect guard specification
+│   ├── PLAYBACK_COMPATIBILITY.md     # 4-tier provider audit matrix
+│   ├── QA_TEST_PLAN.md               # Test matrix & automated test baseline
+│   ├── INSTALLATION.md               # Sideloading via USB, ADB, and Nook TV
+│   ├── RELEASE_CHECKLIST.md          # Distribution verification checklist
+│   └── CLAUDE_HANDOFF.md             # Detailed engineering handoff guide
+├── build.gradle.kts                  # Root build script
+├── settings.gradle.kts               # Root settings (NowShowingTV)
+├── gradle.properties                 # JVM heap & AndroidX settings
+├── gradlew / gradlew.bat             # Gradle wrapper
+└── README.md
+```
+
+---
+
+## Building and Testing
+
+### Prerequisites
+- JDK 17 or JDK 21
+- Android SDK (API 26 minimum, API 35 target)
+
+### Commands
 ```bash
-cd android-tv
-
 # Run unit test suite (33 tests across 7 suites)
 ./gradlew testDebugUnitTest
 
 # Assemble Debug APK (development & testing)
 ./gradlew assembleDebug
-# Generated at: android-tv/app/build/outputs/apk/debug/app-debug.apk
+# Generated at: app/build/outputs/apk/debug/app-debug.apk
 
 # Assemble Signed Release APK (production & sideloading)
 ./gradlew assembleRelease
-# Generated at: android-tv/app/build/outputs/apk/release/app-release.apk
+# Generated at: app/build/outputs/apk/release/app-release.apk
 ```
 
 ---
 
-Built by Ismail Hossain. Contact: ismailhossain013@gmail.com
+## Installation & Sideloading
+
+### Method A: Wireless ADB (Recommended)
+```bash
+# 1. Connect to Android TV via IP
+adb connect <TV_IP_ADDRESS>:5555
+
+# 2. Sideload the release APK
+adb install -r app/build/outputs/apk/release/app-release.apk
+
+# 3. Launch application directly
+adb shell am start -n com.nowshowing.tv/.ui.MainActivity
+```
+
+### Method B: USB Flash Drive
+1. Copy `app-release.apk` to a FAT32 or NTFS formatted USB flash drive.
+2. Insert into television / streaming box USB port.
+3. Open any TV file manager (*File Commander*, *X-plore*), enable *Install unknown apps*, and install.
+
+---
+
+## Data Source & API Keys
+
+Uses the OMDb API for movie and series metadata. A public demo key is included for immediate testing. For production deployments with higher request limits, supply your own key in `ApiClient.kt` or via local configuration.
+
+---
+
+## License & Attribution
+
+Built by Ismail Hossain.  
+Target repository: [smile-plzz/NowShowing-Stream-Android-TV](https://github.com/smile-plzz/NowShowing-Stream-Android-TV)

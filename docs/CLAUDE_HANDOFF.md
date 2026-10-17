@@ -24,10 +24,10 @@ The core architecture, 29-mood recommendation engine, local persistence, network
 
 ## 2. Codebase Quick Orientation
 
-All Android TV source code resides under `android-tv/`:
+All Android TV source code resides at the root of the repository:
 
 ```
-android-tv/app/src/main/java/com/nowshowing/tv/
+app/src/main/java/com/nowshowing/tv/
 ├── data/
 │   ├── api/                   # Retrofit client & OMDb API service
 │   ├── cache/                 # In-memory and TTL caching layers
@@ -157,7 +157,6 @@ android-tv/app/src/main/java/com/nowshowing/tv/
 #### C. Verification Suite Execution
 Always verify changes with the complete test and build pipeline:
 ```bash
-cd android-tv
 # 1. Run unit test suite
 ./gradlew testDebugUnitTest
 
@@ -204,7 +203,7 @@ git push target feature/native-only-playback:feature/native-only-playback
 adb connect <TV_IP>:5555
 
 # Install signed release APK
-adb install -r android-tv/app/build/outputs/apk/release/app-release.apk
+adb install -r app/build/outputs/apk/release/app-release.apk
 
 # Launch App
 adb shell am start -n com.nowshowing.tv/.ui.MainActivity

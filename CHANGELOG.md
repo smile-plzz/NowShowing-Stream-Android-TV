@@ -26,9 +26,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Connected `SourceValidation.kt` to live blocking metrics: recording isolated redirects, blocked tracker domains, and rejected unsafe URI schemes.
   - Modernized `SettingsScreen.kt` and `SettingsViewModel.kt` to display real-time network safety statistics and provide D-pad controls for ad blocking, tracker protection, and strict redirect validation.
 
+### Repository Restructuring
+- Promoted Android TV project from `android-tv/` to root directory (`app/`, `gradle/`, `build.gradle.kts`, `settings.gradle.kts`, `gradlew`).
+- Removed legacy web application assets (`css/`, `js/`, `public/`, `index.html`) to maintain a 100% pure native Android TV codebase.
+- Reconfigured `.gitignore` to standard Android specification.
+
 ### Documentation & Release Preparation
 - Created `docs/CLAUDE_HANDOFF.md`: Comprehensive handoff guide detailing architecture, 3 targeted workstreams (Design Polish, Functionality & Lifecycle Audit, Performance & R8 Stabilization), test baselines, and hardware testing procedures.
-- Hardened `android-tv/app/proguard-rules.pro` with explicit keep rules for Room SQLite and Media3 ExoPlayer internal classes.
+- Hardened `app/proguard-rules.pro` with explicit keep rules for Room SQLite and Media3 ExoPlayer internal classes.
 - Updated `docs/PRIVACY_AND_BLOCKING.md` and `docs/REMOTE_NAVIGATION.md` to reflect native ExoPlayer HUD, D-pad seek feedback, series sequencing, and network-level security.
 - Updated `README.md` with complete Android TV instructions, build procedures, and handoff guide link.
 
