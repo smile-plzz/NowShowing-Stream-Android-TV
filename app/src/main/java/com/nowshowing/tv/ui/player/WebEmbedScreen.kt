@@ -226,6 +226,10 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
                     menu = false
                     host?.focusPlayer()
                 }
+                if (section == "controls" && state.type == "series") {
+                    TvPlayerActionButton(if (state.advancingEpisode) "Loading next episode…" else "Next episode", null, true,
+                        Modifier.focusRequester(nextFocus)) { viewModel.playNextEpisode() }
+                }
                 LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     if (section == "controls") {
                         if (failure != null || state.errorMessage != null) {
@@ -246,7 +250,6 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
                         }
                         item { TvPlayerActionButton("Change source", null) { section = "sources" } }
                         if (state.type == "series") {
-                            item { TvPlayerActionButton(if (state.advancingEpisode) "Loading next episode…" else "Next episode", null, true, Modifier.focusRequester(nextFocus)) { viewModel.playNextEpisode() } }
                             state.episodeMessage?.let { message -> item { Text(message, color = AccentGold, fontSize = 16.sp) } }
                             item { Text("Automatic advancement is unavailable for this web provider. Use Next episode.", color = TextMuted, fontSize = 15.sp) }
                             item { TvPlayerActionButton("Episodes", null) { section = "episodes" } }

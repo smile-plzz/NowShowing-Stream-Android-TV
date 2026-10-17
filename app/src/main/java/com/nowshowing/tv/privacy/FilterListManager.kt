@@ -44,16 +44,11 @@ object FilterListManager {
         val customFile = File(context.filesDir, "filters/$fileName")
         if (customFile.exists() || File(customFile.path + ".bak").exists()) {
             try {
-                AtomicFile(customFile).openRead().bufferedReader().useLines { lines -> lines.forEach { line ->
-                    if (line.isNotBlank() && !line.startsWith("!")) {
-                        rules.add(line)
-                    }
+                val text = AtomicFile(customFile).openRead().use { readBounded(it) }
+                if (text != null && validFilterContent(text)) {
+                    return text.lineSequence().map { it.trim() }.filter { it.isNotBlank() && !it.startsWith("!") }.toList()
                 }
-                }
-                if (rules.isNotEmpty()) {
-                    return rules
-                }
-            } catch (_: Exception) {}
+            } catch (_: Exception) { /* Keep the bundled baseline. */ }
         }
 
         // 2. Fall back to bundled asset rules
@@ -86,9 +81,9 @@ object FilterListManager {
                 stream = destination.startWrite()
                 stream.write(text.toByteArray(Charsets.UTF_8))
                 destination.finishWrite(stream)
-                true
+                destination.openRead().use { readBounded(it) } == text
             } catch (_: Exception) {
-                destination.failWrite(stream)
+                runCatching { destination.failWrite(stream) }
                 false
             }
         }
@@ -105,22 +100,24 @@ object FilterListManager {
         }
     } }
 
+    private fun readBounded(stream: java.io.InputStream): String? {
+        val output = java.io.ByteArrayOutputStream()
+        val buffer = ByteArray(8192)
+        while (output.size() <= 512 * 1024) {
+            val count = stream.read(buffer, 0, minOf(buffer.size, 512 * 1024 + 1 - output.size()))
+            if (count < 0) break
+            output.write(buffer, 0, count)
+        }
+        val bytes = output.toByteArray()
+        return if (bytes.size > 512 * 1024) null else bytes.toString(Charsets.UTF_8)
+    }
+
     private fun fetchUrlContent(url: String): String? = try {
         val request = Request.Builder().url(url).build()
         httpClient.newCall(request).execute().use { response ->
             if (!response.isSuccessful) null else response.body?.let { body ->
                 // Enforce the cap while reading, including unknown Content-Length responses.
-                body.byteStream().use { stream ->
-                    val output = java.io.ByteArrayOutputStream()
-                    val buffer = ByteArray(8192)
-                    while (output.size() <= 512 * 1024) {
-                        val count = stream.read(buffer, 0, minOf(buffer.size, 512 * 1024 + 1 - output.size()))
-                        if (count < 0) break
-                        output.write(buffer, 0, count)
-                    }
-                    val bytes = output.toByteArray()
-                    if (bytes.size > 512 * 1024) null else bytes.toString(Charsets.UTF_8)
-                }
+                body.byteStream().use { readBounded(it) }
             }
         }
     } catch (_: Exception) { null }
