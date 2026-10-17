@@ -201,7 +201,7 @@ object SourceRegistry {
     fun getPreferredSource(context: Context): VideoSource {
         val defaultName = UNSUPPORTED_WEB_SOURCES.first().name
         val name = getPrefs(context).getString(KEY_PREFERRED_SOURCE, defaultName)
-        return SOURCES.firstOrNull { it.name == name } ?: UNSUPPORTED_WEB_SOURCES.first()
+        return UNSUPPORTED_WEB_SOURCES.firstOrNull { it.name == name } ?: UNSUPPORTED_WEB_SOURCES.first()
     }
 
     fun setPreferredSource(context: Context, sourceName: String) {
@@ -210,7 +210,7 @@ object SourceRegistry {
 
     fun getSourceForTitle(context: Context, imdbId: String): VideoSource {
         val id = getPrefs(context).getString("title_source_$imdbId", null)
-        return SOURCES.firstOrNull { it.id == id } ?: getPreferredSource(context)
+        return UNSUPPORTED_WEB_SOURCES.firstOrNull { it.id == id } ?: getPreferredSource(context)
     }
 
     fun setSourceForTitle(context: Context, imdbId: String, source: VideoSource) {

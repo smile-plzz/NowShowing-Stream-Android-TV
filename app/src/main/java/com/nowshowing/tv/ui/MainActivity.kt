@@ -235,7 +235,15 @@ class MainActivity : ComponentActivity() {
                             episode = episode,
                             type = type,
                             viewModel = playerVm,
-                            onBack = { navController.popBackStack() }
+                            onBack = {
+                                val previous = navController.previousBackStackEntry
+                                val hasTitleBehind = previous?.destination?.route == Screen.Details.route &&
+                                    previous?.arguments?.getString("imdbId") == imdbId
+                                navController.popBackStack()
+                                if (type != "diagnostic" && !hasTitleBehind) {
+                                    navController.navigate(Screen.Details.createRoute(imdbId, type)) { launchSingleTop = true }
+                                }
+                            }
                         )
                     }
                 }

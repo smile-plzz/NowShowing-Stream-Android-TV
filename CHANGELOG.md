@@ -1,3 +1,14 @@
+# 1.5.0-rc.1 — 2026-10-18
+
+- Refined TV player menu, first-use help, precise/accelerated pointer movement, fullscreen pointer forwarding, and predictable Back navigation.
+- Added current episode metadata and manual episode selection; kept provider-managed video controls.
+- Moved native diagnostic streams to Settings and added visible app/build versions.
+- Included local Recently opened, shared metadata caching, progressive shelves, and navigation-state restoration from the preceding polish pass.
+- Added versioned GitHub release packaging, APK signature verification, checksums, build metadata, optional permanent signing, and honest prerelease status.
+- Rewrote installation/update instructions and added known limitations, troubleshooting, and release-signing guidance.
+
+---
+
 # Changelog
 
 All notable changes to the NowShowing project will be documented in this file.
