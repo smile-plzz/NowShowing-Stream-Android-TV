@@ -94,20 +94,26 @@ class MediaRepository(
     private suspend fun <T> request(fetch: suspend () -> T, error: (T) -> String?): T =
         networkSlots.withPermit {
             MetadataHealth.check()
+            val generation = MetadataHealth.generation
             try {
                 val result = fetch()
                 error(result)?.let {
                     val failure = classifyMetadataError(it)
-                    MetadataHealth.record(failure)
+                    if (MetadataHealth.generation == generation) MetadataHealth.record(failure)
                     throw MetadataUnavailable(failure)
                 }
-                MetadataHealth.success()
+                if (MetadataHealth.generation == generation) MetadataHealth.success()
                 result
             } catch (cancelled: CancellationException) { throw cancelled
             } catch (known: MetadataUnavailable) { throw known
             } catch (e: Exception) {
-                val failure = if (e is java.io.IOException) MetadataFailure.NETWORK else MetadataFailure.SERVICE
-                MetadataHealth.record(failure)
+                val failure = when {
+                    e is java.io.IOException -> MetadataFailure.NETWORK
+                    e is retrofit2.HttpException && e.code() == 401 -> MetadataFailure.KEY
+                    e is retrofit2.HttpException && e.code() == 429 -> MetadataFailure.QUOTA
+                    else -> MetadataFailure.SERVICE
+                }
+                if (MetadataHealth.generation == generation) MetadataHealth.record(failure)
                 throw MetadataUnavailable(failure)
             }
         }
@@ -163,7 +169,8 @@ class MediaRepository(
                     detail
                 } catch (cancelled: CancellationException) {
                     throw cancelled
-                } catch (_: MetadataUnavailable) {
+                } catch (failure: MetadataUnavailable) {
+                    if (failure.failure == MetadataFailure.NO_RESULTS) return@withContext null
                     db.getCachedPayload(key, allowStale = true)?.let { json ->
                         runCatching { gson.fromJson(json, OmdbTitleDetail::class.java) }.getOrNull()?.let {
                             MetadataHealth.stale(); return@withContext it

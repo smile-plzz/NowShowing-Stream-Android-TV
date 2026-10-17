@@ -1,3 +1,7 @@
+# Daily-use refinement candidate — 18 October 2026
+
+Prepared 1.5.0-rc.2 / 15002 from d5590b5. Current source contracts: docs/ARCHITECTURE.md and docs/WEB_PLAYBACK.md. Added metadata/storage/filter/episode regression coverage and TV_ACCEPTANCE.md. Local Android tooling was unavailable; validation must be recorded from final repository CI. No real-TV performance measurements or supported web completion messages were established. Historical entries below are not current specifications.
+
 # Development Log: NowShowing TV
 
 ## [2026-10-17 20:36] - Phase 1: Inception, Audit & Architecture Specification

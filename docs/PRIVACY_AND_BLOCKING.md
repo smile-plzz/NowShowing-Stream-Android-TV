@@ -1,3 +1,5 @@
+> Current implementation: see ARCHITECTURE.md and WEB_PLAYBACK.md. Filtering is limited to supported rule syntax and requests exposed by WebView. This is not full Brave Shields compatibility. Updates use the maintained Android repository, bounded validation and atomic per-list replacement; partial/failed updates retain known-good rules. API URL logging is disabled. A personal metadata key is stored in local preferences, not a secret backend. Diagnostic export excludes keys, URLs and viewing history and is initiated by the user; no new analytics/upload service is introduced.
+
 > **October 17, 2026 playback update:** See [WEB_PLAYBACK.md](WEB_PLAYBACK.md) for the current dual-engine playback contract. Earlier native-only / zero-WebView requirements below are historical and superseded. Real-provider TV testing remains required.
 
 # Privacy & Network Isolation: NowShowing TV

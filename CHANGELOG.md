@@ -1,3 +1,7 @@
+# 1.5.0-rc.2 — daily-use candidate
+
+Metadata recovery/caching, watched-label preservation, safe filter replacement, direct player entry, default Play focus, cached related titles, bounded image/network work, manual episode controls and persisted autoplay preference, About and redacted Diagnostics. Web completion remains unsupported. Tests and release build evidence belong to the final CI run; TV checks remain pending. See docs/releases/v1.5.0-rc.2.md.
+
 # 1.5.0-rc.1 — 2026-10-18
 
 - Refined TV player menu, first-use help, precise/accelerated pointer movement, fullscreen pointer forwarding, and predictable Back navigation.

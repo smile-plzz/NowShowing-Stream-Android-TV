@@ -1,33 +1,22 @@
-# Playback restoration — October 17, 2026
+# Current playback contract — 1.5.0-rc.2
 
-## Why selected movies did not play
-The native-only implementation classified all eleven existing movie providers as unsupported. Its native alternatives are fixed demo URLs, independent of the selected IMDb title. Changing to a demo cannot resolve a selected movie.
+Selected movies and series use existing provider HTML/iframe players in Android System WebView. Media3 remains available for direct diagnostic demo streams; choosing a demo does not play the selected movie.
 
-## Current playback contract
-- Existing web providers use an embedded Android System WebView, using the existing IMDb, season, and episode URL builder.
-- Direct HLS, DASH, and MP4 sources retain Media3 and its existing native controls.
-- Fresh installs and missing saved source names default to the first existing web provider. Explicit saved demo preferences remain available.
-- Demo streams are labeled separately; they are playback diagnostics, not a movie catalog.
-- No stream extraction, DRM bypass, external app launch, or new provider service is introduced.
-- The legacy UNSUPPORTED_WEB_EMBED enum name is retained for compatibility with the native resolver. It means incompatible with Media3, not unavailable to the application.
+## Startup and remote input
+Pressing Play enters the provider page immediately, with pointer focus. There is no app-owned Enter Player/Start gate. Some providers still require an OK click on their own play button. `mediaPlaybackRequiresUserGesture=false` does not guarantee provider autoplay; no arbitrary DOM/pixel clicks or unverified autoplay URL parameters are injected.
 
-## Remote control
-Select Enter player to focus the player. D-pad moves a temporary pointer; OK clicks at the pointer, including inside cross-origin frames. Back or Menu reveals the app controls; Back again leaves. Provider fullscreen views use Android's custom-view callback. Native source selection returns to the existing native player. Web controls offer reload, source selection, and previous/next episode.
+Arrows move the pointer; held arrows accelerate; OK performs one pointer click. First-use hints appear without blocking playback. Back exits provider fullscreen first, then opens app controls, then returns to the title; submenus return to controls. Menu opens controls directly. Source changes/retry replace and destroy the old WebView. Controls include prominent Next episode for series, episode selection, retry, source switching and repeatable remote help.
+
+## Episode progression
+Autoplay is ON by default and persists in Settings. **Current web providers have no verified completion event integration. Automatic advancement is unavailable for them.** Neither iframe existence, page finished, elapsed time nor an apparently paused image proves video completion. There is no JavaScript-to-native bridge or accepted cross-origin message protocol.
+
+Use manual Next episode. The app resolves known episode numbers, fetches the next season at a known boundary and recognizes the last known episode. Missing metadata yields a recovery message rather than selecting invented episode numbers. Metadata can lag the provider catalog; use explicit season/episode selection when necessary. Automatic post-movie recommendations likewise require a completion signal, so cached related titles appear on Details instead.
+
+Native playback uses actual player events. A supported native series completion can show a ten-second countdown, Next episode and Dismiss; OFF leaves advancement manual. Events are tied to the current native source/session. Currently native catalog entries are fixed diagnostic videos, so they do not establish feature support for movies/series providers.
 
 ## Protection and lifecycle
-HTTPS only; no mixed content, file access, content access, JavaScript-native bridge, downloads, permission grants, or external intents. New windows are denied. Main-frame navigation stays on the selected host while redirect isolation is enabled. HTTPS child frames remain possible for provider playback hosts. Existing source exceptions and filtering preferences apply to intercepted requests. Certificate errors retain WebView's default rejection. Filter evaluation and rule replacement are synchronized, and cached decisions include protection modes.
+HTTPS only; no mixed content, file/content access, downloads, permissions, external navigation intents or privileged JavaScript bridges. Popup windows are denied. Main-frame host isolation and request filtering follow settings/source exceptions. Default SSL rejection is preserved. HTTPS provider child frames remain possible.
 
-WebView pauses/resumes with the screen lifecycle and is destroyed on source changes or leaving. Filtering is limited to requests exposed by WebView; it is not equivalent to Brave Shields or a guarantee of removing every advertisement.
+WebView pauses/resumes with the screen and is stopped/destroyed on source replacement or leaving. Filtering covers only requests WebView exposes and the rule formats the engine supports. It does not promise full Brave Shields compatibility or complete ad removal.
 
-## Honest limitations
-Provider pages can fail, change endpoints, be blocked by a network, require unsupported browser features, or have no selected title. Successful HTML loading does not prove that video plays. A 25-second timer brings controls back without claiming video success. Try another provider when needed.
-
-Cross-origin provider video state is not exposed to the app: web playback does not create native Continue Watching records, claim measured resume, or trigger automatic next-episode countdowns. Use the provider's own subtitles and playback controls; manual episode navigation remains available. Native progress/resume is unchanged except that saved positions must match the requested season and episode.
-
-## Validation
-Navigation policy tests cover provider host confinement, HTTPS iframe compatibility, misleading host suffixes, unsafe schemes, user-info URLs, and isolation preference behavior. GitHub Actions runs existing tests and assembles debug/release APKs for the PR.
-
-Before release, test on a real Android TV: at least one movie and two series episodes; D-pad pointer; provider play/seek/subtitle controls; fullscreen and Back; app background/foreground; source change during load; unreachable source; popup blocking; protection preferences and exceptions; native demo playback; home/search/watchlist/mood navigation.
-
-## Product direction
-This document supersedes earlier native-only requirements in historical handoffs. The UI keeps its routes and features, with warm charcoal surfaces, ivory typography, muted terracotta accents, and clear remote focus.
+HTML loading does not establish playback success. A 25-second page-loading timeout reopens controls without declaring video failure/success. Provider-required clicks, subtitles, seeking, fullscreen quirks and availability must be checked on the TV. See TV_ACCEPTANCE.md.

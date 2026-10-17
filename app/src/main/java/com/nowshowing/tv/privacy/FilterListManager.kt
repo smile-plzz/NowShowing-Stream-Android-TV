@@ -42,7 +42,7 @@ object FilterListManager {
 
         // 1. Check if an updated version exists in local storage
         val customFile = File(context.filesDir, "filters/$fileName")
-        if (customFile.exists() && customFile.length() > 0) {
+        if (customFile.exists() || File(customFile.path + ".bak").exists()) {
             try {
                 AtomicFile(customFile).openRead().bufferedReader().useLines { lines -> lines.forEach { line ->
                     if (line.isNotBlank() && !line.startsWith("!")) {

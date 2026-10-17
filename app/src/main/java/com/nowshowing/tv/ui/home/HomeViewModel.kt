@@ -83,7 +83,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                             s.copy(genreRows = s.genreRows.map { if (it.seed.id == seed.id) GenreRowState(seed, titles.ifEmpty { it.items }) else it })
                         }
                     }.join()
-                }.join()
+                }
                 launch {
                     val titles = repository.lookupTitles(MediaRepository.POPULAR_MOVIES.take(8), "movie")
                     _uiState.update { it.copy(popularMovies = titles.ifEmpty { it.popularMovies }) }

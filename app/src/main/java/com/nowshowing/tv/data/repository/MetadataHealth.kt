@@ -24,6 +24,8 @@ class MetadataUnavailable(val failure: MetadataFailure) : Exception(failure.mess
 object MetadataHealth {
     private val mutable = MutableStateFlow<MetadataFailure?>(null)
     val failure = mutable.asStateFlow()
+    @Volatile var generation: Long = 0
+        private set
     private var blockedUntil = 0L
     private val errors = ArrayDeque<String>()
     @Volatile var usedStaleCache = false
@@ -44,7 +46,7 @@ object MetadataHealth {
     @Synchronized fun success(now: Long = System.currentTimeMillis()) {
         if (now >= blockedUntil) mutable.value = null
     }
-    @Synchronized fun retry() { blockedUntil = 0; mutable.value = null; usedStaleCache = false }
+    @Synchronized fun retry() { generation++; blockedUntil = 0; mutable.value = null; usedStaleCache = false }
     @Synchronized fun stale() { usedStaleCache = true }
     @Synchronized fun recentErrors(): List<String> = errors.toList()
 }

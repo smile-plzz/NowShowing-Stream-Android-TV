@@ -41,12 +41,12 @@ import java.io.ByteArrayInputStream
 @Composable
 internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, onBack: () -> Unit) {
     val menuFocus = remember { FocusRequester() }
+    val nextFocus = remember { FocusRequester() }
     val context = LocalContext.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     var ready by remember { mutableStateOf(false) }
     var menu by remember(state.webEmbedUrl) { mutableStateOf(false) }
     var section by remember(state.webEmbedUrl) { mutableStateOf("controls") }
-    var entered by remember(state.webEmbedUrl) { mutableStateOf(true) }
     val helpPrefs = remember { context.getSharedPreferences("tv_remote_help", Context.MODE_PRIVATE) }
     var seenHelp by remember { mutableStateOf(helpPrefs.getBoolean("seen", false)) }
     var failure by remember(state.webEmbedUrl) { mutableStateOf<String?>(null) }
@@ -84,7 +84,9 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
     }
     LaunchedEffect(menu, section, host, state.webEmbedUrl) {
         withFrameNanos { }
-        if (menu) menuFocus.requestFocus() else host?.focusPlayer()
+        if (menu) {
+            if (section == "controls" && state.type == "series") nextFocus.requestFocus() else menuFocus.requestFocus()
+        } else host?.focusPlayer()
     }
     BackHandler {
         if (host?.exitFullscreen() == true) {
@@ -221,7 +223,6 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
                     "Return to video", null, true,
                     Modifier.focusRequester(menuFocus)
                 ) {
-                    entered = true
                     menu = false
                     host?.focusPlayer()
                 }
@@ -245,7 +246,7 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
                         }
                         item { TvPlayerActionButton("Change source", null) { section = "sources" } }
                         if (state.type == "series") {
-                            item { TvPlayerActionButton(if (state.advancingEpisode) "Loading next episode…" else "Next episode", null, true) { viewModel.playNextEpisode() } }
+                            item { TvPlayerActionButton(if (state.advancingEpisode) "Loading next episode…" else "Next episode", null, true, Modifier.focusRequester(nextFocus)) { viewModel.playNextEpisode() } }
                             state.episodeMessage?.let { message -> item { Text(message, color = AccentGold, fontSize = 16.sp) } }
                             item { Text("Automatic advancement is unavailable for this web provider. Use Next episode.", color = TextMuted, fontSize = 15.sp) }
                             item { TvPlayerActionButton("Episodes", null) { section = "episodes" } }

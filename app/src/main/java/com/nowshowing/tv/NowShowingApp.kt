@@ -26,7 +26,7 @@ class NowShowingApp : Application(), ImageLoaderFactory {
         return ImageLoader.Builder(this)
             .memoryCache {
                 MemoryCache.Builder(this)
-                    .maxSizeBytes(16L * 1024 * 1024) // Bound decoded artwork on low-memory TVs.
+                    .maxSizeBytes(16 * 1024 * 1024) // Bound decoded artwork on low-memory TVs.
                     .build()
             }
             .diskCache {

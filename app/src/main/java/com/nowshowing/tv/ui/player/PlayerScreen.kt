@@ -49,6 +49,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -143,7 +144,7 @@ fun PlayerScreen(
     LaunchedEffect(uiState.showNextEpisodePrompt) {
         withFrameNanos { }
         if (uiState.showNextEpisodePrompt) nextEpisodeFocus.requestFocus()
-        else if (uiState.playableSource != null) primaryFocusRequester.requestFocus()
+        else if (uiState.playableSource != null) runCatching { primaryFocusRequester.requestFocus() }
     }
 
     // Next Episode Countdown Timer
