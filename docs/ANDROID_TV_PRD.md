@@ -1,3 +1,5 @@
+> **October 17, 2026 playback update:** See [WEB_PLAYBACK.md](WEB_PLAYBACK.md) for the current dual-engine playback contract. Earlier native-only / zero-WebView requirements below are historical and superseded. Real-provider TV testing remains required.
+
 # Product Requirement Document (PRD): NowShowing TV
 
 ## 1. Vision & Purpose

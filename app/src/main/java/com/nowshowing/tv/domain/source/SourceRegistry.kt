@@ -41,7 +41,7 @@ object SourceRegistry {
         )
     )
 
-    // Legacy Web-Only Embed Providers (Strictly Incompatible with Native TV Playback)
+    // Web player providers: rendered in the sandboxed WebView, never passed to ExoPlayer.
     val UNSUPPORTED_WEB_SOURCES = listOf(
         VideoSource(
             id = "vidsrc_to",
@@ -49,7 +49,7 @@ object SourceRegistry {
             type = SourceType.UNSUPPORTED_WEB_EMBED,
             url = "https://vidsrc.to/embed/movie/",
             tvUrl = "https://vidsrc.to/embed/tv/",
-            description = "Third-party web embed; does not provide direct media streams"
+            description = "Web player • availability depends on the provider"
         ),
         VideoSource(
             id = "autoembed",
@@ -57,7 +57,7 @@ object SourceRegistry {
             type = SourceType.UNSUPPORTED_WEB_EMBED,
             url = "https://autoembed.co/movie/imdb/",
             tvUrl = "https://autoembed.co/tv/imdb/",
-            description = "Third-party web embed; does not provide direct media streams"
+            description = "Web player • availability depends on the provider"
         ),
         VideoSource(
             id = "twoembed",
@@ -65,7 +65,7 @@ object SourceRegistry {
             type = SourceType.UNSUPPORTED_WEB_EMBED,
             url = "https://www.2embed.cc/embed/",
             tvUrl = "https://www.2embed.cc/embedtv/",
-            description = "Third-party web embed; does not provide direct media streams"
+            description = "Web player • availability depends on the provider"
         ),
         VideoSource(
             id = "twoembed_stream",
@@ -73,7 +73,7 @@ object SourceRegistry {
             type = SourceType.UNSUPPORTED_WEB_EMBED,
             url = "https://www.2embed.stream/embed/movie/",
             tvUrl = "https://www.2embed.stream/embed/tv/",
-            description = "Third-party web embed; does not provide direct media streams"
+            description = "Web player • availability depends on the provider"
         ),
         VideoSource(
             id = "vidsrc_icu",
@@ -81,7 +81,7 @@ object SourceRegistry {
             type = SourceType.UNSUPPORTED_WEB_EMBED,
             url = "https://vidsrc.icu/embed/movie/",
             tvUrl = "https://vidsrc.icu/embed/tv/",
-            description = "Third-party web embed; does not provide direct media streams"
+            description = "Web player • availability depends on the provider"
         ),
         VideoSource(
             id = "vidsrc_xyz",
@@ -89,7 +89,7 @@ object SourceRegistry {
             type = SourceType.UNSUPPORTED_WEB_EMBED,
             url = "https://vidsrc.xyz/embed/movie/",
             tvUrl = "https://vidsrc.xyz/embed/tv/",
-            description = "Third-party web embed; does not provide direct media streams"
+            description = "Web player • availability depends on the provider"
         ),
         VideoSource(
             id = "vidsrc_me",
@@ -97,7 +97,7 @@ object SourceRegistry {
             type = SourceType.UNSUPPORTED_WEB_EMBED,
             url = "https://v2.vidsrc.me/embed/",
             tvUrl = "https://v2.vidsrc.me/embed/",
-            description = "Third-party web embed; does not provide direct media streams"
+            description = "Web player • availability depends on the provider"
         ),
         VideoSource(
             id = "moviesapi",
@@ -105,7 +105,7 @@ object SourceRegistry {
             type = SourceType.UNSUPPORTED_WEB_EMBED,
             url = "https://moviesapi.club/movie/",
             tvUrl = "https://moviesapi.club/tv/",
-            description = "Third-party web embed; does not provide direct media streams"
+            description = "Web player • availability depends on the provider"
         ),
         VideoSource(
             id = "multiembed",
@@ -113,7 +113,7 @@ object SourceRegistry {
             type = SourceType.UNSUPPORTED_WEB_EMBED,
             url = "https://multiembed.mov/?video_id=",
             tvUrl = "https://multiembed.mov/?video_id=",
-            description = "Third-party web embed; does not provide direct media streams"
+            description = "Web player • availability depends on the provider"
         ),
         VideoSource(
             id = "embedsu",
@@ -121,7 +121,7 @@ object SourceRegistry {
             type = SourceType.UNSUPPORTED_WEB_EMBED,
             url = "https://embed.su/embed/movie/",
             tvUrl = "https://embed.su/embed/tv/",
-            description = "Third-party web embed; does not provide direct media streams"
+            description = "Web player • availability depends on the provider"
         ),
         VideoSource(
             id = "vidsrc_mov",
@@ -129,7 +129,7 @@ object SourceRegistry {
             type = SourceType.UNSUPPORTED_WEB_EMBED,
             url = "https://vidsrc.mov/embed/movie/",
             tvUrl = "https://vidsrc.mov/embed/tv/",
-            description = "Third-party web embed; does not provide direct media streams"
+            description = "Web player • availability depends on the provider"
         )
     )
 
@@ -199,9 +199,9 @@ object SourceRegistry {
     }
 
     fun getPreferredSource(context: Context): VideoSource {
-        val defaultName = NATIVE_SOURCES.first().name
+        val defaultName = UNSUPPORTED_WEB_SOURCES.first().name
         val name = getPrefs(context).getString(KEY_PREFERRED_SOURCE, defaultName)
-        return SOURCES.firstOrNull { it.name == name } ?: NATIVE_SOURCES.first()
+        return SOURCES.firstOrNull { it.name == name } ?: UNSUPPORTED_WEB_SOURCES.first()
     }
 
     fun setPreferredSource(context: Context, sourceName: String) {

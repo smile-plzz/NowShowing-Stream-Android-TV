@@ -112,6 +112,12 @@ fun PlayerScreen(
         viewModel.initialize(imdbId, season, episode, type)
     }
 
+    // Web providers deliver HTML players rather than native stream URLs.
+    if (!uiState.isLoading && !uiState.currentSource.isNativeCompatible) {
+        WebEmbedScreen(uiState, viewModel, onBack)
+        return
+    }
+
     // Auto-hide HUD countdown timer
     LaunchedEffect(showHud, hudCountdown) {
         if (showHud) {
@@ -1022,7 +1028,7 @@ private fun SourceItemCard(
         }
 
         // Compatibility Tag
-        val tagText = if (source.isNativeCompatible) "NATIVE PLAYABLE" else "UNSUPPORTED WEB EMBED"
+        val tagText = if (source.isNativeCompatible) "NATIVE PLAYABLE" else "WEB PLAYER"
         val tagColor = if (source.isNativeCompatible) AccentCyan else Color(0xFFFF6B6B)
 
         Box(
@@ -1078,7 +1084,7 @@ private fun TvPlayerIconButton(
 }
 
 @Composable
-private fun TvPlayerActionButton(
+internal fun TvPlayerActionButton(
     label: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector?,
     isAccent: Boolean = false,
