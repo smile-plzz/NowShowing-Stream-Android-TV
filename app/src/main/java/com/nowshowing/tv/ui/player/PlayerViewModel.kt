@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
 import com.nowshowing.tv.data.db.RecentItem
+import com.nowshowing.tv.data.model.OmdbEpisode
 
 data class PlayerUiState(
     val imdbId: String = "",
@@ -40,7 +41,12 @@ data class PlayerUiState(
     val showControls: Boolean = true,
     val isNetworkError: Boolean = false,
     val retryCount: Int = 0,
-    val showSeriesComplete: Boolean = false
+    val showSeriesComplete: Boolean = false,
+    val episodeTitle: String = "",
+    val episodeList: List<OmdbEpisode> = emptyList(),
+    val episodeListSeason: Int = 1,
+    val totalSeasons: Int = 1,
+    val episodesLoading: Boolean = false
 )
 
 class PlayerViewModel(application: Application) : AndroidViewModel(application) {
@@ -49,12 +55,19 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     private val coordinator = PlaybackCoordinator()
     private var historyJob: Job? = null
     private var initializeJob: Job? = null
+    private var episodesJob: Job? = null
 
     private val _uiState = MutableStateFlow(PlayerUiState())
     val uiState: StateFlow<PlayerUiState> = _uiState.asStateFlow()
 
     fun initialize(imdbId: String, season: Int, episode: Int, type: String) {
         initializeJob?.cancel()
+        if (type == "diagnostic") {
+            val source = SourceRegistry.NATIVE_SOURCES.firstOrNull { it.id == imdbId } ?: return
+            _uiState.value = PlayerUiState(imdbId = imdbId, title = source.name, type = type, currentSource = source)
+            resolveAndLoad(source)
+            return
+        }
         initializeJob = viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
                 imdbId = imdbId,
@@ -83,11 +96,13 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                 title = titleName,
                 poster = posterUrl,
                 year = yearVal,
+                totalSeasons = detail?.totalSeasons?.toIntOrNull()?.coerceAtLeast(1) ?: season,
                 currentSource = preferredSource,
                 currentPositionMs = resumeMs
             )
 
             resolveAndLoad(preferredSource, resumeMs)
+            if (type == "series") loadEpisodes(season)
         }
     }
 
@@ -129,7 +144,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                 )
 
                 // Update database continue watching record
-                viewModelScope.launch {
+                if (s.type != "diagnostic") viewModelScope.launch {
                     repository.updateContinueWatching(
                         imdbId = s.imdbId,
                         title = s.title,
@@ -180,6 +195,11 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun selectSource(source: VideoSource) {
+        if (_uiState.value.type == "diagnostic") {
+            _uiState.value = _uiState.value.copy(currentSource = source, title = source.name, isLoading = true, errorMessage = null, showSourceSelector = false)
+            resolveAndLoad(source)
+            return
+        }
         SourceRegistry.setPreferredSource(getApplication(), source.name)
         SourceRegistry.setSourceForTitle(getApplication(), _uiState.value.imdbId, source)
         _uiState.value = _uiState.value.copy(
@@ -202,31 +222,46 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         resolveAndLoad(_uiState.value.currentSource, _uiState.value.currentPositionMs)
     }
 
+    fun loadEpisodes(season: Int) {
+        episodesJob?.cancel()
+        _uiState.value = _uiState.value.copy(episodeListSeason = season, episodesLoading = true, episodeList = emptyList())
+        val id = _uiState.value.imdbId
+        episodesJob = viewModelScope.launch {
+            val episodes = repository.getSeason(id, season)?.episodes.orEmpty()
+            val s = _uiState.value
+            _uiState.value = s.copy(
+                episodeList = episodes, episodesLoading = false,
+                episodeTitle = if (s.season == season) episodes.firstOrNull { it.episode.toIntOrNull() == s.episode }?.title.orEmpty() else s.episodeTitle
+            )
+        }
+    }
+
+    fun playEpisode(season: Int, episode: Int) {
+        if (season < 1 || episode < 1) return
+        val s = _uiState.value
+        val title = if (s.episodeListSeason == season) s.episodeList.firstOrNull { it.episode.toIntOrNull() == episode }?.title.orEmpty() else ""
+        _uiState.value = s.copy(season = season, episode = episode, episodeTitle = title,
+            currentPositionMs = 0L, durationMs = 0L, showNextEpisodePrompt = false, showSeriesComplete = false, isLoading = true)
+        resolveAndLoad(s.currentSource, 0L)
+        if (s.episodeListSeason != season) loadEpisodes(season)
+    }
+
     fun playNextEpisode() {
         val s = _uiState.value
-        val nextEp = coordinator.getNextEpisode(s.season, s.episode)
-        _uiState.value = _uiState.value.copy(
-            season = nextEp.season,
-            episode = nextEp.episode,
-            currentPositionMs = 0L,
-            durationMs = 0L,
-            showNextEpisodePrompt = false,
-            isLoading = true
-        )
-        resolveAndLoad(_uiState.value.currentSource, 0L)
+        val knownEnd = if (s.episodeListSeason == s.season && s.episodeList.isNotEmpty())
+            s.episodeList.mapNotNull { it.episode.toIntOrNull() }.maxOrNull() else null
+        if (knownEnd != null && s.episode >= knownEnd && s.season >= s.totalSeasons) {
+            _uiState.value = s.copy(showSeriesComplete = true)
+            return
+        }
+        val next = coordinator.getNextEpisode(s.season, s.episode, knownEnd)
+        playEpisode(next.season, next.episode)
     }
 
     fun playPreviousEpisode() {
         val s = _uiState.value
-        val prevEp = coordinator.getPreviousEpisode(s.season, s.episode) ?: return
-        _uiState.value = _uiState.value.copy(
-            season = prevEp.season,
-            episode = prevEp.episode,
-            currentPositionMs = 0L,
-            durationMs = 0L,
-            isLoading = true
-        )
-        resolveAndLoad(_uiState.value.currentSource, 0L)
+        val previous = coordinator.getPreviousEpisode(s.season, s.episode) ?: return
+        playEpisode(previous.season, previous.episode)
     }
 
     fun updateProgress(positionMs: Long, durationMs: Long) {
@@ -239,7 +274,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             showNextEpisodePrompt = shouldPrompt
         )
 
-        viewModelScope.launch {
+        if (s.type != "diagnostic") viewModelScope.launch {
             repository.updateContinueWatching(
                 imdbId = s.imdbId,
                 title = s.title,

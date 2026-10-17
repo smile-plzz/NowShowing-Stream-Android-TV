@@ -1,63 +1,55 @@
-# Installation & Sideloading Guide: NowShowing TV
+# Install and update NowShowing TV
 
-## 1. Overview
-NowShowing TV is distributed as a standalone native Android package (`.apk`). It is designed for installation on Android TV, Google TV, and Android TV-based streaming boxes (Nvidia Shield, Chromecast with Google TV, Xiaomi Mi Box, Amazon Fire TV, smart TVs running Android TV).
+## Supported TVs
+Android TV or Google TV, Android 8.0 / API 26 or later. Samsung Tizen and LG webOS cannot install Android APKs. Fire TV compatibility has not been verified.
 
-No Google Play Store publication is required.
+## Download
+Open [GitHub Releases](https://github.com/smile-plzz/NowShowing-Stream-Android-TV/releases).
+For this build select **v1.5.0-rc.1**, expand Assets, and download **NowShowing-TV-1.5.0-rc.1-release.apk**.
+The debug APK is for development. Source-code ZIP/TAR downloads are not installable apps.
 
-## 2. Prerequisites
-1. **Target Device**: Android TV / Google TV running Android 8.0 (API level 26) or newer.
-2. **Developer Options**:
-   - On your TV, navigate to **Settings** > **Device Preferences** (or **System**) > **About**.
-   - Scroll down to **Android TV OS build** (or **Build**) and press `OK` 7 times until you see the toast: *"You are now a developer!"*.
-   - Return to **Settings** > **Developer options** and enable **USB debugging** (and **Network debugging** if installing wirelessly).
+The release includes SHA256SUMS.txt, public signing-certificate fingerprints, and build-info.json. These identify exactly which version, commit, and signing mode you downloaded. This candidate uses development signing until a permanent key is configured; read the release notes before updating.
 
-## 3. Installation Methods
+## Install using a USB drive or TV file transfer
+1. Copy the release APK to a USB drive or transfer it to the TV using your existing file-transfer method.
+2. Open the APK in a TV file manager.
+3. If prompted, allow that file manager to install unknown apps, then confirm installation.
+4. Open NowShowing TV from the TV's app list or Nook TV.
+5. Disable that file manager's install permission again if you do not need it.
 
-### Method A: Direct ADB Sideloading via USB (Recommended for Developers)
-1. Connect your computer to the Android TV device via USB cable (or ensure both are on the same local Wi-Fi network).
-2. Verify connection:
-   ```bash
-   adb devices
-   ```
-3. Install the APK:
-   ```bash
-   adb install -r android-tv/app/build/outputs/apk/debug/app-debug.apk
-   ```
-4. Launch the application:
-   ```bash
-   adb shell am start -n com.nowshowing.tv/.ui.MainActivity
-   ```
+A developer-options setup is not required for ordinary file-manager installation.
 
-### Method B: Wireless ADB Sideloading over Wi-Fi
-1. Find your TV's local IP address under **Settings** > **Network & Internet** (e.g. `192.168.1.150`).
-2. Connect to the TV from your terminal:
-   ```bash
-   adb connect 192.168.1.150:5555
-   ```
-3. Authorize the debugging prompt that appears on your television screen.
-4. Sideload the APK:
-   ```bash
-   adb install -r android-tv/app/build/outputs/apk/debug/app-debug.apk
-   ```
+## Install using ADB
+Use Android SDK Platform Tools on your computer. Enable developer options and the appropriate debugging option on your TV.
+Older devices commonly expose network ADB on port 5555:
+```sh
+adb connect TV_IP:5555
+adb install -r NowShowing-TV-1.5.0-rc.1-release.apk
+adb shell am start -n com.nowshowing.tv/.ui.MainActivity
+```
+Newer devices may require Wireless debugging pairing instead:
+```sh
+adb pair TV_IP:PAIRING_PORT
+adb connect TV_IP:DEBUG_PORT
+```
+Use the ports shown on your TV; the pairing and debugging ports can differ. Confirm the computer authorization prompt on the TV. Disable debugging after installation if it is no longer needed.
 
-### Method C: Sideloading via USB Drive or File Manager
-1. Copy `app-debug.apk` (or `app-release.apk`) to a standard USB flash drive formatted as FAT32 or NTFS.
-2. Plug the USB flash drive into your Android TV box or television port.
-3. Open any file manager on the TV (e.g., *File Commander*, *AnExplorer*, or *X-plore*).
-4. When prompted by the system, enable **Install unknown apps** for the file manager.
-5. Select the APK and click **Install**.
+## Updating without losing local data
+Install the newer APK over the existing app. Android preserves local data when the package name and signing certificate match and the version code is accepted.
+This build is version **1.5.0-rc.1**, Android version code **15001**. Older builds may show 1.0.0 in Android despite a different GitHub release tag.
 
-### Method D: Sideloading via "Send Files to TV" or "Downloader"
-1. Install the free app **Send files to TV** (SFTV) from Google Play on both your phone/PC and TV.
-2. Transfer the APK file to the TV.
-3. Open the APK on the TV using an APK installer app to complete installation.
+If Android reports a signing mismatch / UPDATE_INCOMPATIBLE, stop. Reinstalling or clearing app storage erases local watchlists, history, preferences, and caches. A previous runner-generated development certificate cannot be reconstructed from its APK. Obtain a matching-key build if the old key exists; otherwise a deliberate fresh installation is required. There is currently no in-app export/restore.
 
-## 4. Launcher & Nook TV Integration
-- **Standard Android TV / Google TV**: The app declares `android.intent.category.LEANBACK_LAUNCHER` and provides a native `320x180` TV banner. It appears directly in your TV's home screen apps row.
-- **Nook TV Launcher**: Nook TV discovers all apps declaring either `LEANBACK_LAUNCHER` or `LAUNCHER`. NowShowing TV is immediately detected, displays its high-resolution banner, and launches seamlessly with full remote control focus handoff.
+The database upgrade adds history storage without dropping existing tables, but it cannot preserve data across uninstalling.
 
-## 5. Troubleshooting Installation Issues
-- **"INSTALL_FAILED_UPDATE_INCOMPATIBLE"**: An earlier version with a differing signature exists. Uninstall the previous build first (`adb uninstall com.nowshowing.tv`) and re-run install.
-- **"Parse Error / There was a problem parsing the package"**: Confirm the target Android TV is running Android 8.0 (API 26) or newer.
-- **"App not installed"**: Ensure **Unknown sources** is allowed in TV Settings under **Security & Restrictions**.
+## First use and remote controls
+Open a title, select an episode if needed, then Open player.
+- Arrows move the pointer; OK clicks the provider's play or subtitle controls.
+- Tap for precise movement; hold an arrow to move faster.
+- Back exits provider fullscreen first, opens app controls next, then returns to the title.
+- Menu opens app controls directly.
+- Return to video returns control to the pointer.
+- Change source offers existing movie providers. Demo streams live under Settings > Playback diagnostics.
+- Remote help is always available in the player and Settings.
+
+Recently opened remembers the title, episode, and source. It does not guarantee timestamp resume inside third-party players. See [known limitations](KNOWN_LIMITATIONS.md) and [troubleshooting](TROUBLESHOOTING.md).

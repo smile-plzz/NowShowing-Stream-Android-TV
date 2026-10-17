@@ -12,20 +12,20 @@ android {
         applicationId = "com.nowshowing.tv"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 15001
+        versionName = "1.5.0-rc.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     signingConfigs {
         create("release") {
-            val keystoreFile = file("release-key.jks")
+            val keystoreFile = file(System.getenv("RELEASE_KEYSTORE_PATH") ?: "release-key.jks")
             if (keystoreFile.exists()) {
                 storeFile = keystoreFile
-                storePassword = System.getenv("KEYSTORE_PASSWORD") ?: "nowshowing"
-                keyAlias = System.getenv("KEY_ALIAS") ?: "nowshowing"
-                keyPassword = System.getenv("KEY_PASSWORD") ?: "nowshowing"
+                storePassword = requireNotNull(System.getenv("KEYSTORE_PASSWORD")) { "KEYSTORE_PASSWORD is required for release signing" }
+                keyAlias = requireNotNull(System.getenv("KEY_ALIAS")) { "KEY_ALIAS is required for release signing" }
+                keyPassword = requireNotNull(System.getenv("KEY_PASSWORD")) { "KEY_PASSWORD is required for release signing" }
             } else {
                 initWith(getByName("debug"))
             }
@@ -55,6 +55,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     testOptions {

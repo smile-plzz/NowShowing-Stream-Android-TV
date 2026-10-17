@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -904,7 +905,7 @@ fun PlayerScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         contentPadding = PaddingValues(vertical = 4.dp)
                     ) {
-                        items(SourceRegistry.SOURCES) { source ->
+                        items(if (uiState.type == "diagnostic") SourceRegistry.NATIVE_SOURCES else SourceRegistry.UNSUPPORTED_WEB_SOURCES) { source ->
                             SourceItemCard(
                                 source = source,
                                 isSelected = source.name == uiState.currentSource.name,
@@ -1108,6 +1109,7 @@ internal fun TvPlayerActionButton(
 
     Row(
         modifier = modifier
+            .heightIn(min = 48.dp)
             .shadow(
                 elevation = if (isFocused) 12.dp else 2.dp,
                 shape = RoundedCornerShape(8.dp),
@@ -1122,7 +1124,7 @@ internal fun TvPlayerActionButton(
             )
             .focusable(interactionSource = interactionSource)
             .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 9.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (icon != null) {
@@ -1137,7 +1139,7 @@ internal fun TvPlayerActionButton(
         Text(
             text = label,
             color = textColor,
-            fontSize = 12.sp,
+            fontSize = 14.sp,
             fontWeight = FontWeight.Bold
         )
     }

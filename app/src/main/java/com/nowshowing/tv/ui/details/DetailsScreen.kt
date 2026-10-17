@@ -321,7 +321,7 @@ fun DetailsScreen(
                                 LazyRow(
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    items(SourceRegistry.SOURCES) { src ->
+                                    items(SourceRegistry.UNSUPPORTED_WEB_SOURCES) { src ->
                                         SourceChip(
                                             source = src,
                                             isSelected = uiState.selectedSource.name == src.name,
@@ -473,7 +473,7 @@ private fun DetailActionButton(
     isPrimary: Boolean,
     onClick: () -> Unit
 ) {
-    val (actionFocus, rememberAction) = rememberReturnFocusRequester("details-action:$label")
+    val (actionFocus, rememberAction) = rememberReturnFocusRequester(if (isPrimary) "details-action:play" else "details-action:$label")
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
 

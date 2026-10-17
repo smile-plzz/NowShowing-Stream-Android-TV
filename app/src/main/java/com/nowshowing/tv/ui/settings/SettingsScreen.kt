@@ -33,9 +33,16 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import com.nowshowing.tv.BuildConfig
+import com.nowshowing.tv.domain.source.SourceRegistry
+import com.nowshowing.tv.ui.navigation.Screen
+import com.nowshowing.tv.ui.player.TvPlayerActionButton
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -62,6 +69,8 @@ fun SettingsScreen(
     onNavigate: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    var resetTips by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -85,21 +94,44 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.width(10.dp))
                     Column {
                         Text(
-                            text = "Security & Network Isolation",
+                            text = "Settings & Help",
                             color = TextPrimary,
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "Native stream validation, HTTPS enforcement, and redirect isolation for Android TV",
+                            text = "NowShowing TV ${BuildConfig.VERSION_NAME} · Build ${BuildConfig.VERSION_CODE}",
                             color = TextMuted,
-                            fontSize = 13.sp
+                            fontSize = 15.sp
                         )
                     }
                 }
                 Spacer(modifier = Modifier.height(20.dp))
             }
 
+            item(key = "remote_help") {
+                Text("Remote help", color = TextPrimary, fontSize = 20.sp)
+                Text("Arrows move the pointer · OK clicks · Hold arrows to move faster. Back exits fullscreen, then opens player controls.",
+                    color = TextMuted, fontSize = 16.sp)
+                TvPlayerActionButton(if (resetTips) "Tips will appear next time" else "Show first-use tips again", null) {
+                    context.getSharedPreferences("tv_remote_help", android.content.Context.MODE_PRIVATE)
+                        .edit().putBoolean("seen", false).apply()
+                    resetTips = true
+                }
+                Spacer(Modifier.height(16.dp))
+            }
+            item(key = "playback_diagnostics") {
+                Text("Playback diagnostics", color = TextPrimary, fontSize = 20.sp)
+                Text("These demo videos test the TV’s native player. They do not play the movie you selected.",
+                    color = TextMuted, fontSize = 15.sp)
+                SourceRegistry.NATIVE_SOURCES.forEach { source ->
+                    TvPlayerActionButton(source.name, null) {
+                        onNavigate(Screen.Player.createRoute(source.id, 1, 1, "diagnostic"))
+                    }
+                    Spacer(Modifier.height(8.dp))
+                }
+                Spacer(Modifier.height(16.dp))
+            }
             // Statistics Overview Card
             item(key = "stats_card") {
                 Row(
@@ -112,9 +144,9 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.SpaceAround,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    StatBox(label = "Malicious Hosts Intercepted", count = uiState.totalThreatsBlocked, color = AccentCyan)
+                    StatBox(label = "Ad requests blocked", count = uiState.totalThreatsBlocked, color = AccentCyan)
                     StatBox(label = "Trackers Blocked", count = uiState.totalTrackersBlocked, color = AccentGold)
-                    StatBox(label = "Dangerous Redirects Capped", count = uiState.totalRedirectsBlocked, color = Color(0xFFFF5252))
+                    StatBox(label = "Navigation blocked", count = uiState.totalRedirectsBlocked, color = Color(0xFFFF5252))
                 }
                 Spacer(modifier = Modifier.height(20.dp))
             }
@@ -130,8 +162,8 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 SettingToggleItem(
-                    title = "Media Domain & Endpoint Validation",
-                    description = "Validates remote streaming hosts and media manifests against verified filter lists",
+                    title = "Ad request filtering",
+                    description = "Filters requests matched by bundled ad rules",
                     isEnabled = uiState.isDomainValidationEnabled,
                     onToggle = { viewModel.toggleDomainValidation() }
                 )
@@ -144,18 +176,14 @@ fun SettingsScreen(
                 )
 
                 SettingToggleItem(
-                    title = "Redirect Depth Capping & Loop Defense",
-                    description = "Restricts network redirect chains to 5 hops to prevent tracking loops",
+                    title = "Keep the player page contained",
+                    description = "Restricts embedded player page navigation to its original host",
                     isEnabled = uiState.isRedirectIsolationEnabled,
                     onToggle = { viewModel.toggleRedirectIsolation() }
                 )
 
-                SettingToggleItem(
-                    title = "Strict HTTPS & Protocol Isolation",
-                    description = "Enforces secure HTTPS for all remote media streams (exempts local RFC-1918 subnets)",
-                    isEnabled = uiState.isHttpsEnforced,
-                    onToggle = { viewModel.toggleHttpsEnforcement() }
-                )
+                Text("Secure connections are required for embedded players. Certificate errors are never bypassed.",
+                    color = TextMuted, fontSize = 15.sp)
 
                 Spacer(modifier = Modifier.height(20.dp))
             }
@@ -355,7 +383,7 @@ private fun TvSettingsButton(
         Text(
             text = label,
             color = if (isFocused) Color.Black else TextPrimary,
-            fontSize = 13.sp,
+            fontSize = 15.sp,
             fontWeight = FontWeight.Bold
         )
     }
@@ -389,7 +417,7 @@ private fun ExemptSourceRow(
         Text(
             text = name,
             color = if (isFocused) Color.Black else TextPrimary,
-            fontSize = 13.sp,
+            fontSize = 15.sp,
             fontWeight = FontWeight.Medium
         )
         Text(
