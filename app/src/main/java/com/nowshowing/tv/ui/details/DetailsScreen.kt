@@ -45,11 +45,13 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.nowshowing.tv.domain.source.SourceRegistry
 import com.nowshowing.tv.ui.common.TvContentRow
 import com.nowshowing.tv.ui.common.TvTopBar
@@ -108,17 +110,22 @@ fun DetailsScreen(
                                 .fillMaxWidth()
                                 .height(380.dp)
                         ) {
-                            // Backdrop Image
+                            // Backdrop Image with Coil size downsampling and crossfade
                             if (!detail.poster.isNullOrBlank() && detail.poster != "N/A") {
+                                val context = LocalContext.current
                                 AsyncImage(
-                                    model = detail.poster,
+                                    model = ImageRequest.Builder(context)
+                                        .data(detail.poster)
+                                        .size(1280, 720)
+                                        .crossfade(300)
+                                        .build(),
                                     contentDescription = detail.title,
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier.fillMaxSize()
                                 )
                             }
 
-                            // Dark Gradient
+                            // Dark Vertical Gradient
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
@@ -129,6 +136,23 @@ fun DetailsScreen(
                                                 Color.Black.copy(alpha = 0.95f),
                                                 BgDark
                                             )
+                                        )
+                                    )
+                            )
+
+                            // Left-Edge Horizontal Gradient Scrim for 100% typography & poster contrast
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(
+                                        Brush.horizontalGradient(
+                                            colors = listOf(
+                                                Color(0xFF0D0E12),
+                                                Color(0xFF0D0E12).copy(alpha = 0.65f),
+                                                Color.Transparent
+                                            ),
+                                            startX = 0f,
+                                            endX = 850f
                                         )
                                     )
                             )
@@ -150,8 +174,13 @@ fun DetailsScreen(
                                         .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
                                 ) {
                                     if (!detail.poster.isNullOrBlank() && detail.poster != "N/A") {
+                                        val context = LocalContext.current
                                         AsyncImage(
-                                            model = detail.poster,
+                                            model = ImageRequest.Builder(context)
+                                                .data(detail.poster)
+                                                .size(300, 450)
+                                                .crossfade(true)
+                                                .build(),
                                             contentDescription = detail.title,
                                             contentScale = ContentScale.Crop,
                                             modifier = Modifier.fillMaxSize()

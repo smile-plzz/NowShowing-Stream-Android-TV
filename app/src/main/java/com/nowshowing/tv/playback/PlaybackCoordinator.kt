@@ -55,10 +55,23 @@ class PlaybackCoordinator(
     }
 
     /**
-     * Calculates the next episode in a series.
+     * Calculates the next episode in a series with optional season boundary rollover.
+     * When [maxEpisodesInSeason] is specified and current [episode] >= [maxEpisodesInSeason],
+     * rolls over to the next season (e.g. S1E10 -> S2E1).
      */
-    fun getNextEpisode(season: Int, episode: Int): EpisodeInfo {
-        return EpisodeInfo(season = season, episode = episode + 1)
+    fun getNextEpisode(season: Int, episode: Int, maxEpisodesInSeason: Int? = null): EpisodeInfo {
+        return if (maxEpisodesInSeason != null && episode >= maxEpisodesInSeason) {
+            EpisodeInfo(season = season + 1, episode = 1)
+        } else {
+            EpisodeInfo(season = season, episode = episode + 1)
+        }
+    }
+
+    /**
+     * Finds the next compatible source as a fallback when current source fails.
+     */
+    fun resolveFallbackSource(currentSource: VideoSource): VideoSource? {
+        return SourceRegistry.getNextCompatibleSource(currentSource).takeIf { it.name != currentSource.name }
     }
 
     /**

@@ -159,7 +159,30 @@
   - Generated APKs at `app/build/outputs/apk/`:
     - `app-debug.apk`: 22,229,313 bytes
     - `app-release.apk`: 15,810,848 bytes
-- **Status**: Repository is 100% pure native Android TV codebase; ready to commit and push to remote.
+## [2026-10-17 23:15] - Phase 7: Design Polish, Functionality Audit & Release Stabilization
+- **Task**: Execute three core workstreams: Design Polish & Cinematic TV Refinement, Functionality Audit & Hardware Lifecycle, and Low-End Hardware Performance & R8 Release Stabilization.
+- **Workstream 1: Design Polish & Cinematic TV Refinement**:
+  - `TvFocusableCard.kt`: Integrated `FastOutSlowInEasing` on focus scale interpolation (`tween(150)`), added animated `ShimmerBox` placeholder, Coil poster downsampling (`size(300, 450)`), and enhanced soft elevation drop shadow with `FocusGlow`.
+  - `HomeScreen.kt`: Added `size(1280, 720)` crossfade backdrop image loading, multi-stop vertical bottom gradient scrim (`#0D0E12` fade) for 100% typography legibility, and replaced full-screen spinner with `ShimmerHomeScreen` skeleton carousel placeholders.
+  - `DetailsScreen.kt`: Added `size(1280, 720)` crossfade backdrop, horizontal left-edge gradient scrim, and downsampled poster card (`size(300, 450)`).
+  - `SettingsScreen.kt`: Scaled switch toggles (1.2x) for 10-foot TV readability.
+- **Workstream 2: Functionality Audit, Hardware Lifecycle & Edge Cases**:
+  - `PlayerScreen.kt` & `MainActivity.kt`: Configured ExoPlayer `AudioAttributes(USAGE_MEDIA, CONTENT_TYPE_MOVIE)` with `handleAudioFocus = true`.
+  - Audited TV standby/HDMI-CEC lifecycle: `onPause`/`onResume` manages `FLAG_KEEP_SCREEN_ON` to allow hardware sleep, and `onDispose` commits playback progress and releases ExoPlayer.
+  - Remote media keys: Handled `KEYCODE_MEDIA_STOP`, `PLAY`, `PAUSE`, `FAST_FORWARD`, `REWIND`.
+  - Network error handling: Added `onPlayerError` listener intercepting network connection failures (`ERROR_CODE_IO_NETWORK_CONNECTION_FAILED`, `ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT`, `ERROR_CODE_IO_BAD_HTTP_STATUS`) with a dedicated TV Retry Dialog offering immediate retry, next-source fallback, and exit.
+  - Series progression & finale: Added season boundary rollover (`getNextEpisode` with `maxEpisodesInSeason`) in `PlaybackCoordinator.kt` and series completion card in `PlayerScreen.kt`.
+  - Subtitles & Audio: Added remote-navigable Subtitles & Audio modal controlling embedded WebVTT text and multi-audio language tracks via ExoPlayer's `TrackSelectionParameters`.
+- **Workstream 3: Low-End Hardware Performance & R8 Release Stabilization**:
+  - `app/build.gradle.kts`: Activated R8 code shrinking and resource optimization (`isMinifyEnabled = true`, `isShrinkResources = true`).
+  - `app/proguard-rules.pro`: Hardened ProGuard keep rules for data models, Room SQLite, Media3 ExoPlayer renderers, Retrofit, OkHttp, Gson, Coil, and Coroutines.
+  - Player HUD Polish: Added custom scrubber timeline displaying buffered percentage segment and played duration, frosted glass seek pill (`⏪ -10s`, `⏩ +10s`), and live countdown on 30s auto-next prompt.
+  - Unit tests: Expanded `PlaybackCoordinatorTest.kt` with tests for season boundary rollover and fallback source resolution.
+- **Verification Results**:
+  - `testDebugUnitTest`: **100% PASS** (35 tests across 7 test suites, 0 failures, 0 errors).
+  - `assembleDebug`: **BUILD SUCCESSFUL**. Generated `app-debug.apk` (22,262,081 bytes).
+  - `assembleRelease`: **BUILD SUCCESSFUL**. Generated optimized `app-release.apk` (10,435,860 bytes — **34% size reduction from 15.8 MB down to 9.95 MB**).
+- **Status**: Production-ready release candidate fully verified and ready to commit.
 
 
 

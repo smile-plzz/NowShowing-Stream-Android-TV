@@ -34,7 +34,10 @@ data class PlayerUiState(
     val seekFeedbackText: String? = null,
     val showNextEpisodePrompt: Boolean = false,
     val showSourceSelector: Boolean = false,
-    val showControls: Boolean = true
+    val showControls: Boolean = true,
+    val isNetworkError: Boolean = false,
+    val retryCount: Int = 0,
+    val showSeriesComplete: Boolean = false
 )
 
 class PlayerViewModel(application: Application) : AndroidViewModel(application) {
@@ -239,5 +242,37 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     fun dismissNextEpisodePrompt() {
         _uiState.value = _uiState.value.copy(showNextEpisodePrompt = false)
+    }
+
+    fun onNetworkError() {
+        _uiState.value = _uiState.value.copy(
+            isNetworkError = true,
+            isBuffering = false
+        )
+    }
+
+    fun onPlaybackError(message: String) {
+        _uiState.value = _uiState.value.copy(
+            errorMessage = message,
+            playableSource = null,
+            isLoading = false
+        )
+    }
+
+    fun retryPlayback() {
+        _uiState.value = _uiState.value.copy(
+            isNetworkError = false,
+            retryCount = _uiState.value.retryCount + 1,
+            isLoading = true
+        )
+        resolveAndLoad(_uiState.value.currentSource, _uiState.value.currentPositionMs)
+    }
+
+    fun onMovieFinished() {
+        _uiState.value = _uiState.value.copy(showSeriesComplete = true)
+    }
+
+    fun dismissCompletion() {
+        _uiState.value = _uiState.value.copy(showSeriesComplete = false)
     }
 }

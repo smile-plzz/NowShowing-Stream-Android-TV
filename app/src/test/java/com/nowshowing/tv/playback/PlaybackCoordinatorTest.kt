@@ -96,4 +96,25 @@ class PlaybackCoordinatorTest {
         assertTrue(!coordinator.isEligibleForNextEpisodePrompt(positionMs = 100_000L, durationMs = 100_000L))
         assertTrue(!coordinator.isEligibleForNextEpisodePrompt(positionMs = 0L, durationMs = 0L))
     }
+
+    @Test
+    fun testSeasonBoundaryRollover() {
+        // Season finale rollover: S1E10 with 10 episodes in season -> S2E1
+        val next = coordinator.getNextEpisode(season = 1, episode = 10, maxEpisodesInSeason = 10)
+        assertEquals(2, next.season)
+        assertEquals(1, next.episode)
+
+        // Mid-season progression: S1E9 with 10 episodes -> S1E10
+        val midNext = coordinator.getNextEpisode(season = 1, episode = 9, maxEpisodesInSeason = 10)
+        assertEquals(1, midNext.season)
+        assertEquals(10, midNext.episode)
+    }
+
+    @Test
+    fun testResolveFallbackSource() {
+        val current = SourceRegistry.NATIVE_SOURCES.first()
+        val fallback = coordinator.resolveFallbackSource(current)
+        assertNotNull(fallback)
+        assertTrue(fallback!!.isNativeCompatible)
+    }
 }

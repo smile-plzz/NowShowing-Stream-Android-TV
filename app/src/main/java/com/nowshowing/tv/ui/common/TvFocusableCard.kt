@@ -1,6 +1,11 @@
 package com.nowshowing.tv.ui.common
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -36,18 +41,21 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
+import coil.request.ImageRequest
 import com.nowshowing.tv.ui.theme.AccentCyan
 import com.nowshowing.tv.ui.theme.AccentGold
 import com.nowshowing.tv.ui.theme.CardBorder
 import com.nowshowing.tv.ui.theme.FocusBorder
 import com.nowshowing.tv.ui.theme.FocusGlow
 import com.nowshowing.tv.ui.theme.SurfaceDark
+import com.nowshowing.tv.ui.theme.SurfaceVariant
 import com.nowshowing.tv.ui.theme.TextMuted
 import com.nowshowing.tv.ui.theme.TextPrimary
 
@@ -69,7 +77,7 @@ fun TvFocusableCard(
 
     val scale by animateFloatAsState(
         targetValue = if (isFocused) 1.06f else 1.0f,
-        animationSpec = tween(durationMillis = 150),
+        animationSpec = tween(durationMillis = 150, easing = FastOutSlowInEasing),
         label = "card_scale"
     )
 
@@ -84,8 +92,9 @@ fun TvFocusableCard(
                 .width(width)
                 .height(height)
                 .shadow(
-                    elevation = if (isFocused) 16.dp else 4.dp,
+                    elevation = if (isFocused) 24.dp else 4.dp,
                     shape = RoundedCornerShape(10.dp),
+                    ambientColor = if (isFocused) FocusGlow else Color.Black,
                     spotColor = if (isFocused) FocusGlow else Color.Black
                 )
                 .clip(RoundedCornerShape(10.dp))
@@ -104,13 +113,36 @@ fun TvFocusableCard(
                     onClick = onClick
                 )
         ) {
-            // Poster Image
+            // Poster Image with Coil Downsampling & Shimmer
             if (posterUrl.isNotBlank() && posterUrl != "N/A") {
-                AsyncImage(
-                    model = posterUrl,
+                val context = LocalContext.current
+                SubcomposeAsyncImage(
+                    model = ImageRequest.Builder(context)
+                        .data(posterUrl)
+                        .size(300, 450)
+                        .crossfade(true)
+                        .build(),
                     contentDescription = title,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
+                    loading = {
+                        ShimmerBox(modifier = Modifier.fillMaxSize())
+                    },
+                    error = {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(SurfaceDark),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "No Poster",
+                                color = TextMuted,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
                 )
             } else {
                 Box(
@@ -223,4 +255,31 @@ fun TvFocusableCard(
             }
         }
     }
+}
+
+@Composable
+fun ShimmerBox(modifier: Modifier = Modifier) {
+    val infiniteTransition = rememberInfiniteTransition(label = "card_shimmer")
+    val shimmerOffset by infiniteTransition.animateFloat(
+        initialValue = -800f,
+        targetValue = 800f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "card_shimmer_offset"
+    )
+    Box(
+        modifier = modifier.background(
+            Brush.linearGradient(
+                colors = listOf(
+                    SurfaceDark,
+                    SurfaceVariant.copy(alpha = 0.8f),
+                    SurfaceDark
+                ),
+                start = androidx.compose.ui.geometry.Offset(shimmerOffset, 0f),
+                end = androidx.compose.ui.geometry.Offset(shimmerOffset + 400f, 0f)
+            )
+        )
+    )
 }

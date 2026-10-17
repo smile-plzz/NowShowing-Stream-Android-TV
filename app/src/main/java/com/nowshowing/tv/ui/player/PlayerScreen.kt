@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -39,9 +40,11 @@ import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.TvOff
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Subtitles
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -95,6 +98,9 @@ fun PlayerScreen(
 
     var showHud by remember { mutableStateOf(true) }
     var hudCountdown by remember { mutableStateOf(5) }
+    var showAudioSubDrawer by remember { mutableStateOf(false) }
+    var subtitlesEnabled by remember { mutableStateOf(true) }
+    var selectedAudioLang by remember { mutableStateOf("Auto") }
 
     val primaryFocusRequester = remember { FocusRequester() }
 
@@ -126,6 +132,18 @@ fun PlayerScreen(
         }
     }
 
+    // Next Episode Countdown Timer
+    var nextEpCountdown by remember(uiState.showNextEpisodePrompt) { mutableStateOf(30) }
+    LaunchedEffect(uiState.showNextEpisodePrompt) {
+        if (uiState.showNextEpisodePrompt) {
+            for (i in 30 downTo 1) {
+                nextEpCountdown = i
+                delay(1000)
+            }
+            viewModel.playNextEpisode()
+        }
+    }
+
     val playable = uiState.playableSource
 
     Box(
@@ -149,6 +167,13 @@ fun PlayerScreen(
             // AndroidX Media3 / ExoPlayer Native Engine
             val exoPlayer = remember(playable.mediaUri) {
                 ExoPlayer.Builder(context).build().apply {
+                    setAudioAttributes(
+                        androidx.media3.common.AudioAttributes.Builder()
+                            .setUsage(androidx.media3.common.C.USAGE_MEDIA)
+                            .setContentType(androidx.media3.common.C.AUDIO_CONTENT_TYPE_MOVIE)
+                            .build(),
+                        /* handleAudioFocus = */ true
+                    )
                     val mediaItem = MediaItem.fromUri(playable.mediaUri)
                     setMediaItem(mediaItem)
                     if (playable.startPositionMs > 0L) {
@@ -169,6 +194,9 @@ fun PlayerScreen(
                             Player.STATE_ENDED -> {
                                 if (uiState.type == "series") {
                                     viewModel.playNextEpisode()
+                                } else {
+                                    // Movie finished — show completion
+                                    viewModel.onMovieFinished()
                                 }
                             }
                             Player.STATE_IDLE -> {}
@@ -177,6 +205,20 @@ fun PlayerScreen(
 
                     override fun onIsPlayingChanged(isPlaying: Boolean) {
                         viewModel.setPlaying(isPlaying)
+                    }
+
+                    override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                        val isNetworkError = error.errorCode ==
+                            androidx.media3.common.PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED ||
+                            error.errorCode ==
+                            androidx.media3.common.PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT ||
+                            error.errorCode ==
+                            androidx.media3.common.PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS
+                        if (isNetworkError) {
+                            viewModel.onNetworkError()
+                        } else {
+                            viewModel.onPlaybackError(error.message ?: "Unknown playback error")
+                        }
                     }
                 }
                 exoPlayer.addListener(listener)
@@ -275,6 +317,12 @@ fun PlayerScreen(
                                     onBack()
                                     true
                                 }
+                                KeyEvent.KEYCODE_MEDIA_STOP -> {
+                                    viewModel.updateProgress(exoPlayer.currentPosition, exoPlayer.duration)
+                                    exoPlayer.stop()
+                                    onBack()
+                                    true
+                                }
                                 else -> false
                             }
                         } else false
@@ -290,10 +338,26 @@ fun PlayerScreen(
             ) {
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color.Black.copy(alpha = 0.85f))
-                        .border(1.5.dp, AccentCyan, RoundedCornerShape(12.dp))
-                        .padding(horizontal = 24.dp, vertical = 12.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.White.copy(alpha = 0.15f),
+                                    Color.Black.copy(alpha = 0.75f)
+                                )
+                            )
+                        )
+                        .border(
+                            width = 1.dp,
+                            brush = Brush.linearGradient(
+                                colors = listOf(
+                                    Color.White.copy(alpha = 0.4f),
+                                    AccentCyan.copy(alpha = 0.6f)
+                                )
+                            ),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        .padding(horizontal = 28.dp, vertical = 14.dp)
                 ) {
                     Text(
                         text = uiState.seekFeedbackText ?: "",
@@ -381,13 +445,23 @@ fun PlayerScreen(
                             }
                         }
 
-                        // Source Indicator & Switcher Button
-                        TvPlayerActionButton(
-                            label = "Source: ${uiState.currentSource.name}",
-                            icon = Icons.Default.SwapHoriz,
-                            isAccent = true,
-                            onClick = { viewModel.openSourceSelector() }
-                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            // Subtitles & Audio Drawer Button
+                            TvPlayerActionButton(
+                                label = "Audio & Subs",
+                                icon = Icons.Default.Subtitles,
+                                isAccent = false,
+                                onClick = { showAudioSubDrawer = true }
+                            )
+
+                            // Source Indicator & Switcher Button
+                            TvPlayerActionButton(
+                                label = "Source: ${uiState.currentSource.name}",
+                                icon = Icons.Default.SwapHoriz,
+                                isAccent = true,
+                                onClick = { viewModel.openSourceSelector() }
+                            )
+                        }
                     }
 
                     // Bottom Controls Row: Timeline, Play/Pause, Next/Prev Episode
@@ -423,15 +497,35 @@ fun PlayerScreen(
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        LinearProgressIndicator(
-                            progress = { progressFraction },
+                        // Custom scrubber timeline with buffered and played segments
+                        val bufferedFraction = exoPlayer.bufferedPercentage / 100f
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(6.dp)
-                                .clip(RoundedCornerShape(3.dp)),
-                            color = AccentCyan,
-                            trackColor = Color.White.copy(alpha = 0.2f)
-                        )
+                                .clip(RoundedCornerShape(3.dp))
+                        ) {
+                            // Background track
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(Color.White.copy(alpha = 0.2f))
+                            )
+                            // Buffered segment
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .fillMaxWidth(bufferedFraction.coerceIn(0f, 1f))
+                                    .background(Color.White.copy(alpha = 0.45f))
+                            )
+                            // Played segment
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .fillMaxWidth(progressFraction.coerceIn(0f, 1f))
+                                    .background(AccentCyan)
+                            )
+                        }
 
                         Spacer(modifier = Modifier.height(18.dp))
 
@@ -510,7 +604,7 @@ fun PlayerScreen(
                 ) {
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
-                            text = "Next Episode starting soon",
+                            text = "Next in ${nextEpCountdown}s",
                             color = AccentCyan,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
@@ -534,6 +628,138 @@ fun PlayerScreen(
                                 icon = null,
                                 onClick = { viewModel.dismissNextEpisodePrompt() }
                             )
+                        }
+                    }
+                }
+            }
+
+            // Series or Movie Completion Card
+            if (uiState.showSeriesComplete) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 36.dp, bottom = 48.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(SurfaceDark.copy(alpha = 0.95f))
+                        .border(1.5.dp, AccentGold, RoundedCornerShape(12.dp))
+                        .padding(18.dp)
+                ) {
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = "🎬 Finished!",
+                            color = AccentGold,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = uiState.title,
+                            color = TextPrimary,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        TvPlayerActionButton(
+                            label = "Back to Details",
+                            icon = Icons.AutoMirrored.Filled.ArrowBack,
+                            onClick = {
+                                viewModel.dismissCompletion()
+                                onBack()
+                            }
+                        )
+                    }
+                }
+            }
+
+            // Subtitles & Audio Drawer Dialog
+            if (showAudioSubDrawer) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.88f))
+                        .clickable { showAudioSubDrawer = false },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .width(500.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(SurfaceDark)
+                            .border(1.5.dp, FocusBorder, RoundedCornerShape(16.dp))
+                            .padding(24.dp)
+                            .clickable(enabled = false) {}
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Audio & Subtitles",
+                                color = TextPrimary,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            TvPlayerActionButton(
+                                label = "Close",
+                                icon = null,
+                                onClick = { showAudioSubDrawer = false }
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(18.dp))
+
+                        Text(
+                            text = "Subtitles (WebVTT / Embedded)",
+                            color = TextMuted,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            TvPlayerActionButton(
+                                label = if (subtitlesEnabled) "Subtitles: ON" else "Subtitles: OFF",
+                                icon = if (subtitlesEnabled) Icons.Default.Check else null,
+                                isAccent = subtitlesEnabled,
+                                onClick = {
+                                    subtitlesEnabled = !subtitlesEnabled
+                                    exoPlayer.trackSelectionParameters = exoPlayer.trackSelectionParameters
+                                        .buildUpon()
+                                        .setTrackTypeDisabled(
+                                            androidx.media3.common.C.TRACK_TYPE_TEXT,
+                                            !subtitlesEnabled
+                                        )
+                                        .build()
+                                }
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(18.dp))
+
+                        Text(
+                            text = "Audio Language Track",
+                            color = TextMuted,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            listOf("Auto", "English", "Original").forEach { lang ->
+                                TvPlayerActionButton(
+                                    label = lang,
+                                    icon = if (selectedAudioLang == lang) Icons.Default.Check else null,
+                                    isAccent = selectedAudioLang == lang,
+                                    onClick = {
+                                        selectedAudioLang = lang
+                                        val paramBuilder = exoPlayer.trackSelectionParameters.buildUpon()
+                                        if (lang == "English") {
+                                            paramBuilder.setPreferredAudioLanguage("en")
+                                        } else {
+                                            paramBuilder.setPreferredAudioLanguage(null)
+                                        }
+                                        exoPlayer.trackSelectionParameters = paramBuilder.build()
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -679,6 +905,66 @@ fun PlayerScreen(
                                 onClick = { viewModel.selectSource(source) }
                             )
                         }
+                    }
+                }
+            }
+        }
+
+        // Network Error Retry Dialog
+        if (uiState.isNetworkError) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.88f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    modifier = Modifier
+                        .width(480.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(SurfaceDark)
+                        .border(1.5.dp, Color(0xFFFF5252), RoundedCornerShape(16.dp))
+                        .padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = null,
+                        tint = Color(0xFFFF5252),
+                        modifier = Modifier.size(48.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Connection Lost",
+                        color = TextPrimary,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Network stream connection failed. Check your network or try another source.",
+                        color = TextMuted,
+                        fontSize = 13.sp,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        TvPlayerActionButton(
+                            label = "Retry",
+                            icon = Icons.Default.Refresh,
+                            isAccent = true,
+                            onClick = { viewModel.retryPlayback() }
+                        )
+                        TvPlayerActionButton(
+                            label = "Next Source",
+                            icon = Icons.Default.SwapHoriz,
+                            onClick = { viewModel.switchToNextCompatibleSource() }
+                        )
+                        TvPlayerActionButton(
+                            label = "Back",
+                            icon = Icons.AutoMirrored.Filled.ArrowBack,
+                            onClick = onBack
+                        )
                     }
                 }
             }

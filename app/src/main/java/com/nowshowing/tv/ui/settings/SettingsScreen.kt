@@ -39,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -291,16 +292,18 @@ private fun SettingToggleItem(
 
         Spacer(modifier = Modifier.width(16.dp))
 
-        Switch(
-            checked = isEnabled,
-            onCheckedChange = { onToggle() },
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = AccentCyan,
-                checkedTrackColor = AccentCyan.copy(alpha = 0.3f),
-                uncheckedThumbColor = Color.Gray,
-                uncheckedTrackColor = SurfaceVariant
+        Box(modifier = Modifier.scale(1.2f)) {
+            Switch(
+                checked = isEnabled,
+                onCheckedChange = { onToggle() },
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = AccentCyan,
+                    checkedTrackColor = AccentCyan.copy(alpha = 0.3f),
+                    uncheckedThumbColor = Color.Gray,
+                    uncheckedTrackColor = SurfaceVariant
+                )
             )
-        )
+        }
     }
 }
 

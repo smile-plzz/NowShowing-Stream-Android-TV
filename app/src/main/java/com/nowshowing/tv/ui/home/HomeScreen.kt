@@ -1,5 +1,11 @@
 package com.nowshowing.tv.ui.home
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -39,11 +45,13 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.nowshowing.tv.data.db.ContinueItem
 import com.nowshowing.tv.data.model.OmdbTitleDetail
 import com.nowshowing.tv.ui.common.TvContentRow
@@ -77,12 +85,7 @@ fun HomeScreen(
         TvTopBar(currentRoute = "home", onNavigate = onNavigate)
 
         if (uiState.isLoading) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(color = AccentCyan)
-            }
+            ShimmerHomeScreen()
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
@@ -186,18 +189,22 @@ private fun HomeHeroBanner(
             .clip(RoundedCornerShape(16.dp))
             .background(SurfaceDark)
     ) {
-        // Backdrop poster image
+        // Backdrop poster image with Coil size downsampling and crossfade
         if (!hero.poster.isNullOrBlank() && hero.poster != "N/A") {
+            val context = LocalContext.current
             AsyncImage(
-                model = hero.poster,
+                model = ImageRequest.Builder(context)
+                    .data(hero.poster)
+                    .size(1280, 720)
+                    .crossfade(300)
+                    .build(),
                 contentDescription = hero.title,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxSize()
+                modifier = Modifier.fillMaxSize()
             )
         }
 
-        // Gradient shadow overlay
+        // Horizontal gradient shadow overlay
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -207,6 +214,22 @@ private fun HomeHeroBanner(
                             Color.Black.copy(alpha = 0.95f),
                             Color.Black.copy(alpha = 0.7f),
                             Color.Black.copy(alpha = 0.2f)
+                        )
+                    )
+                )
+        )
+
+        // Vertical bottom gradient scrim for 100% text legibility
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            Color.Transparent,
+                            Color(0xFF0D0E12).copy(alpha = 0.7f),
+                            Color(0xFF0D0E12)
                         )
                     )
                 )
@@ -444,6 +467,73 @@ private fun MoodTeaserBanner(onClick: () -> Unit) {
                     fontSize = 13.sp
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun ShimmerHomeScreen() {
+    val infiniteTransition = rememberInfiniteTransition(label = "home_shimmer")
+    val shimmerOffset by infiniteTransition.animateFloat(
+        initialValue = -1000f,
+        targetValue = 1000f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "home_shimmer_offset"
+    )
+    val shimmerBrush = Brush.linearGradient(
+        colors = listOf(
+            SurfaceDark,
+            SurfaceVariant.copy(alpha = 0.8f),
+            SurfaceDark
+        ),
+        start = androidx.compose.ui.geometry.Offset(shimmerOffset, 0f),
+        end = androidx.compose.ui.geometry.Offset(shimmerOffset + 600f, 0f)
+    )
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BgDark)
+            .padding(top = 8.dp)
+    ) {
+        // Hero shimmer box
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(340.dp)
+                .padding(horizontal = 48.dp, vertical = 12.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(shimmerBrush)
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        // Multiple row shimmers
+        repeat(2) {
+            Box(
+                modifier = Modifier
+                    .padding(horizontal = 48.dp)
+                    .width(160.dp)
+                    .height(22.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(shimmerBrush)
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 48.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                items(6) {
+                    Box(
+                        modifier = Modifier
+                            .width(150.dp)
+                            .height(225.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(shimmerBrush)
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 }

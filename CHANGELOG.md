@@ -5,6 +5,37 @@ All notable changes to the NowShowing project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-10-17
+
+### Added
+- **Subtitles & Multi-Audio Track Selection**:
+  - Remote-navigable "Audio & Subs" drawer modal in `PlayerScreen.kt` using ExoPlayer's `TrackSelectionParameters`.
+  - D-pad toggles for embedded WebVTT subtitles and multi-language audio track preferences (Auto, English, Original).
+- **Network Error Recovery & Fallback**:
+  - `onPlayerError` listener in `PlayerScreen.kt` catching network timeout, bad HTTP status, and connection failure exceptions.
+  - Cinematic TV Retry Dialog with instant retry, next-source fallback, and exit options.
+- **Series Progression & Finale**:
+  - Season boundary rollover support in `PlaybackCoordinator.kt` (`getNextEpisode` with `maxEpisodesInSeason`, e.g. S1E10 -> S2E1).
+  - TV series/movie completion card overlay upon playback finish.
+  - Dedicated unit tests for season rollover and fallback source resolution.
+- **Design Polish & Cinematic Refinements**:
+  - `TvFocusableCard.kt`: Smooth `FastOutSlowInEasing` focus scale animation (150ms), soft elevation drop shadow with `FocusGlow`, and animated `ShimmerBox` loading skeleton.
+  - `HomeScreen.kt`: Multi-stop vertical bottom gradient scrim (`#0D0E12` fade) for 100% typography contrast, `ShimmerHomeScreen` skeleton carousel placeholders, and crossfade backdrops.
+  - `DetailsScreen.kt`: Left-edge and bottom gradient scrims ensuring pristine title legibility against high-key artwork, plus crossfade backdrops.
+  - `PlayerScreen.kt`: Custom timeline scrubber with buffered percentage segment and played duration, frosted glass seek pill (`⏪ -10s`, `⏩ +10s`), and live countdown timer on 30s auto-next prompt.
+  - `SettingsScreen.kt`: 1.2x scaled TV toggle switches for 10-foot visibility.
+
+### Optimized
+- **Low-End Hardware Memory & APK Size (Chromecast HD & Xiaomi Mi Box)**:
+  - Memory-bounded Coil downsampling on all images: `size(300, 450)` for poster cards and `size(1280, 720)` for hero backdrops.
+  - Activated R8 code shrinking and resource optimization (`isMinifyEnabled = true`, `isShrinkResources = true`).
+  - Hardened ProGuard rules preserving Room SQLite, Media3 ExoPlayer renderers, Retrofit, OkHttp, and Gson.
+  - Release APK size reduced by 34% (from 15.8 MB down to **9.95 MB**).
+- **Hardware Remote & Standby Lifecycle**:
+  - Audio focus configured via `AudioAttributes(USAGE_MEDIA, CONTENT_TYPE_MOVIE)` and `handleAudioFocus = true`.
+  - Handled `KEYCODE_MEDIA_STOP`, `PLAY`, `PAUSE`, `FAST_FORWARD`, `REWIND`.
+  - TV standby / HDMI-CEC sleep audit: `onPause`/`onResume` manages `FLAG_KEEP_SCREEN_ON` to allow hardware sleep while releasing wakelocks and persisting playback positions.
+
 ## [1.3.0] - 2026-10-17
 
 ### Added
