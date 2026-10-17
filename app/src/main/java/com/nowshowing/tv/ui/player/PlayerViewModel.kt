@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
+import com.nowshowing.tv.data.db.RecentItem
 
 data class PlayerUiState(
     val imdbId: String = "",
@@ -45,12 +47,15 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     private val repository = MediaRepository(application)
     private val coordinator = PlaybackCoordinator()
+    private var historyJob: Job? = null
+    private var initializeJob: Job? = null
 
     private val _uiState = MutableStateFlow(PlayerUiState())
     val uiState: StateFlow<PlayerUiState> = _uiState.asStateFlow()
 
     fun initialize(imdbId: String, season: Int, episode: Int, type: String) {
-        viewModelScope.launch {
+        initializeJob?.cancel()
+        initializeJob = viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
                 imdbId = imdbId,
                 season = season,
@@ -62,16 +67,17 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             )
 
             val detail = repository.getDetails(imdbId)
-            val titleName = detail?.title ?: "NowShowing"
-            val posterUrl = detail?.poster ?: ""
-            val yearVal = detail?.year ?: ""
+            val lastOpened = repository.getRecentlyOpened().firstOrNull { it.imdbID == imdbId }
+            val titleName = detail?.title ?: lastOpened?.title ?: "NowShowing"
+            val posterUrl = detail?.poster ?: lastOpened?.poster ?: ""
+            val yearVal = detail?.year ?: lastOpened?.year ?: ""
 
             // Retrieve saved playback position from continue watching if available
             val continueList = repository.getContinueWatching()
             val savedEntry = continueList.firstOrNull { it.imdbID == imdbId }
             val resumeMs = savedEntry?.takeIf { it.season == season && it.episode == episode }?.positionMs ?: 0L
 
-            val preferredSource = SourceRegistry.getPreferredSource(getApplication())
+            val preferredSource = SourceRegistry.getSourceForTitle(getApplication(), imdbId)
 
             _uiState.value = _uiState.value.copy(
                 title = titleName,
@@ -96,6 +102,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                 errorMessage = if (url == null) "This source has no player for this title." else null,
                 showSourceSelector = false
             )
+            if (url != null) recordOpened(source)
             return
         }
         _uiState.value = s.copy(webEmbedUrl = null, isNetworkError = false)
@@ -159,8 +166,22 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    private fun recordOpened(source: VideoSource) {
+        val s = _uiState.value
+        SourceRegistry.setSourceForTitle(getApplication(), s.imdbId, source)
+        val previous = historyJob
+        historyJob = viewModelScope.launch {
+            previous?.join()
+            repository.recordRecentlyOpened(RecentItem(
+                imdbID = s.imdbId, title = s.title, poster = s.poster, year = s.year,
+                type = s.type, season = s.season, episode = s.episode, sourceId = source.id
+            ))
+        }
+    }
+
     fun selectSource(source: VideoSource) {
         SourceRegistry.setPreferredSource(getApplication(), source.name)
+        SourceRegistry.setSourceForTitle(getApplication(), _uiState.value.imdbId, source)
         _uiState.value = _uiState.value.copy(
             currentSource = source,
             isLoading = true,

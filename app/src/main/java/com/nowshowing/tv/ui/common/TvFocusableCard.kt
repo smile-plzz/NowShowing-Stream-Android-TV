@@ -35,6 +35,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
@@ -70,13 +71,15 @@ fun TvFocusableCard(
     width: Dp = 150.dp,
     height: Dp = 225.dp,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    focusKey: String = "$title:$posterUrl"
 ) {
+    val (returnRequester, rememberSelection) = rememberReturnFocusRequester(focusKey)
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
 
     val scale by animateFloatAsState(
-        targetValue = if (isFocused) 1.06f else 1.0f,
+        targetValue = if (isFocused) 1.035f else 1.0f,
         animationSpec = tween(durationMillis = 150, easing = FastOutSlowInEasing),
         label = "card_scale"
     )
@@ -92,7 +95,7 @@ fun TvFocusableCard(
                 .width(width)
                 .height(height)
                 .shadow(
-                    elevation = if (isFocused) 24.dp else 4.dp,
+                    elevation = if (isFocused) 12.dp else 4.dp,
                     shape = RoundedCornerShape(10.dp),
                     ambientColor = if (isFocused) FocusGlow else Color.Black,
                     spotColor = if (isFocused) FocusGlow else Color.Black
@@ -106,11 +109,11 @@ fun TvFocusableCard(
                     ),
                     shape = RoundedCornerShape(10.dp)
                 )
-                .focusable(interactionSource = interactionSource)
+                .focusRequester(returnRequester)
                 .clickable(
                     interactionSource = interactionSource,
                     indication = null,
-                    onClick = onClick
+                    onClick = { rememberSelection(); onClick() }
                 )
         ) {
             // Poster Image with Coil Downsampling & Shimmer
@@ -257,29 +260,8 @@ fun TvFocusableCard(
     }
 }
 
+/** Quiet placeholders avoid an animation clock for every poster on low-powered TVs. */
 @Composable
 fun ShimmerBox(modifier: Modifier = Modifier) {
-    val infiniteTransition = rememberInfiniteTransition(label = "card_shimmer")
-    val shimmerOffset by infiniteTransition.animateFloat(
-        initialValue = -800f,
-        targetValue = 800f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1200, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "card_shimmer_offset"
-    )
-    Box(
-        modifier = modifier.background(
-            Brush.linearGradient(
-                colors = listOf(
-                    SurfaceDark,
-                    SurfaceVariant.copy(alpha = 0.8f),
-                    SurfaceDark
-                ),
-                start = androidx.compose.ui.geometry.Offset(shimmerOffset, 0f),
-                end = androidx.compose.ui.geometry.Offset(shimmerOffset + 400f, 0f)
-            )
-        )
-    )
+    Box(modifier = modifier.background(SurfaceVariant))
 }

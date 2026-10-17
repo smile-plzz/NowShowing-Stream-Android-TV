@@ -14,7 +14,12 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import java.util.concurrent.ConcurrentHashMap
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
+import com.nowshowing.tv.data.db.RecentItem
 
 data class GenreRowSeed(
     val id: String,
@@ -27,9 +32,12 @@ class MediaRepository(private val context: Context) {
     private val api = ApiClient.service
     private val db = NowShowingDatabase.getInstance(context)
     private val gson = Gson()
-    private val memoryCache = ConcurrentHashMap<String, Any>()
 
     companion object {
+        private val memoryCache = MetadataCache<OmdbTitleDetail>()
+        private val requestLocks = Array(64) { Mutex() }
+        private val networkSlots = Semaphore(4)
+
         val TRENDING_SEED = listOf(
             "Dune: Part Two", "Oppenheimer", "The Bear", "Fallout", "Shogun",
             "Godzilla x Kong", "Civil War", "Baby Reindeer", "Ripley", "3 Body Problem"
@@ -91,77 +99,63 @@ class MediaRepository(private val context: Context) {
                     page = page,
                     type = if (type.isNullOrBlank() || type == "all") null else type
                 )
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (e: Exception) {
                 OmdbSearchResponse(search = null, totalResults = "0", response = "False", error = e.localizedMessage)
             }
         }
 
-    suspend fun getDetails(imdbId: String): OmdbTitleDetail? = withContext(Dispatchers.IO) {
-        val cacheKey = "details_$imdbId"
-        if (memoryCache.containsKey(cacheKey)) {
-            return@withContext memoryCache[cacheKey] as? OmdbTitleDetail
+    private suspend fun cachedDetail(key: String, fetch: suspend () -> OmdbTitleDetail): OmdbTitleDetail? =
+        withContext(Dispatchers.IO) {
+            // Striped locks bound synchronization memory and coalesce matching concurrent lookups.
+            requestLocks[(key.hashCode() and Int.MAX_VALUE) % requestLocks.size].withLock {
+                memoryCache.get(key)?.let { return@withContext it }
+                db.getCachedPayload(key)?.let { json ->
+                    try {
+                        val detail = gson.fromJson(json, OmdbTitleDetail::class.java)
+                        if (detail != null && detail.response != "False") {
+                            // Disk expiry stays authoritative; do not extend it in the memory tier.
+                            return@withContext detail
+                        }
+                    } catch (_: Exception) { /* Invalid cached JSON: refetch. */ }
+                }
+                try {
+                    val detail = networkSlots.withPermit { fetch() }
+                    if (detail.response == "False") return@withContext null
+                    db.setCachedPayload(key, gson.toJson(detail))
+                    memoryCache.put(key, detail)
+                    if (detail.imdbID.isNotBlank()) {
+                        val idKey = "details_${detail.imdbID}"
+                        db.setCachedPayload(idKey, gson.toJson(detail))
+                        memoryCache.put(idKey, detail)
+                    }
+                    detail
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (_: Exception) { null }
+            }
         }
 
-        // Check SQLite cache
-        val cachedJson = db.getCachedPayload(cacheKey)
-        if (cachedJson != null) {
-            try {
-                val detail = gson.fromJson(cachedJson, OmdbTitleDetail::class.java)
-                memoryCache[cacheKey] = detail
-                return@withContext detail
-            } catch (_: Exception) {}
-        }
+    suspend fun getDetails(imdbId: String): OmdbTitleDetail? = cachedDetail("details_$imdbId") {
+        api.getDetails(apiKey = ApiClient.DEFAULT_OMDB_KEY, imdbId = imdbId)
+    }
 
-        try {
-            val response = api.getDetails(apiKey = ApiClient.DEFAULT_OMDB_KEY, imdbId = imdbId)
-            if (response.response != "False") {
-                memoryCache[cacheKey] = response
-                db.setCachedPayload(cacheKey, gson.toJson(response))
-                response
-            } else null
-        } catch (_: Exception) {
-            null
+    suspend fun getDetailsByTitle(title: String, type: String? = null): OmdbTitleDetail? {
+        val normalizedType = type?.takeUnless { it.isBlank() || it == "all" }
+        // Keep v1 disk-cache keys so upgrading does not discard warm metadata.
+        val key = "title_${title.trim()}_${normalizedType ?: ""}"
+        return cachedDetail(key) {
+            api.getDetailsByTitle(ApiClient.DEFAULT_OMDB_KEY, title.trim(), normalizedType)
         }
     }
 
-    suspend fun getDetailsByTitle(title: String, type: String? = null): OmdbTitleDetail? =
-        withContext(Dispatchers.IO) {
-            val cacheKey = "title_${title}_${type ?: ""}"
-            if (memoryCache.containsKey(cacheKey)) {
-                return@withContext memoryCache[cacheKey] as? OmdbTitleDetail
-            }
-
-            val cachedJson = db.getCachedPayload(cacheKey)
-            if (cachedJson != null) {
-                try {
-                    val detail = gson.fromJson(cachedJson, OmdbTitleDetail::class.java)
-                    memoryCache[cacheKey] = detail
-                    return@withContext detail
-                } catch (_: Exception) {}
-            }
-
-            try {
-                val response = api.getDetailsByTitle(
-                    apiKey = ApiClient.DEFAULT_OMDB_KEY,
-                    title = title,
-                    type = if (type.isNullOrBlank() || type == "all") null else type
-                )
-                if (response.response != "False") {
-                    memoryCache[cacheKey] = response
-                    db.setCachedPayload(cacheKey, gson.toJson(response))
-                    response
-                } else null
-            } catch (_: Exception) {
-                null
-            }
-        }
-
     suspend fun lookupTitles(titles: List<String>, type: String? = null): List<OmdbTitleDetail> =
         coroutineScope {
-            val deferred = titles.map { title ->
+            val deferred = titles.distinct().map { title ->
                 async { getDetailsByTitle(title, type) }
             }
-            deferred.awaitAll().filterNotNull()
+            deferred.awaitAll().filterNotNull().distinctBy { it.imdbID }
         }
 
     suspend fun getSeason(imdbId: String, season: Int): OmdbSeasonResponse? = withContext(Dispatchers.IO) {
@@ -183,6 +177,8 @@ class MediaRepository(private val context: Context) {
                 db.setCachedPayload(cacheKey, gson.toJson(response), ttlMs = 7 * 24 * 60 * 60 * 1000L)
                 response
             } else null
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (_: Exception) {
             null
         }
@@ -191,6 +187,15 @@ class MediaRepository(private val context: Context) {
     // =========================================================================
     // Watchlist & History
     // =========================================================================
+
+    suspend fun getRecentlyOpened(): List<RecentItem> = withContext(Dispatchers.IO) { db.getRecentlyOpened() }
+
+    suspend fun recordRecentlyOpened(item: RecentItem) = withContext(Dispatchers.IO) { db.upsertRecentlyOpened(item) }
+
+    suspend fun removeRecentlyOpened(imdbId: String) = withContext(Dispatchers.IO) { db.removeRecentlyOpened(imdbId) }
+
+    suspend fun setRecentlyWatched(imdbId: String, watched: Boolean) =
+        withContext(Dispatchers.IO) { db.setRecentlyWatched(imdbId, watched) }
 
     suspend fun getWatchlist(): List<WatchlistItem> = withContext(Dispatchers.IO) {
         db.getWatchlist()

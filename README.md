@@ -10,6 +10,8 @@ See [current playback behavior and TV test steps](docs/WEB_PLAYBACK.md). Provide
 
 ## Features
 
+- **TV polish and local history**: Progressive home shelves, shared bounded metadata caching, remembered browsing position/focus, and a Recently opened shelf with per-title source/episode memory and manual history controls. See [polish and history notes](docs/POLISH_AND_HISTORY.md).
+
 - **Cinematic 10-Foot UI**: Remote-controlled interface optimized for standard D-pad television remotes, Google TV voice remotes, and HDMI-CEC controllers.
 - **29-Mood Recommendation Engine**: Precision recommendation system ported from the web client. Explores multi-genre candidate seeds, verifies real genre tags against cached OMDb lookups, and ranks candidates using composite score heuristics.
 - **Dual Playback Engines**: Existing movie and series embed providers open in an embedded WebView with D-pad pointer controls. Direct HLS, DASH, and MP4 streams retain Media3. Demo streams are diagnostics, not the selected movie.

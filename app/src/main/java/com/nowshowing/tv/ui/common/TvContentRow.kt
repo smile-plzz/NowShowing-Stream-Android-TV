@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -26,9 +27,10 @@ fun TvContentRow(
     title: String,
     items: List<OmdbTitleDetail>,
     onItemClick: (OmdbTitleDetail) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isLoading: Boolean = false
 ) {
-    if (items.isEmpty()) return
+    if (items.isEmpty() && !isLoading) return
 
     val listState = rememberLazyListState()
 
@@ -59,8 +61,12 @@ fun TvContentRow(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
+            if (items.isEmpty() && isLoading) {
+                items(6) { ShimmerBox(Modifier.width(150.dp).height(270.dp)) }
+            }
             items(items, key = { it.imdbID }) { movie ->
                 TvFocusableCard(
+                    focusKey = "$title:${movie.imdbID}",
                     title = movie.title,
                     posterUrl = if (movie.poster != "N/A") movie.poster ?: "" else "",
                     year = movie.year,

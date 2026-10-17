@@ -28,6 +28,7 @@ import com.nowshowing.tv.ui.search.SearchViewModel
 import com.nowshowing.tv.ui.settings.SettingsScreen
 import com.nowshowing.tv.ui.settings.SettingsViewModel
 import com.nowshowing.tv.ui.theme.NowShowingTheme
+import com.nowshowing.tv.ui.common.ReturnFocusScope
 
 class MainActivity : ComponentActivity() {
 
@@ -48,6 +49,7 @@ class MainActivity : ComponentActivity() {
                     // Home Screen
                     composable(Screen.Home.route) {
                         val homeVm: HomeViewModel = viewModel()
+                        ReturnFocusScope {
                         HomeScreen(
                             viewModel = homeVm,
                             onNavigate = { route ->
@@ -64,11 +66,13 @@ class MainActivity : ComponentActivity() {
                                 navController.navigate(Screen.Player.createRoute(imdbId, season, episode, type))
                             }
                         )
+                        }
                     }
 
                     // Movies Browse
                     composable(Screen.Movies.route) {
                         val browseVm: BrowseViewModel = viewModel()
+                        ReturnFocusScope {
                         BrowseScreen(
                             kind = "movies",
                             viewModel = browseVm,
@@ -82,11 +86,13 @@ class MainActivity : ComponentActivity() {
                                 navController.navigate(Screen.Details.createRoute(imdbId, type))
                             }
                         )
+                        }
                     }
 
                     // TV Browse
                     composable(Screen.TV.route) {
                         val browseVm: BrowseViewModel = viewModel()
+                        ReturnFocusScope {
                         BrowseScreen(
                             kind = "tv",
                             viewModel = browseVm,
@@ -100,11 +106,13 @@ class MainActivity : ComponentActivity() {
                                 navController.navigate(Screen.Details.createRoute(imdbId, type))
                             }
                         )
+                        }
                     }
 
                     // Mood Screen
                     composable(Screen.Mood.route) {
                         val moodVm: MoodViewModel = viewModel()
+                        ReturnFocusScope {
                         MoodScreen(
                             viewModel = moodVm,
                             onNavigate = { route ->
@@ -117,11 +125,13 @@ class MainActivity : ComponentActivity() {
                                 navController.navigate(Screen.Details.createRoute(imdbId, type))
                             }
                         )
+                        }
                     }
 
                     // Search Screen
                     composable(Screen.Search.route) {
                         val searchVm: SearchViewModel = viewModel()
+                        ReturnFocusScope {
                         SearchScreen(
                             viewModel = searchVm,
                             onNavigate = { route ->
@@ -134,11 +144,13 @@ class MainActivity : ComponentActivity() {
                                 navController.navigate(Screen.Details.createRoute(imdbId, type))
                             }
                         )
+                        }
                     }
 
                     // Watchlist Screen
                     composable(Screen.Watchlist.route) {
                         val watchlistVm: WatchlistViewModel = viewModel()
+                        ReturnFocusScope {
                         WatchlistScreen(
                             viewModel = watchlistVm,
                             onNavigate = { route ->
@@ -151,6 +163,7 @@ class MainActivity : ComponentActivity() {
                                 navController.navigate(Screen.Details.createRoute(imdbId, type))
                             }
                         )
+                        }
                     }
 
                     // Privacy & Content Blocking Settings Screen
@@ -179,6 +192,7 @@ class MainActivity : ComponentActivity() {
                         val type = backStackEntry.arguments?.getString("type") ?: "movie"
                         val detailsVm: DetailsViewModel = viewModel()
 
+                        ReturnFocusScope {
                         DetailsScreen(
                             imdbId = imdbId,
                             type = type,
@@ -196,6 +210,7 @@ class MainActivity : ComponentActivity() {
                                 navController.navigate(Screen.Details.createRoute(recId, recType))
                             }
                         )
+                        }
                     }
 
                     // Player Screen

@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
 
 data class SearchUiState(
     val query: String = "",
@@ -23,6 +24,7 @@ data class SearchUiState(
 
 class SearchViewModel(application: Application) : AndroidViewModel(application) {
 
+    private var searchJob: Job? = null
     private val repository = MediaRepository(application)
     private val _uiState = MutableStateFlow(SearchUiState())
     val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
@@ -40,18 +42,21 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun onCharInput(c: Char) {
-        _uiState.value = _uiState.value.copy(query = _uiState.value.query + c)
+        searchJob?.cancel()
+        _uiState.value = _uiState.value.copy(query = _uiState.value.query + c, isLoading = false)
     }
 
     fun onBackspace() {
+        searchJob?.cancel()
         val q = _uiState.value.query
         if (q.isNotEmpty()) {
-            _uiState.value = _uiState.value.copy(query = q.dropLast(1))
+            _uiState.value = _uiState.value.copy(query = q.dropLast(1), isLoading = false)
         }
     }
 
     fun onClear() {
-        _uiState.value = _uiState.value.copy(query = "", results = emptyList(), errorMessage = null)
+        searchJob?.cancel()
+        _uiState.value = _uiState.value.copy(query = "", results = emptyList(), totalResults = 0, currentPage = 1, isLoading = false, errorMessage = null)
     }
 
     fun setTypeFilter(type: String) {
@@ -65,7 +70,9 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
         val trimmed = query.trim()
         if (trimmed.isBlank()) return
 
-        viewModelScope.launch {
+        if (!reset && _uiState.value.isLoading) return
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
             repository.addRecentSearch(trimmed)
             loadRecentSearches()
 
@@ -73,8 +80,7 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
             _uiState.value = _uiState.value.copy(
                 query = trimmed,
                 isLoading = true,
-                errorMessage = null,
-                currentPage = targetPage
+                errorMessage = null
             )
 
             val filterType = when (_uiState.value.selectedType) {
@@ -85,10 +91,11 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
 
             val response = repository.search(trimmed, page = targetPage, type = filterType)
             if (response.response != "False" && response.search != null) {
-                val updated = if (reset) response.search else _uiState.value.results + response.search
+                val updated = (if (reset) response.search else _uiState.value.results + response.search).distinctBy { it.imdbID }
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     results = updated,
+                    currentPage = targetPage,
                     totalResults = response.totalResults?.toIntOrNull() ?: updated.size
                 )
             } else {
