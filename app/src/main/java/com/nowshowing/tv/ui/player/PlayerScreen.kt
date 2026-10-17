@@ -1088,6 +1088,7 @@ internal fun TvPlayerActionButton(
     label: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector?,
     isAccent: Boolean = false,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -1106,7 +1107,7 @@ internal fun TvPlayerActionButton(
     }
 
     Row(
-        modifier = Modifier
+        modifier = modifier
             .shadow(
                 elevation = if (isFocused) 12.dp else 2.dp,
                 shape = RoundedCornerShape(8.dp),

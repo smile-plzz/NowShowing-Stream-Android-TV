@@ -21,6 +21,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -37,6 +39,7 @@ import java.io.ByteArrayInputStream
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, onBack: () -> Unit) {
+    val menuFocus = remember { FocusRequester() }
     val context = LocalContext.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     var ready by remember { mutableStateOf(false) }
@@ -73,6 +76,9 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
         }
         lifecycle.addObserver(observer)
         onDispose { lifecycle.removeObserver(observer) }
+    }
+    LaunchedEffect(menu) {
+        if (menu) menuFocus.requestFocus()
     }
     BackHandler {
         if (host?.exitFullscreen() == true) {
@@ -195,7 +201,7 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
                     color = TextSecondary
                 )
                 Text(failure ?: state.errorMessage ?: "Use the D-pad to move the pointer and OK to click the provider’s play button. Back or Menu opens these controls.", color = TextSecondary, fontSize = 14.sp)
-                TvPlayerActionButton("Enter player", null, true) {
+                TvPlayerActionButton("Enter player", null, true, Modifier.focusRequester(menuFocus)) {
                     menu = false
                     host?.focusPlayer()
                 }
