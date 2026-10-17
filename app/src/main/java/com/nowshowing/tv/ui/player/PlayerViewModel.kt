@@ -241,7 +241,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         val s = _uiState.value
         val title = if (s.episodeListSeason == season) s.episodeList.firstOrNull { it.episode.toIntOrNull() == episode }?.title.orEmpty() else ""
         _uiState.value = s.copy(season = season, episode = episode, episodeTitle = title,
-            currentPositionMs = 0L, durationMs = 0L, showNextEpisodePrompt = false, isLoading = true)
+            currentPositionMs = 0L, durationMs = 0L, showNextEpisodePrompt = false, showSeriesComplete = false, isLoading = true)
         resolveAndLoad(s.currentSource, 0L)
         if (s.episodeListSeason != season) loadEpisodes(season)
     }
