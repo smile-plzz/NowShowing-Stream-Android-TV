@@ -67,9 +67,10 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             )
 
             val detail = repository.getDetails(imdbId)
-            val titleName = detail?.title ?: "NowShowing"
-            val posterUrl = detail?.poster ?: ""
-            val yearVal = detail?.year ?: ""
+            val lastOpened = repository.getRecentlyOpened().firstOrNull { it.imdbID == imdbId }
+            val titleName = detail?.title ?: lastOpened?.title ?: "NowShowing"
+            val posterUrl = detail?.poster ?: lastOpened?.poster ?: ""
+            val yearVal = detail?.year ?: lastOpened?.year ?: ""
 
             // Retrieve saved playback position from continue watching if available
             val continueList = repository.getContinueWatching()
