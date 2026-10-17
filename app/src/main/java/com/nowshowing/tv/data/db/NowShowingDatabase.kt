@@ -34,7 +34,7 @@ class NowShowingDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_
 
     companion object {
         const val DATABASE_NAME = "nowshowing_tv.db"
-        const val DATABASE_VERSION = 1
+        const val DATABASE_VERSION = 2
 
         private const val TABLE_WATCHLIST = "watchlist"
         private const val TABLE_CONTINUE = "continue_watching"
@@ -52,6 +52,7 @@ class NowShowingDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_
     }
 
     override fun onCreate(db: SQLiteDatabase) {
+        createRecentTable(db)
         db.execSQL(
             """
             CREATE TABLE $TABLE_WATCHLIST (
@@ -103,11 +104,66 @@ class NowShowingDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        db.execSQL("DROP TABLE IF EXISTS $TABLE_WATCHLIST")
-        db.execSQL("DROP TABLE IF EXISTS $TABLE_CONTINUE")
-        db.execSQL("DROP TABLE IF EXISTS $TABLE_CACHE")
-        db.execSQL("DROP TABLE IF EXISTS $TABLE_SEARCH_HISTORY")
-        onCreate(db)
+        // Additive v1 -> v2 migration: preserve watchlist, native progress, and cache.
+        if (oldVersion < 2) createRecentTable(db)
+    }
+
+    private fun createRecentTable(db: SQLiteDatabase) {
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS recently_opened (
+                imdb_id TEXT PRIMARY KEY, title TEXT NOT NULL, poster TEXT, year TEXT,
+                type TEXT NOT NULL, season INTEGER NOT NULL, episode INTEGER NOT NULL,
+                source_id TEXT NOT NULL, watched INTEGER NOT NULL DEFAULT 0,
+                updated_at INTEGER NOT NULL
+            )
+        """.trimIndent())
+    }
+
+    fun getRecentlyOpened(): List<RecentItem> {
+        val result = mutableListOf<RecentItem>()
+        readableDatabase.rawQuery("SELECT * FROM recently_opened ORDER BY updated_at DESC LIMIT 30", null).use {
+            while (it.moveToNext()) {
+                result += RecentItem(
+                    imdbID = it.getString(it.getColumnIndexOrThrow("imdb_id")),
+                    title = it.getString(it.getColumnIndexOrThrow("title")),
+                    poster = it.getString(it.getColumnIndexOrThrow("poster")) ?: "",
+                    year = it.getString(it.getColumnIndexOrThrow("year")) ?: "",
+                    type = it.getString(it.getColumnIndexOrThrow("type")),
+                    season = it.getInt(it.getColumnIndexOrThrow("season")),
+                    episode = it.getInt(it.getColumnIndexOrThrow("episode")),
+                    sourceId = it.getString(it.getColumnIndexOrThrow("source_id")),
+                    watched = it.getInt(it.getColumnIndexOrThrow("watched")) != 0,
+                    updatedAt = it.getLong(it.getColumnIndexOrThrow("updated_at"))
+                )
+            }
+        }
+        return result
+    }
+
+    fun upsertRecentlyOpened(item: RecentItem) {
+        val db = writableDatabase
+        db.beginTransaction()
+        try {
+            val values = ContentValues().apply {
+                put("imdb_id", item.imdbID); put("title", item.title)
+                put("poster", item.poster); put("year", item.year); put("type", item.type)
+                put("season", item.season); put("episode", item.episode)
+                put("source_id", item.sourceId); put("watched", if (item.watched) 1 else 0)
+                put("updated_at", item.updatedAt)
+            }
+            db.insertWithOnConflict("recently_opened", null, values, SQLiteDatabase.CONFLICT_REPLACE)
+            db.execSQL("DELETE FROM recently_opened WHERE imdb_id NOT IN (SELECT imdb_id FROM recently_opened ORDER BY updated_at DESC LIMIT 30)")
+            db.setTransactionSuccessful()
+        } finally { db.endTransaction() }
+    }
+
+    fun removeRecentlyOpened(imdbId: String) {
+        writableDatabase.delete("recently_opened", "imdb_id = ?", arrayOf(imdbId))
+    }
+
+    fun setRecentlyWatched(imdbId: String, watched: Boolean) {
+        val values = ContentValues().apply { put("watched", if (watched) 1 else 0) }
+        writableDatabase.update("recently_opened", values, "imdb_id = ?", arrayOf(imdbId))
     }
 
     // =========================================================================

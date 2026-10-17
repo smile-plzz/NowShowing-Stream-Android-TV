@@ -208,6 +208,15 @@ object SourceRegistry {
         getPrefs(context).edit().putString(KEY_PREFERRED_SOURCE, sourceName).apply()
     }
 
+    fun getSourceForTitle(context: Context, imdbId: String): VideoSource {
+        val id = getPrefs(context).getString("title_source_$imdbId", null)
+        return SOURCES.firstOrNull { it.id == id } ?: getPreferredSource(context)
+    }
+
+    fun setSourceForTitle(context: Context, imdbId: String, source: VideoSource) {
+        getPrefs(context).edit().putString("title_source_$imdbId", source.id).apply()
+    }
+
     fun getNextCompatibleSource(currentSource: VideoSource): VideoSource {
         val compatible = getNativeCompatibleSources()
         if (compatible.isEmpty()) return currentSource

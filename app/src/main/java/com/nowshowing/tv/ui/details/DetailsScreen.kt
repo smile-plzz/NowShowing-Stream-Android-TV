@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -40,6 +41,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusRequester
+import com.nowshowing.tv.ui.common.rememberReturnFocusRequester
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
@@ -75,6 +78,7 @@ fun DetailsScreen(
     onSelectRecommended: (String, String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val detailsScroll = rememberLazyListState()
     var showSourceSelector by remember { mutableStateOf(false) }
 
     LaunchedEffect(imdbId, type) {
@@ -100,6 +104,7 @@ fun DetailsScreen(
                 }
             } else {
                 LazyColumn(
+                    state = detailsScroll,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(bottom = 48.dp)
                 ) {
@@ -468,6 +473,7 @@ private fun DetailActionButton(
     isPrimary: Boolean,
     onClick: () -> Unit
 ) {
+    val (actionFocus, rememberAction) = rememberReturnFocusRequester("details-action:$label")
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
 
@@ -496,8 +502,8 @@ private fun DetailActionButton(
                 color = if (isFocused) Color.White else Color.Transparent,
                 shape = RoundedCornerShape(8.dp)
             )
-            .focusable(interactionSource = interactionSource)
-            .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
+            .focusRequester(actionFocus)
+            .clickable(interactionSource = interactionSource, indication = null, onClick = { rememberAction(); onClick() })
             .padding(horizontal = 18.dp, vertical = 9.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -593,6 +599,7 @@ private fun EpisodeCard(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
+    val (episodeFocus, rememberEpisode) = rememberReturnFocusRequester("episode:${episode.imdbID}")
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
 
@@ -606,8 +613,8 @@ private fun EpisodeCard(
                 color = if (isFocused) Color.White else if (isSelected) AccentCyan else Color.Transparent,
                 shape = RoundedCornerShape(8.dp)
             )
-            .focusable(interactionSource = interactionSource)
-            .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
+            .focusRequester(episodeFocus)
+            .clickable(interactionSource = interactionSource, indication = null, onClick = { rememberEpisode(); onClick() })
             .padding(12.dp)
     ) {
         Row(

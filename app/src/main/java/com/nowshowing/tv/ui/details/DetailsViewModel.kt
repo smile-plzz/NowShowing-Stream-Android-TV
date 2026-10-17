@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
 
 data class DetailsUiState(
     val imdbId: String = "",
@@ -29,13 +30,20 @@ data class DetailsUiState(
 
 class DetailsViewModel(application: Application) : AndroidViewModel(application) {
 
+    private var loadJob: Job? = null
+    private var seasonJob: Job? = null
     private val repository = MediaRepository(application)
     private val _uiState = MutableStateFlow(DetailsUiState())
     val uiState: StateFlow<DetailsUiState> = _uiState.asStateFlow()
 
     fun loadDetails(imdbId: String, type: String) {
-        viewModelScope.launch {
-            val prefSource = SourceRegistry.getPreferredSource(getApplication())
+        if (_uiState.value.imdbId == imdbId && _uiState.value.detail != null) {
+            _uiState.value = _uiState.value.copy(selectedSource = SourceRegistry.getSourceForTitle(getApplication(), imdbId))
+            return
+        }
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
+            val prefSource = SourceRegistry.getSourceForTitle(getApplication(), imdbId)
             val inWatchlist = repository.isInWatchlist(imdbId)
 
             _uiState.value = DetailsUiState(
@@ -57,9 +65,15 @@ class DetailsViewModel(application: Application) : AndroidViewModel(application)
                     totalSeasons = numSeasons
                 )
 
+                _uiState.value = _uiState.value.copy(isLoading = false)
+
+                // If series, load remembered episode when available
+                val lastOpened = repository.getRecentlyOpened().firstOrNull { it.imdbID == imdbId }
+                val savedSeason = lastOpened?.season?.coerceIn(1, numSeasons.coerceAtLeast(1)) ?: 1
+                _uiState.value = _uiState.value.copy(selectedSeason = savedSeason, selectedEpisode = lastOpened?.episode ?: 1)
                 // If series, load season 1 episodes
                 if (isSeries) {
-                    loadSeasonEpisodes(imdbId, 1)
+                    loadSeasonEpisodes(imdbId, savedSeason)
                 }
 
                 // Load recommendations by primary genre
@@ -90,7 +104,8 @@ class DetailsViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private fun loadSeasonEpisodes(imdbId: String, season: Int) {
-        viewModelScope.launch {
+        seasonJob?.cancel()
+        seasonJob = viewModelScope.launch {
             val seasonData = repository.getSeason(imdbId, season)
             val eps = seasonData?.episodes ?: emptyList()
             _uiState.value = _uiState.value.copy(episodes = eps)
@@ -108,5 +123,6 @@ class DetailsViewModel(application: Application) : AndroidViewModel(application)
     fun setSource(source: VideoSource) {
         _uiState.value = _uiState.value.copy(selectedSource = source)
         SourceRegistry.setPreferredSource(getApplication(), source.name)
+        SourceRegistry.setSourceForTitle(getApplication(), _uiState.value.imdbId, source)
     }
 }

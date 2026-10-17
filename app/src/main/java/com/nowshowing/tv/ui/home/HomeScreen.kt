@@ -35,11 +35,24 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.nowshowing.tv.data.db.RecentItem
+import com.nowshowing.tv.ui.common.ShimmerBox
+import com.nowshowing.tv.ui.player.TvPlayerActionButton
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusRequester
+import com.nowshowing.tv.ui.common.rememberReturnFocusRequester
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
@@ -75,6 +88,25 @@ fun HomeScreen(
     onPlayClick: (String, Int, Int, String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val listState = rememberLazyListState()
+    var manageHistory by rememberSaveable { mutableStateOf(false) }
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    DisposableEffect(lifecycle) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) viewModel.refreshHistory()
+        }
+        lifecycle.addObserver(observer)
+        viewModel.refreshHistory()
+        onDispose { lifecycle.removeObserver(observer) }
+    }
+    if (manageHistory) {
+        HistoryManager(
+            recent = uiState.recentlyOpened, native = uiState.continueWatching,
+            onClose = { manageHistory = false },
+            onRemoveRecent = viewModel::removeRecent, onMarkWatched = viewModel::markWatched,
+            onRemoveNative = viewModel::removeContinue
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -84,13 +116,27 @@ fun HomeScreen(
         // Sticky TV Top Bar
         TvTopBar(currentRoute = "home", onNavigate = onNavigate)
 
-        if (uiState.isLoading) {
-            ShimmerHomeScreen()
-        } else {
+        run {
             LazyColumn(
+                state = listState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = 48.dp)
             ) {
+                item(key = "history_heading") {
+                    Row(Modifier.fillMaxWidth().padding(horizontal = 48.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically) {
+                        Text("Find your next watch", color = TextMuted, fontSize = 14.sp)
+                        TvPlayerActionButton("Manage history", null) { manageHistory = true }
+                    }
+                }
+                if (uiState.recentlyOpened.isNotEmpty()) {
+                    item(key = "recently_opened") {
+                        RecentlyOpenedRow(uiState.recentlyOpened) {
+                            onPlayClick(it.imdbID, it.season, it.episode, it.type)
+                        }
+                    }
+                }
                 // Hero Banner
                 uiState.heroTitle?.let { hero ->
                     item(key = "hero_banner") {
@@ -114,6 +160,11 @@ fun HomeScreen(
                     }
                 }
 
+                if (uiState.heroTitle == null && uiState.isLoading) {
+                    item(key = "hero_loading") {
+                        ShimmerBox(Modifier.fillMaxWidth().height(340.dp).padding(horizontal = 48.dp, vertical = 12.dp))
+                    }
+                }
                 // Continue Watching
                 if (uiState.continueWatching.isNotEmpty()) {
                     item(key = "continue_watching") {
@@ -126,6 +177,15 @@ fun HomeScreen(
                     }
                 }
 
+                item(key = "load_feedback") {
+                    Column(Modifier.padding(horizontal = 48.dp, vertical = 8.dp)) {
+                        if (uiState.isLoading) Text("Loading more shelves…", color = TextMuted, fontSize = 13.sp)
+                        uiState.message?.let { Text(it, color = TextMuted, fontSize = 14.sp) }
+                        if (!uiState.isLoading) {
+                            TvPlayerActionButton("Refresh shelves", null) { viewModel.loadHomeData() }
+                        }
+                    }
+                }
                 // Mood Teaser Banner
                 item(key = "mood_teaser") {
                     MoodTeaserBanner(onClick = { onNavigate("mood") })
@@ -134,7 +194,8 @@ fun HomeScreen(
                 // Trending Now
                 item(key = "trending") {
                     TvContentRow(
-                        title = "Trending Now",
+                        title = "Featured picks",
+                        isLoading = uiState.isLoading,
                         items = uiState.trending,
                         onItemClick = { m ->
                             onTitleClick(m.imdbID, if (m.type == "series") "series" else "movie")
@@ -146,6 +207,7 @@ fun HomeScreen(
                 items(uiState.genreRows, key = { it.seed.id }) { row ->
                     TvContentRow(
                         title = row.seed.label,
+                        isLoading = uiState.isLoading,
                         items = row.items,
                         onItemClick = { m ->
                             onTitleClick(m.imdbID, if (m.type == "series") "series" else "movie")
@@ -157,6 +219,7 @@ fun HomeScreen(
                 item(key = "pop_movies") {
                     TvContentRow(
                         title = "Popular Movies",
+                        isLoading = uiState.isLoading,
                         items = uiState.popularMovies,
                         onItemClick = { m -> onTitleClick(m.imdbID, "movie") }
                     )
@@ -166,6 +229,7 @@ fun HomeScreen(
                 item(key = "pop_tv") {
                     TvContentRow(
                         title = "Popular TV Shows",
+                        isLoading = uiState.isLoading,
                         items = uiState.popularTv,
                         onItemClick = { m -> onTitleClick(m.imdbID, "series") }
                     )
@@ -228,8 +292,8 @@ private fun HomeHeroBanner(
                         colors = listOf(
                             Color.Transparent,
                             Color.Transparent,
-                            Color(0xFF0D0E12).copy(alpha = 0.7f),
-                            Color(0xFF0D0E12)
+                            BgDark.copy(alpha = 0.7f),
+                            BgDark
                         )
                     )
                 )
@@ -334,6 +398,7 @@ fun TvActionButton(
     isPrimary: Boolean,
     onClick: () -> Unit
 ) {
+    val (actionFocus, rememberAction) = rememberReturnFocusRequester("home-action:$label")
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
 
@@ -362,11 +427,11 @@ fun TvActionButton(
                 color = if (isFocused) Color.White else Color.Transparent,
                 shape = RoundedCornerShape(8.dp)
             )
-            .focusable(interactionSource = interactionSource)
+            .focusRequester(actionFocus)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
-                onClick = onClick
+                onClick = { rememberAction(); onClick() }
             )
             .padding(horizontal = 20.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -398,7 +463,7 @@ private fun ContinueWatchingRow(
             .padding(vertical = 12.dp)
     ) {
         Text(
-            text = "Continue Watching",
+            text = "Continue Watching · Direct streams",
             color = TextPrimary,
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
@@ -413,6 +478,7 @@ private fun ContinueWatchingRow(
             items(items, key = { it.imdbID }) { item ->
                 val epBadge = if (item.type == "series") "S${item.season}:E${item.episode}" else "Resume"
                 TvFocusableCard(
+                    focusKey = "continue:${item.imdbID}",
                     title = item.title,
                     posterUrl = item.poster,
                     year = item.year,

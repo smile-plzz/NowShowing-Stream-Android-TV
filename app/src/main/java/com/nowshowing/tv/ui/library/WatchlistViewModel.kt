@@ -27,7 +27,7 @@ class WatchlistViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun loadWatchlist() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
+            _uiState.value = _uiState.value.copy(isLoading = _uiState.value.items.isEmpty())
             val list = repository.getWatchlist()
             _uiState.value = WatchlistUiState(isLoading = false, items = list)
         }

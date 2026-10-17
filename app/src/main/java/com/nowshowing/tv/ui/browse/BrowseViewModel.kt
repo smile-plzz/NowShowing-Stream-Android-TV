@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
 
 enum class SortMode(val label: String) {
     FEATURED("Featured"),
@@ -31,10 +32,13 @@ class BrowseViewModel(application: Application) : AndroidViewModel(application) 
     private val _uiState = MutableStateFlow(BrowseUiState())
     val uiState: StateFlow<BrowseUiState> = _uiState.asStateFlow()
 
+    private var browseJob: Job? = null
     private var rawItems: List<OmdbTitleDetail> = emptyList()
 
     fun loadBrowse(kind: String) {
-        viewModelScope.launch {
+        if (_uiState.value.kind == kind && (rawItems.isNotEmpty() || browseJob?.isActive == true)) return
+        browseJob?.cancel()
+        browseJob = viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
                 kind = kind,
                 title = if (kind == "tv") "Popular TV Shows" else "Popular Movies",
