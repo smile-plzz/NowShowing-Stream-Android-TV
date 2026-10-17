@@ -32,11 +32,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
     private var loadJob: Job? = null
+    private var historyRefreshJob: Job? = null
 
     init { loadHomeData() }
 
     fun refreshHistory() {
-        viewModelScope.launch {
+        historyRefreshJob?.cancel()
+        historyRefreshJob = viewModelScope.launch {
             val recent = repository.getRecentlyOpened()
             val native = repository.getContinueWatching()
             _uiState.update { it.copy(recentlyOpened = recent, continueWatching = native) }

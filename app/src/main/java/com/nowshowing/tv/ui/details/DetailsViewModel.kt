@@ -39,6 +39,10 @@ class DetailsViewModel(application: Application) : AndroidViewModel(application)
     fun loadDetails(imdbId: String, type: String) {
         if (_uiState.value.imdbId == imdbId && _uiState.value.detail != null) {
             _uiState.value = _uiState.value.copy(selectedSource = SourceRegistry.getSourceForTitle(getApplication(), imdbId))
+            viewModelScope.launch {
+                val saved = repository.isInWatchlist(imdbId)
+                if (_uiState.value.imdbId == imdbId) _uiState.value = _uiState.value.copy(isInWatchlist = saved)
+            }
             return
         }
         loadJob?.cancel()

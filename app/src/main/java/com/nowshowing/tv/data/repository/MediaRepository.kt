@@ -20,7 +20,6 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import com.nowshowing.tv.data.db.RecentItem
-import java.util.Locale
 
 data class GenreRowSeed(
     val id: String,
@@ -144,7 +143,8 @@ class MediaRepository(private val context: Context) {
 
     suspend fun getDetailsByTitle(title: String, type: String? = null): OmdbTitleDetail? {
         val normalizedType = type?.takeUnless { it.isBlank() || it == "all" }
-        val key = "title_${title.trim().lowercase(Locale.ROOT)}_${normalizedType ?: ""}"
+        // Keep v1 disk-cache keys so upgrading does not discard warm metadata.
+        val key = "title_${title.trim()}_${normalizedType ?: ""}"
         return cachedDetail(key) {
             api.getDetailsByTitle(ApiClient.DEFAULT_OMDB_KEY, title.trim(), normalizedType)
         }
