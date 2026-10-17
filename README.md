@@ -4,15 +4,17 @@ A dedicated, TV-native movie and television discovery and streaming application 
 
 Built with **Jetpack Compose for TV**, **AndroidX Media3 (ExoPlayer)**, **Room Database**, and **Retrofit/OkHttp**.
 
+See [current playback behavior and TV test steps](docs/WEB_PLAYBACK.md). Provider availability is external; an accessible web page does not guarantee playback. Web-player progress and subtitles are managed by the provider.
+
 ---
 
 ## Features
 
 - **Cinematic 10-Foot UI**: Remote-controlled interface optimized for standard D-pad television remotes, Google TV voice remotes, and HDMI-CEC controllers.
 - **29-Mood Recommendation Engine**: Precision recommendation system ported from the web client. Explores multi-genre candidate seeds, verifies real genre tags against cached OMDb lookups, and ranks candidates using composite score heuristics.
-- **Mandatory Native Playback**: All video streams run exclusively through native AndroidX Media3 / ExoPlayer (HLS, DASH, MP4). Zero third-party WebViews, zero iframe players, and zero browser pop-ups.
-- **Media Source Resolution & Validation**: Dedicated resolver layer that identifies direct playable streams, validates HTTPS transport, isolates redirect chains (max 5 hops), and safely rejects legacy web-only embeds.
-- **Native Brave-Inspired Privacy Shields**: Network request filtering against Adblock Plus and EasyPrivacy rule syntax with a thread-safe 1,000-entry LRU decision cache (<0.05ms evaluation time), live security metrics, and a dedicated TV settings screen.
+- **Dual Playback Engines**: Existing movie and series embed providers open in an embedded WebView with D-pad pointer controls. Direct HLS, DASH, and MP4 streams retain Media3. Demo streams are diagnostics, not the selected movie.
+- **Media Source Resolution & Validation**: Dedicated resolver layer that identifies direct playable streams, validates HTTPS transport, isolates redirect chains (max 5 hops), and keeps web-only embeds out of the native player.
+- **Native Brave-Inspired Privacy Shields**: Network request filtering against Adblock Plus and EasyPrivacy rule syntax with a thread-safe 1,000-entry LRU decision cache , live security metrics, and a dedicated TV settings screen.
 - **Local Persistence**: Watchlist, Continue Watching (with genuine playback progress tracking), Search History, and OMDb request caching stored securely in SQLite via Room.
 - **Launcher Integration**: Declares `android.intent.category.LEANBACK_LAUNCHER` with a 320x180 TV banner (`@drawable/banner`) for seamless discovery on Google TV, standard Android TV, and the Nook TV launcher.
 
@@ -32,7 +34,7 @@ Built with **Jetpack Compose for TV**, **AndroidX Media3 (ExoPlayer)**, **Room D
 │   │   │   ├── privacy/              # ContentBlockEngine, FilterListManager, BlockingStatistics
 │   │   │   └── ui/                   # Jetpack Compose for TV screens (Home, Browse, Mood, Player, Search, Settings)
 │   │   └── res/                      # TV banner, launcher icons, theme colors, strings
-│   ├── src/test/                     # 33 unit tests across 7 suites (100% pass)
+│   ├── src/test/                     # JVM regression tests
 │   ├── build.gradle.kts              # App dependencies, Compose TV, Media3, signing config
 │   └── proguard-rules.pro            # R8 obfuscation & keep rules for Room and Media3
 ├── docs/                             # Complete architecture & engineering documentation
@@ -62,7 +64,7 @@ Built with **Jetpack Compose for TV**, **AndroidX Media3 (ExoPlayer)**, **Room D
 
 ### Commands
 ```bash
-# Run unit test suite (33 tests across 7 suites)
+# Run unit test suite (existing tests and web-navigation policy tests)
 ./gradlew testDebugUnitTest
 
 # Assemble Debug APK (development & testing)

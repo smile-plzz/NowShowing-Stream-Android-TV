@@ -24,6 +24,7 @@ data class PlayerUiState(
     val episode: Int = 1,
     val currentSource: VideoSource = SourceRegistry.NATIVE_SOURCES.first(),
     val playableSource: PlayableSource? = null,
+    val webEmbedUrl: String? = null,
     val isLoading: Boolean = true,
     val isPlaying: Boolean = true,
     val isBuffering: Boolean = false,
@@ -68,7 +69,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             // Retrieve saved playback position from continue watching if available
             val continueList = repository.getContinueWatching()
             val savedEntry = continueList.firstOrNull { it.imdbID == imdbId }
-            val resumeMs = savedEntry?.positionMs ?: 0L
+            val resumeMs = savedEntry?.takeIf { it.season == season && it.episode == episode }?.positionMs ?: 0L
 
             val preferredSource = SourceRegistry.getPreferredSource(getApplication())
 
@@ -86,6 +87,18 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     private fun resolveAndLoad(source: VideoSource, resumeMs: Long = 0L) {
         val s = _uiState.value
+        if (!source.isNativeCompatible) {
+            val url = SourceRegistry.buildVideoUrl(source, s.imdbId, s.season, s.episode, s.type == "series")
+            _uiState.value = s.copy(
+                currentSource = source, playableSource = null, webEmbedUrl = url,
+                isLoading = false, isIncompatibleSource = false, isNetworkError = false,
+                currentPositionMs = 0L, durationMs = 0L, showNextEpisodePrompt = false,
+                errorMessage = if (url == null) "This source has no player for this title." else null,
+                showSourceSelector = false
+            )
+            return
+        }
+        _uiState.value = s.copy(webEmbedUrl = null, isNetworkError = false)
         val result = coordinator.resolvePlayback(
             source = source,
             imdbId = s.imdbId,

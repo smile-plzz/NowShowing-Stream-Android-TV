@@ -1,3 +1,5 @@
+> **October 17, 2026 playback update:** See [WEB_PLAYBACK.md](WEB_PLAYBACK.md) for the current dual-engine playback contract. Earlier native-only / zero-WebView requirements below are historical and superseded. Real-provider TV testing remains required.
+
 # NowShowing TV — Handoff to Claude: Design Polish, Functionality Audit & Release Stabilization
 
 **Target Platform:** Android TV / Google TV (API 26 to 35)  

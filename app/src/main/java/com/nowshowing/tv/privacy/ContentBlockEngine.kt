@@ -115,6 +115,7 @@ class ContentBlockEngine {
         }
     }
 
+    @Synchronized
     fun evaluate(
         url: String,
         pageUrl: String? = null,
@@ -125,8 +126,9 @@ class ContentBlockEngine {
             return BlockDecision(isBlocked = false)
         }
 
+        val cacheKey = "$isAdBlockEnabled:$isTrackerBlockEnabled:$url"
         // Cache hit check
-        decisionCache[url]?.let { return it }
+        decisionCache[cacheKey]?.let { return it }
 
         val lowerUrl = url.lowercase(Locale.ROOT)
         val host = extractHost(url)
@@ -136,7 +138,7 @@ class ContentBlockEngine {
         for (w in whitelistDomains) {
             if (host == w || host.endsWith(".$w")) {
                 val allowed = BlockDecision(isBlocked = false)
-                decisionCache[url] = allowed
+                decisionCache[cacheKey] = allowed
                 return allowed
             }
         }
@@ -147,12 +149,12 @@ class ContentBlockEngine {
             val isTracker = trackerDomains.contains(matchedDomain)
             if (isTracker && !isTrackerBlockEnabled) {
                 val allowed = BlockDecision(isBlocked = false)
-                decisionCache[url] = allowed
+                decisionCache[cacheKey] = allowed
                 return allowed
             }
             if (!isTracker && !isAdBlockEnabled) {
                 val allowed = BlockDecision(isBlocked = false)
-                decisionCache[url] = allowed
+                decisionCache[cacheKey] = allowed
                 return allowed
             }
 
@@ -161,7 +163,7 @@ class ContentBlockEngine {
                 type = if (isTracker) BlockType.TRACKER else BlockType.AD,
                 matchedRule = "||$matchedDomain^"
             )
-            decisionCache[url] = decision
+            decisionCache[cacheKey] = decision
             return decision
         }
 
@@ -174,7 +176,7 @@ class ContentBlockEngine {
                         type = BlockType.AD,
                         matchedRule = kw
                     )
-                    decisionCache[url] = decision
+                    decisionCache[cacheKey] = decision
                     return decision
                 }
             }
@@ -186,14 +188,14 @@ class ContentBlockEngine {
                         type = BlockType.AD,
                         matchedRule = p.pattern()
                     )
-                    decisionCache[url] = decision
+                    decisionCache[cacheKey] = decision
                     return decision
                 }
             }
         }
 
         val allowed = BlockDecision(isBlocked = false)
-        decisionCache[url] = allowed
+        decisionCache[cacheKey] = allowed
         return allowed
     }
 
