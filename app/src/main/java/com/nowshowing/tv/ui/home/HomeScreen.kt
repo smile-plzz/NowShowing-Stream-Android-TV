@@ -182,7 +182,8 @@ fun HomeScreen(
                         if (uiState.isLoading) Text("Loading more shelves…", color = TextMuted, fontSize = 13.sp)
                         uiState.message?.let { Text(it, color = TextMuted, fontSize = 14.sp) }
                         if (!uiState.isLoading) {
-                            TvPlayerActionButton("Refresh shelves", null) { viewModel.loadHomeData() }
+                            TvPlayerActionButton(if (uiState.message != null) "Retry metadata" else "Refresh shelves", null) { viewModel.retryMetadata() }
+                            if (uiState.message != null) TvPlayerActionButton("Metadata settings", null) { onNavigate("settings") }
                         }
                     }
                 }

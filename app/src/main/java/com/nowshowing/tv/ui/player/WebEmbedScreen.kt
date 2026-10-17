@@ -44,9 +44,9 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
     val context = LocalContext.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     var ready by remember { mutableStateOf(false) }
-    var menu by remember(state.webEmbedUrl) { mutableStateOf(true) }
+    var menu by remember(state.webEmbedUrl) { mutableStateOf(false) }
     var section by remember(state.webEmbedUrl) { mutableStateOf("controls") }
-    var entered by remember(state.webEmbedUrl) { mutableStateOf(false) }
+    var entered by remember(state.webEmbedUrl) { mutableStateOf(true) }
     val helpPrefs = remember { context.getSharedPreferences("tv_remote_help", Context.MODE_PRIVATE) }
     var seenHelp by remember { mutableStateOf(helpPrefs.getBoolean("seen", false)) }
     var failure by remember(state.webEmbedUrl) { mutableStateOf<String?>(null) }
@@ -82,8 +82,9 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
         lifecycle.addObserver(observer)
         onDispose { lifecycle.removeObserver(observer) }
     }
-    LaunchedEffect(menu, section) {
-        if (menu) menuFocus.requestFocus()
+    LaunchedEffect(menu, section, host, state.webEmbedUrl) {
+        withFrameNanos { }
+        if (menu) menuFocus.requestFocus() else host?.focusPlayer()
     }
     BackHandler {
         if (host?.exitFullscreen() == true) {
@@ -181,11 +182,13 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
                                 // Default SSL handling cancels certificate errors; never bypass it.
                             }
                             web.loadUrl(rootUrl)
+                            post { if (!menu) focusPlayer() }
                         }
                     },
                     modifier = Modifier.fillMaxSize(),
                     onRelease = { released ->
                         released.exitFullscreen()
+                        released.web.onPause()
                         released.web.stopLoading()
                         released.removeAllViews()
                         released.web.destroy()
@@ -195,6 +198,10 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
             }
         }
 
+        if (!menu && !seenHelp) {
+            Text("Arrows move pointer · OK clicks · Back opens controls and help", color = TextPrimary,
+                fontSize = 16.sp, modifier = Modifier.align(Alignment.BottomCenter).background(BgDark).padding(16.dp))
+        }
         if (loading && !menu) {
             CircularProgressIndicator(Modifier.align(Alignment.TopEnd).padding(24.dp), color = AccentCyan)
         }
@@ -211,7 +218,7 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
                 Text(state.currentSource.name, color = AccentCyan, fontSize = 14.sp)
                 if (loading) Text("Opening provider page…", color = TextMuted, fontSize = 14.sp)
                 TvPlayerActionButton(
-                    if (entered) "Return to video" else "Open player", null, true,
+                    "Return to video", null, true,
                     Modifier.focusRequester(menuFocus)
                 ) {
                     entered = true
@@ -238,6 +245,9 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
                         }
                         item { TvPlayerActionButton("Change source", null) { section = "sources" } }
                         if (state.type == "series") {
+                            item { TvPlayerActionButton(if (state.advancingEpisode) "Loading next episode…" else "Next episode", null, true) { viewModel.playNextEpisode() } }
+                            state.episodeMessage?.let { message -> item { Text(message, color = AccentGold, fontSize = 16.sp) } }
+                            item { Text("Automatic advancement is unavailable for this web provider. Use Next episode.", color = TextMuted, fontSize = 15.sp) }
                             item { TvPlayerActionButton("Episodes", null) { section = "episodes" } }
                         }
                         item { TvPlayerActionButton("Retry this source", null) {

@@ -17,6 +17,7 @@ class NowShowingApp : Application(), ImageLoaderFactory {
         super.onCreate()
         // Initialize baseline privacy shields asynchronously
         CoroutineScope(Dispatchers.IO).launch {
+            com.nowshowing.tv.data.db.NowShowingDatabase.getInstance(this@NowShowingApp).pruneMetadata()
             FilterListManager.initialize(this@NowShowingApp)
         }
     }
@@ -25,7 +26,7 @@ class NowShowingApp : Application(), ImageLoaderFactory {
         return ImageLoader.Builder(this)
             .memoryCache {
                 MemoryCache.Builder(this)
-                    .maxSizePercent(0.25)
+                    .maxSizeBytes(16L * 1024 * 1024) // Bound decoded artwork on low-memory TVs.
                     .build()
             }
             .diskCache {
@@ -34,7 +35,7 @@ class NowShowingApp : Application(), ImageLoaderFactory {
                     .maxSizeBytes(50L * 1024 * 1024) // 50 MB
                     .build()
             }
-            .crossfade(true)
+            .crossfade(false)
             .respectCacheHeaders(false)
             .build()
     }

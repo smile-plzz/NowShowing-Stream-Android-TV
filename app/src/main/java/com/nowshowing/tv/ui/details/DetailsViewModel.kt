@@ -46,6 +46,7 @@ class DetailsViewModel(application: Application) : AndroidViewModel(application)
             return
         }
         loadJob?.cancel()
+        seasonJob?.cancel()
         loadJob = viewModelScope.launch {
             val prefSource = SourceRegistry.getSourceForTitle(getApplication(), imdbId)
             val inWatchlist = repository.isInWatchlist(imdbId)
@@ -80,16 +81,8 @@ class DetailsViewModel(application: Application) : AndroidViewModel(application)
                     loadSeasonEpisodes(imdbId, savedSeason)
                 }
 
-                // Load recommendations by primary genre
-                val primaryGenre = detail.genre?.split(",")?.firstOrNull()?.trim()
-                if (!primaryGenre.isNullOrBlank()) {
-                    val recsResp = repository.search(primaryGenre, page = 1, type = if (isSeries) "series" else "movie")
-                    val recsList = (recsResp.search ?: emptyList())
-                        .filter { it.imdbID != imdbId }
-                        .take(6)
-                        .mapNotNull { repository.getDetails(it.imdbID) }
-                    _uiState.value = _uiState.value.copy(recommendations = recsList)
-                }
+                // Reuse genre-matched cached candidates; no title-word search or extra network calls.
+                _uiState.value = _uiState.value.copy(recommendations = repository.relatedTitles(detail))
 
                 _uiState.value = _uiState.value.copy(isLoading = false)
             } else {
@@ -99,7 +92,7 @@ class DetailsViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun selectSeason(season: Int) {
-        _uiState.value = _uiState.value.copy(selectedSeason = season, selectedEpisode = 1)
+        _uiState.value = _uiState.value.copy(selectedSeason = season, selectedEpisode = 1, episodes = emptyList())
         loadSeasonEpisodes(_uiState.value.imdbId, season)
     }
 

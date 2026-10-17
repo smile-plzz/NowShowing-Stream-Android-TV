@@ -27,16 +27,17 @@ data class GenreRowSeed(
     val seed: List<String>
 )
 
-class MediaRepository(private val context: Context) {
-
-    private val api = ApiClient.service
-    private val db = NowShowingDatabase.getInstance(context)
+class MediaRepository(
+    private val context: Context,
+    private val api: com.nowshowing.tv.data.api.OmdbApiService = ApiClient.service,
+    private val db: NowShowingDatabase = NowShowingDatabase.getInstance(context)
+) {
     private val gson = Gson()
 
     companion object {
         private val memoryCache = MetadataCache<OmdbTitleDetail>()
         private val requestLocks = Array(64) { Mutex() }
-        private val networkSlots = Semaphore(4)
+        private val networkSlots = Semaphore(2)
 
         val TRENDING_SEED = listOf(
             "Dune: Part Two", "Oppenheimer", "The Bear", "Fallout", "Shogun",
@@ -90,19 +91,48 @@ class MediaRepository(private val context: Context) {
         )
     }
 
+    private suspend fun <T> request(fetch: suspend () -> T, error: (T) -> String?): T =
+        networkSlots.withPermit {
+            MetadataHealth.check()
+            try {
+                val result = fetch()
+                error(result)?.let {
+                    val failure = classifyMetadataError(it)
+                    MetadataHealth.record(failure)
+                    throw MetadataUnavailable(failure)
+                }
+                MetadataHealth.success()
+                result
+            } catch (cancelled: CancellationException) { throw cancelled
+            } catch (known: MetadataUnavailable) { throw known
+            } catch (e: Exception) {
+                val failure = if (e is java.io.IOException) MetadataFailure.NETWORK else MetadataFailure.SERVICE
+                MetadataHealth.record(failure)
+                throw MetadataUnavailable(failure)
+            }
+        }
+
     suspend fun search(query: String, page: Int = 1, type: String? = null): OmdbSearchResponse =
         withContext(Dispatchers.IO) {
-            try {
-                api.searchTitles(
-                    apiKey = ApiClient.DEFAULT_OMDB_KEY,
-                    query = query,
-                    page = page,
-                    type = if (type.isNullOrBlank() || type == "all") null else type
-                )
-            } catch (cancelled: CancellationException) {
-                throw cancelled
-            } catch (e: Exception) {
-                OmdbSearchResponse(search = null, totalResults = "0", response = "False", error = e.localizedMessage)
+            val cacheKey = "search_${query.trim().lowercase()}_${page}_${type.orEmpty()}"
+            requestLocks[(cacheKey.hashCode() and Int.MAX_VALUE) % requestLocks.size].withLock {
+                fun cached(stale: Boolean): OmdbSearchResponse? = db.getCachedPayload(cacheKey, stale)?.let {
+                    runCatching { gson.fromJson(it, OmdbSearchResponse::class.java) }.getOrNull()
+                }
+                cached(false)?.let { return@withContext it }
+                try {
+                    val response = request({ api.searchTitles(
+                        apiKey = ApiClient.metadataKey(context), query = query, page = page,
+                        type = type?.takeUnless { it.isBlank() || it == "all" }
+                    ) }) { if (it.response == "False") it.error ?: "Service error" else null }
+                    db.setCachedPayload(cacheKey, gson.toJson(response), 60 * 60 * 1000L)
+                    response
+                } catch (failure: MetadataUnavailable) {
+                    if (failure.failure != MetadataFailure.NO_RESULTS) cached(true)?.let {
+                        MetadataHealth.stale(); return@withContext it
+                    }
+                    OmdbSearchResponse(null, "0", "False", failure.failure.message)
+                }
             }
         }
 
@@ -121,7 +151,7 @@ class MediaRepository(private val context: Context) {
                     } catch (_: Exception) { /* Invalid cached JSON: refetch. */ }
                 }
                 try {
-                    val detail = networkSlots.withPermit { fetch() }
+                    val detail = request(fetch) { if (it.response == "False") it.error ?: "Service error" else null }
                     if (detail.response == "False") return@withContext null
                     db.setCachedPayload(key, gson.toJson(detail))
                     memoryCache.put(key, detail)
@@ -133,12 +163,19 @@ class MediaRepository(private val context: Context) {
                     detail
                 } catch (cancelled: CancellationException) {
                     throw cancelled
-                } catch (_: Exception) { null }
+                } catch (_: MetadataUnavailable) {
+                    db.getCachedPayload(key, allowStale = true)?.let { json ->
+                        runCatching { gson.fromJson(json, OmdbTitleDetail::class.java) }.getOrNull()?.let {
+                            MetadataHealth.stale(); return@withContext it
+                        }
+                    }
+                    null
+                }
             }
         }
 
     suspend fun getDetails(imdbId: String): OmdbTitleDetail? = cachedDetail("details_$imdbId") {
-        api.getDetails(apiKey = ApiClient.DEFAULT_OMDB_KEY, imdbId = imdbId)
+        api.getDetails(apiKey = ApiClient.metadataKey(context), imdbId = imdbId)
     }
 
     suspend fun getDetailsByTitle(title: String, type: String? = null): OmdbTitleDetail? {
@@ -146,7 +183,7 @@ class MediaRepository(private val context: Context) {
         // Keep v1 disk-cache keys so upgrading does not discard warm metadata.
         val key = "title_${title.trim()}_${normalizedType ?: ""}"
         return cachedDetail(key) {
-            api.getDetailsByTitle(ApiClient.DEFAULT_OMDB_KEY, title.trim(), normalizedType)
+            api.getDetailsByTitle(ApiClient.metadataKey(context), title.trim(), normalizedType)
         }
     }
 
@@ -168,20 +205,42 @@ class MediaRepository(private val context: Context) {
         }
 
         try {
-            val response = api.getSeason(
-                apiKey = ApiClient.DEFAULT_OMDB_KEY,
-                imdbId = imdbId,
-                season = season
-            )
-            if (response.response != "False") {
-                db.setCachedPayload(cacheKey, gson.toJson(response), ttlMs = 7 * 24 * 60 * 60 * 1000L)
+            requestLocks[(cacheKey.hashCode() and Int.MAX_VALUE) % requestLocks.size].withLock {
+                db.getCachedPayload(cacheKey)?.let {
+                    runCatching { gson.fromJson(it, OmdbSeasonResponse::class.java) }.getOrNull()?.let { return@withContext it }
+                }
+                val response = request({ api.getSeason(ApiClient.metadataKey(context), imdbId, season) }) {
+                    if (it.response == "False") it.error ?: "Service error" else null
+                }
+                db.setCachedPayload(cacheKey, gson.toJson(response), 7 * 24 * 60 * 60 * 1000L)
                 response
-            } else null
-        } catch (cancelled: CancellationException) {
-            throw cancelled
-        } catch (_: Exception) {
-            null
+            }
+        } catch (cancelled: CancellationException) { throw cancelled
+        } catch (failure: MetadataUnavailable) {
+            if (failure.failure == MetadataFailure.NO_RESULTS) return@withContext null
+            db.getCachedPayload(cacheKey, true)?.let {
+                runCatching { gson.fromJson(it, OmdbSeasonResponse::class.java) }.getOrNull()?.also { MetadataHealth.stale() }
+            }
         }
+    }
+
+    suspend fun relatedTitles(detail: OmdbTitleDetail): List<OmdbTitleDetail> = withContext(Dispatchers.IO) {
+        val genres = detail.genre.orEmpty().split(",").map { it.trim() }.filter { it.isNotBlank() && it != "N/A" }.toSet()
+        db.cachedDetailPayloads().mapNotNull {
+            runCatching { gson.fromJson(it, OmdbTitleDetail::class.java) }.getOrNull()
+        }.distinctBy { it.imdbID }.filter {
+            it.imdbID != detail.imdbID && it.type == detail.type &&
+                it.genre.orEmpty().split(",").any { genre -> genre.trim() in genres }
+        }.take(6)
+    }
+
+    suspend fun clearMetadataCache() = withContext(Dispatchers.IO) {
+        // Serialize against every repository read/write so cleared entries cannot be repopulated by in-flight requests.
+        suspend fun clearAt(index: Int) {
+            if (index == requestLocks.size) { db.clearMetadata(); memoryCache.clear() }
+            else requestLocks[index].withLock { clearAt(index + 1) }
+        }
+        clearAt(0)
     }
 
     // =========================================================================

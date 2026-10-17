@@ -100,7 +100,13 @@ fun DetailsScreen(
             val detail = uiState.detail
             if (detail == null) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = "Could not load title details.", color = TextMuted, fontSize = 16.sp)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(com.nowshowing.tv.data.repository.MetadataHealth.failure.value?.message ?: "Could not load title details.", color = TextMuted, fontSize = 16.sp)
+                        com.nowshowing.tv.ui.player.TvPlayerActionButton("Retry details", null) {
+                            com.nowshowing.tv.data.repository.MetadataHealth.retry()
+                            viewModel.loadDetails(imdbId, type)
+                        }
+                    }
                 }
             } else {
                 LazyColumn(

@@ -8,6 +8,7 @@ import com.nowshowing.tv.data.db.RecentItem
 import com.nowshowing.tv.data.model.OmdbTitleDetail
 import com.nowshowing.tv.data.repository.GenreRowSeed
 import com.nowshowing.tv.data.repository.MediaRepository
+import com.nowshowing.tv.data.repository.MetadataHealth
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
@@ -21,7 +22,7 @@ data class HomeUiState(
     val continueWatching: List<ContinueItem> = emptyList(),
     val recentlyOpened: List<RecentItem> = emptyList(),
     val trending: List<OmdbTitleDetail> = emptyList(),
-    val genreRows: List<GenreRowState> = MediaRepository.GENRE_ROWS.map { GenreRowState(it, emptyList()) },
+    val genreRows: List<GenreRowState> = MediaRepository.GENRE_ROWS.take(3).map { GenreRowState(it, emptyList()) },
     val popularMovies: List<OmdbTitleDetail> = emptyList(),
     val popularTv: List<OmdbTitleDetail> = emptyList(),
     val message: String? = null
@@ -34,7 +35,14 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private var loadJob: Job? = null
     private var historyRefreshJob: Job? = null
 
-    init { loadHomeData() }
+    init {
+        viewModelScope.launch { MetadataHealth.failure.collect { failure ->
+            _uiState.update { it.copy(message = failure?.message) }
+        } }
+        loadHomeData()
+    }
+
+    fun retryMetadata() { MetadataHealth.retry(); loadHomeData() }
 
     fun refreshHistory() {
         historyRefreshJob?.cancel()
@@ -66,29 +74,29 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             coroutineScope {
                 launch {
                     val titles = repository.lookupTitles(MediaRepository.TRENDING_SEED)
-                    _uiState.update { it.copy(trending = titles, heroTitle = titles.firstOrNull() ?: it.heroTitle) }
-                }
-                MediaRepository.GENRE_ROWS.forEach { seed ->
+                    _uiState.update { it.copy(trending = titles.ifEmpty { it.trending }, heroTitle = titles.firstOrNull() ?: it.heroTitle) }
+                }.join()
+                MediaRepository.GENRE_ROWS.take(3).forEach { seed ->
                     launch {
                         val titles = repository.lookupTitles(seed.seed)
                         _uiState.update { s ->
-                            s.copy(genreRows = s.genreRows.map { if (it.seed.id == seed.id) GenreRowState(seed, titles) else it })
+                            s.copy(genreRows = s.genreRows.map { if (it.seed.id == seed.id) GenreRowState(seed, titles.ifEmpty { it.items }) else it })
                         }
-                    }
-                }
+                    }.join()
+                }.join()
                 launch {
-                    val titles = repository.lookupTitles(MediaRepository.POPULAR_MOVIES.take(14), "movie")
-                    _uiState.update { it.copy(popularMovies = titles) }
-                }
+                    val titles = repository.lookupTitles(MediaRepository.POPULAR_MOVIES.take(8), "movie")
+                    _uiState.update { it.copy(popularMovies = titles.ifEmpty { it.popularMovies }) }
+                }.join()
                 launch {
-                    val titles = repository.lookupTitles(MediaRepository.POPULAR_TV.take(14), "series")
-                    _uiState.update { it.copy(popularTv = titles) }
+                    val titles = repository.lookupTitles(MediaRepository.POPULAR_TV.take(8), "series")
+                    _uiState.update { it.copy(popularTv = titles.ifEmpty { it.popularTv }) }
                 }
             }
             _uiState.update {
                 val hasTitles = it.trending.isNotEmpty() || it.genreRows.any { row -> row.items.isNotEmpty() } ||
                     it.popularMovies.isNotEmpty() || it.popularTv.isNotEmpty()
-                it.copy(isLoading = false, message = if (hasTitles) null else "Could not load titles. Check your connection and try again.")
+                it.copy(isLoading = false, message = MetadataHealth.failure.value?.message ?: if (hasTitles) null else "Could not load titles. Check your connection and try again.")
             }
         }
     }
