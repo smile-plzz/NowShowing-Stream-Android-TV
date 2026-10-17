@@ -5,6 +5,20 @@ All notable changes to the NowShowing project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-10-18
+
+### Added
+- **Web Provider Fallback & TV Pointer Controls (PR #1)**:
+  - Added `WebEmbedScreen.kt` and `WebEmbedPolicy.kt` enabling TV pointer and D-pad controls for web provider streams.
+  - Implemented return focus persistence (`ReturnFocus.kt`) restoring remote focus to provider controls upon exit.
+  - Added `WebEmbedPolicyTest.kt` verifying embedding policy and fallback constraints.
+  - Added documentation: `docs/WEB_PLAYBACK.md`.
+- **Viewing History & TV Browsing Polish (PR #2)**:
+  - Added local SQLite viewing history tracking (`RecentItem.kt`, `HistoryManager.kt`).
+  - Added offline metadata recovery and warm upgrade cache preservation (`MetadataCache.kt`).
+  - Added unit tests: `RecentItemTest.kt` and `MetadataCacheTest.kt`.
+  - Added documentation: `docs/POLISH_AND_HISTORY.md`.
+
 ## [1.4.0] - 2026-10-17
 
 ### Added
