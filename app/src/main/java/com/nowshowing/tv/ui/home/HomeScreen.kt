@@ -48,6 +48,8 @@ import com.nowshowing.tv.ui.common.ShimmerBox
 import com.nowshowing.tv.ui.player.TvPlayerActionButton
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -89,6 +91,21 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
+    val recoveryFocus = remember { androidx.compose.ui.focus.FocusRequester() }
+    var focusedRecovery by rememberSaveable { mutableStateOf(false) }
+    val emptyFailure = !uiState.isLoading && uiState.message != null && uiState.heroTitle == null &&
+        uiState.trending.isEmpty() && uiState.popularMovies.isEmpty() && uiState.popularTv.isEmpty() &&
+        uiState.genreRows.all { it.items.isEmpty() }
+    LaunchedEffect(emptyFailure) {
+        if (emptyFailure && !focusedRecovery) {
+            listState.scrollToItem(1 + (if (uiState.recentlyOpened.isNotEmpty()) 1 else 0) + (if (uiState.continueWatching.isNotEmpty()) 1 else 0))
+            withFrameNanos { }
+            focusedRecovery = runCatching { recoveryFocus.requestFocus(); true }.getOrDefault(false)
+        }
+    }
+    val historyFocus = remember { androidx.compose.ui.focus.FocusRequester() }
+    var restoreHistoryFocus by remember { mutableStateOf(false) }
+    LaunchedEffect(restoreHistoryFocus) { if (restoreHistoryFocus) { withFrameNanos { }; historyFocus.requestFocus(); restoreHistoryFocus = false } }
     var manageHistory by rememberSaveable { mutableStateOf(false) }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     DisposableEffect(lifecycle) {
@@ -102,7 +119,7 @@ fun HomeScreen(
     if (manageHistory) {
         HistoryManager(
             recent = uiState.recentlyOpened, native = uiState.continueWatching,
-            onClose = { manageHistory = false },
+            onClose = { manageHistory = false; restoreHistoryFocus = true },
             onRemoveRecent = viewModel::removeRecent, onMarkWatched = viewModel::markWatched,
             onRemoveNative = viewModel::removeContinue
         )
@@ -127,7 +144,7 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically) {
                         Text("Find your next watch", color = TextMuted, fontSize = 14.sp)
-                        TvPlayerActionButton("Manage history", null) { manageHistory = true }
+                        TvPlayerActionButton("Manage history", null, modifier = Modifier.focusRequester(historyFocus)) { manageHistory = true }
                     }
                 }
                 if (uiState.recentlyOpened.isNotEmpty()) {
@@ -182,7 +199,7 @@ fun HomeScreen(
                         if (uiState.isLoading) Text("Loading more shelves…", color = TextMuted, fontSize = 13.sp)
                         uiState.message?.let { Text(it, color = TextMuted, fontSize = 14.sp) }
                         if (!uiState.isLoading) {
-                            TvPlayerActionButton(if (uiState.message != null) "Retry metadata" else "Refresh shelves", null) { viewModel.retryMetadata() }
+                            TvPlayerActionButton(if (uiState.message != null) "Retry metadata" else "Refresh shelves", null, modifier = Modifier.focusRequester(recoveryFocus)) { viewModel.retryMetadata() }
                             if (uiState.message != null) TvPlayerActionButton("Metadata settings", null) { onNavigate("settings") }
                         }
                     }
@@ -508,7 +525,6 @@ private fun MoodTeaserBanner(onClick: () -> Unit) {
                 color = if (isFocused) FocusBorder else Color.White.copy(alpha = 0.08f),
                 shape = RoundedCornerShape(12.dp)
             )
-            .focusable(interactionSource = interactionSource)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,

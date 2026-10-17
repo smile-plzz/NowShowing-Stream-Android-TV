@@ -14,11 +14,11 @@ Arrows move focus, OK selects, and Back returns through the navigation stack. Se
 | Back in Sources/Episodes/Help | Return to main controls |
 | Back in main controls | Return to title details |
 | Menu | Open app controls directly |
-| Open player / Return to video | Focus provider interaction and briefly reveal the pointer |
+| Return to video | Focus provider interaction and briefly reveal the pointer |
 
 Fullscreen pointer support forwards touch events to the provider custom view. Some provider implementations may still behave differently; actual remote testing remains necessary.
 
-Main controls provide Change source, Episodes for series, Retry this source, Remote help, and Back to title. The episode panel displays the current season/episode and metadata when available. Selecting an episode is a deliberate action; no iframe completion detection is claimed.
+Main controls provide prominent Next episode and Episodes for series, Change source, Retry this source, Remote help, and Back to title. The episode panel displays the current season/episode and metadata when available. Selecting an episode is a deliberate action; no iframe completion detection is claimed.
 
 First-use tips can be dismissed with Got it and reset from Settings. Help remains available regardless of dismissal.
 

@@ -97,6 +97,7 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     results = updated,
+                    errorMessage = if (response.isStale) "Showing expired cached search results. ${com.nowshowing.tv.data.repository.MetadataHealth.failure.value?.message.orEmpty()}" else null,
                     currentPage = targetPage,
                     totalResults = response.totalResults?.toIntOrNull() ?: updated.size
                 )
@@ -104,7 +105,9 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     results = _uiState.value.results,
-                    errorMessage = response.error ?: "Metadata service unavailable. Retry your search."
+                    errorMessage = (response.error ?: "Metadata service unavailable. Retry your search.").let {
+                        if (_uiState.value.results.isNotEmpty()) "$it Previous search results are retained." else it
+                    }
                 )
             }
         }

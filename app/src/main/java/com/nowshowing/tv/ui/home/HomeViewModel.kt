@@ -96,7 +96,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             _uiState.update {
                 val hasTitles = it.trending.isNotEmpty() || it.genreRows.any { row -> row.items.isNotEmpty() } ||
                     it.popularMovies.isNotEmpty() || it.popularTv.isNotEmpty()
-                it.copy(isLoading = false, message = MetadataHealth.failure.value?.message ?: if (hasTitles) null else "Could not load titles. Check your connection and try again.")
+                it.copy(isLoading = false, message = (MetadataHealth.failure.value?.message ?: if (hasTitles) null else "Could not load titles. Check your connection and try again.")?.let { message ->
+                    if (MetadataHealth.usedStaleCache) "$message Showing expired cached metadata (up to 30 days after expiry)." else message
+                })
             }
         }
     }

@@ -152,7 +152,6 @@ private fun SortPill(
                 color = if (isFocused) Color.White else if (isSelected) AccentCyan.copy(alpha = 0.5f) else Color.Transparent,
                 shape = RoundedCornerShape(6.dp)
             )
-            .focusable(interactionSource = interactionSource)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,

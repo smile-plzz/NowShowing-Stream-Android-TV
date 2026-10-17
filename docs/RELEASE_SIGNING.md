@@ -1,7 +1,7 @@
 # Release signing and publication
 
 ## Current status
-v1.5.0-rc.2 is a development-signed sideload release candidate unless build-info.json explicitly says signingMode=permanent. No repository signing secrets were configured when this release was prepared. The workflow automatically marks development-signed publications as prereleases.
+v1.5.0-rc.2 is a development-signed sideload release candidate unless build-info.json explicitly says signingMode=permanent. Permanent-signing availability has not been verified for this pass; PR builds deliberately ignore signing secrets. The workflow automatically marks development-signed publications as prereleases.
 
 Debug signing is not a production identity. Each runner may generate a different key, so it does not guarantee future in-place updates. The private key from a previous runner is not recoverable from its APK.
 

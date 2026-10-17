@@ -42,6 +42,7 @@ class MetadataRepositoryTest {
         api.networkFailure = true
         val response = repository.search("warm")
         assertEquals("Warm title", response.search!!.single().title)
+        assertTrue(response.isStale)
         assertEquals(MetadataFailure.NETWORK, MetadataHealth.failure.value)
         assertTrue(MetadataHealth.usedStaleCache)
     }

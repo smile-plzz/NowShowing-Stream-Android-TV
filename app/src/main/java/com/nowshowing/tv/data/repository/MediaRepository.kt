@@ -135,7 +135,7 @@ class MediaRepository(
                     response
                 } catch (failure: MetadataUnavailable) {
                     if (failure.failure != MetadataFailure.NO_RESULTS) cached(true)?.let {
-                        MetadataHealth.stale(); return@withContext it
+                        MetadataHealth.stale(); return@withContext it.copy(isStale = true)
                     }
                     OmdbSearchResponse(null, "0", "False", failure.failure.message)
                 }

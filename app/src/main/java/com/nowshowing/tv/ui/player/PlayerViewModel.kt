@@ -21,6 +21,7 @@ import com.nowshowing.tv.data.db.RecentItem
 import com.nowshowing.tv.data.model.OmdbEpisode
 
 data class PlayerUiState(
+    val playbackSession: Long = 0,
     val autoplay: Boolean = true,
     val advancingEpisode: Boolean = false,
     val episodeMessage: String? = null,
@@ -125,7 +126,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         session++
         completedSession = null
         nextJob?.cancel()
-        _uiState.value = _uiState.value.copy(showNextEpisodePrompt = false, nextEpisode = null,
+        _uiState.value = _uiState.value.copy(playbackSession = session, showNextEpisodePrompt = false, nextEpisode = null,
             episodeMessage = null, advancingEpisode = false, showSeriesComplete = false)
         val s = _uiState.value
         if (!source.isNativeCompatible) {
@@ -247,10 +248,12 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         _uiState.value = _uiState.value.copy(episodeListSeason = season, episodesLoading = true, episodeList = emptyList())
         val id = _uiState.value.imdbId
         episodesJob = viewModelScope.launch {
-            val episodes = repository.getSeason(id, season)?.episodes.orEmpty()
+            val metadata = repository.getSeason(id, season)
+            val episodes = metadata?.episodes.orEmpty()
             val s = _uiState.value
             _uiState.value = s.copy(
                 episodeList = episodes, episodesLoading = false,
+                totalSeasons = metadata?.totalSeasons?.toIntOrNull()?.coerceAtLeast(s.season) ?: s.totalSeasons,
                 episodeTitle = if (s.season == season) episodes.firstOrNull { it.episode.toIntOrNull() == s.episode }?.title.orEmpty() else s.episodeTitle
             )
         }

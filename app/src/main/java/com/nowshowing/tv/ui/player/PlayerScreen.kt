@@ -107,7 +107,7 @@ fun PlayerScreen(
     val primaryFocusRequester = remember { FocusRequester() }
 
     BackHandler {
-        onBack()
+        if (uiState.showNextEpisodePrompt) viewModel.dismissNextEpisodePrompt() else onBack()
     }
 
     LaunchedEffect(imdbId, season, episode, type) {
@@ -180,7 +180,7 @@ fun PlayerScreen(
     ) {
         if (playable != null) {
             // AndroidX Media3 / ExoPlayer Native Engine
-            val exoPlayer = remember(playable.mediaUri) {
+            val exoPlayer = remember(uiState.playbackSession) {
                 ExoPlayer.Builder(context).build().apply {
                     setAudioAttributes(
                         androidx.media3.common.AudioAttributes.Builder()
@@ -1010,7 +1010,6 @@ private fun SourceItemCard(
                 color = if (isFocused) Color.White else if (isSelected) AccentCyan else Color.Transparent,
                 shape = RoundedCornerShape(8.dp)
             )
-            .focusable(interactionSource = interactionSource)
             .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -1075,7 +1074,6 @@ private fun TvPlayerIconButton(
                 color = if (isFocused) Color.White else Color.Transparent,
                 shape = CircleShape
             )
-            .focusable(interactionSource = interactionSource)
             .clickable(interactionSource = interactionSource, indication = null, onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
@@ -1126,7 +1124,6 @@ internal fun TvPlayerActionButton(
                 color = if (isFocused) Color.White else if (isAccent) AccentCyan.copy(alpha = 0.5f) else Color.White.copy(alpha = 0.12f),
                 shape = RoundedCornerShape(8.dp)
             )
-            .focusable(interactionSource = interactionSource)
             .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
