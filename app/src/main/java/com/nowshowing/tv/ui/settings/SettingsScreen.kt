@@ -175,6 +175,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, onNavigate: (String) -> Unit) {
                         item(key = "report_intro") { InfoCard("Support report", "Includes app/device/WebView details, public certificate, cache sizes and recent metadata error categories. Excludes viewing history, provider URLs, API keys and device serial numbers. Review it before sharing.") }
                         item(key = "refresh_report") { TvPlayerActionButton(if (state.isRefreshingDiagnostics) "Refreshing report…" else "Refresh report", null,
                             enabled = !state.isRefreshingDiagnostics) { viewModel.refreshDiagnostics() } }
+                        if (!state.reportReady && !state.isRefreshingDiagnostics) item(key = "report_unavailable") { Feedback(state.diagnosticText) }
                         item(key = "view_report") { TvPlayerActionButton("View diagnostic report", null, modifier = Modifier.focusRequester(reportFocus), enabled = state.reportReady) { showReport = true } }
                         item(key = "copy_report") { TvPlayerActionButton("Copy diagnostic report", null, enabled = state.reportReady) {
                             (context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(ClipData.newPlainText("NowShowing diagnostics", state.diagnosticText))

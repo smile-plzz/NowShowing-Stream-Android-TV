@@ -51,7 +51,7 @@ Open a title, select an episode if needed, then Open player.
 - Back exits provider fullscreen first, opens app controls next, then returns to the title.
 - Menu opens app controls directly.
 - Return to video returns control to the pointer.
-- Change source offers existing movie providers. Demo streams live under Settings > Playback diagnostics.
+- Change source offers existing movie providers. Demo streams live under Settings > Help > Native playback checks.
 - Remote help is always available in the player and Settings.
 
 Recently opened remembers the title, episode, and source. It does not guarantee timestamp resume inside third-party players. See [known limitations](KNOWN_LIMITATIONS.md) and [troubleshooting](TROUBLESHOOTING.md).
