@@ -1,7 +1,7 @@
-# Release checklist — 1.5.0
+# Release checklist — 1.5.1
 
 ## Implemented/prepared
-- [x] New version 1.5.0 / 15003; no overwrite of a published version.
+- [x] New version 1.5.1 / 15004; no overwrite of a published version.
 - [x] Current architecture, playback, controls, limitations and acceptance documentation.
 - [x] Metadata/storage/filter/episode-policy regression tests added.
 - [x] Existing workflow packages APKs, checksums, public certificate details and build-info.json.

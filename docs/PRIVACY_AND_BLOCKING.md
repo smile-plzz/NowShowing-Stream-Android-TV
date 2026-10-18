@@ -1,4 +1,4 @@
-# Privacy and request filtering — 1.5.0
+# Privacy and request filtering — 1.5.1
 
 ## Network behavior
 OMDb receives metadata queries/IMDb IDs and the selected API key. Poster hosts receive image requests. Movie/series web providers and their HTTPS frames run inside Android System WebView and may receive normal browser information such as IP address, cookies and user agent. Filtering reduces some requests; it does not make third-party playback private or guarantee removal of every advertisement.

@@ -1,4 +1,4 @@
-# Current architecture — 1.5.0
+# Current architecture — 1.5.1
 
 This describes implemented source behavior. It supersedes historical Room/native-only designs. Device performance and provider compatibility require separate TV validation.
 
@@ -8,7 +8,7 @@ This describes implemented source behavior. It supersedes historical Room/native
 Compose lazy lists/grids retain saveable scroll state within their Navigation entries. `ReturnFocusScope` saves the selected card/action key and restores it on return/resume; Details defaults to the Play action once it exists. Restoration does not repeatedly request focus during ordinary recomposition. Removed items may fall back to normal Compose focus behavior. Physical remote testing remains necessary.
 
 ## Metadata repository
-`MediaRepository` uses Retrofit/OkHttp against OMDb with one bundled demo key or one locally supplied key. No key rotation or pooling exists. Logging of request URLs is disabled because query strings include credentials.
+`MediaRepository` uses Retrofit/OkHttp against OMDb with one bundled demo key or up to five locally supplied keys. Invalid/inactive credentials fail over in order, with session rejection tracking and bounded attempts. Quota, network, service and no-results failures do not cycle credentials. Logging of request URLs is disabled because query strings include credentials.
 
 - At most two concurrent metadata requests across repository instances.
 - 64 striped mutexes bound synchronization memory and coalesce matching detail/search/season requests.

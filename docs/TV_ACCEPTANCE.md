@@ -1,4 +1,4 @@
-# Real-TV acceptance — 1.5.0
+# Real-TV acceptance — 1.5.1
 
 Record installed version/code/commit from Settings, device model/Android/WebView, signing certificate, and whether this is a fresh install or same-certificate update. Do not uninstall a valued installation just to test: a signing mismatch needs a deliberate data-loss decision.
 
@@ -14,4 +14,4 @@ Record installed version/code/commit from Settings, device model/Android/WebView
 
 For a failure, supply: exact action sequence, title/source/season/episode voluntarily if relevant, installed build, approximate time, and a redacted diagnostic report. Viewing history is not collected in reports automatically.
 
-Final UI checks: on a narrower layout, reach Settings from the top navigation; visit all five sections; verify blank Save personal key is disabled; verify View/Copy/Share waits for a generated report; read the diagnostic dialog with arrows and close it; verify busy controls do not accept repeated requests. Automated Compose tests cover narrow navigation, section switching and disabled/key-entry actions. Actual TV visual/remote validation remains an owner check.
+Final UI checks: on a narrower layout, reach Settings from the top navigation; visit all five sections; verify blank Save personal keys is disabled; verify View/Copy/Share waits for a generated report; read the diagnostic dialog with arrows and close it; verify busy controls do not accept repeated requests. Automated Compose tests cover narrow navigation, section switching and disabled/key-entry actions. Actual TV visual/remote validation remains an owner check.

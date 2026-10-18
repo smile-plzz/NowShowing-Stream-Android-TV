@@ -21,7 +21,7 @@ Include the version/build from Settings, TV model, Android version, source name,
 
 Avoid clearing app storage as a routine troubleshooting step. It removes watchlists, viewing history, source preferences, and caches.
 
-## Metadata recovery in 1.5.0
+## Metadata recovery in 1.5.1
 Quota reached, invalid/inactive key, connection failure and service failure have different explanations. Home → Retry metadata resets the bounded request circuit; Search → Retry search does likewise. Avoid repeated retries during a provider quota outage. Settings → Metadata accepts up to five authorized personal OMDb keys, separated by commas or spaces; the explicit Use demo key action restores the shared key. Rejected credentials are skipped until Retry or a configuration change; quota/network/service/no-results failures do not cycle keys. Additional personal keys are never bundled in public source. Existing single-key settings are retained.
 
 Warm metadata remains useful; expired fallback is identified on Home/Diagnostics and retained at most 30 days after expiry. Clear metadata & image caches rebuilds only these caches and preserves watchlist, history, watched labels and settings. Cache clearing cannot fix an exhausted key and removes useful offline metadata.

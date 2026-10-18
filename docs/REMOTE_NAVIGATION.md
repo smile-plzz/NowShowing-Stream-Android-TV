@@ -1,4 +1,4 @@
-# TV remote controls — 1.5.0
+# TV remote controls — 1.5.1
 
 ## Browsing
 Arrows move focus, OK selects, and Back returns through the navigation stack. Selected cards/actions and list/grid position are restored when possible. Focus has a bright outline; a checkmark/tint indicates a selected source or episode.
