@@ -11,6 +11,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
+import com.nowshowing.tv.data.repository.MetadataHealth
 
 data class MoodUiState(
     val selectedMood: MoodItem? = null,
@@ -25,8 +27,12 @@ class MoodViewModel(application: Application) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow(MoodUiState())
     val uiState: StateFlow<MoodUiState> = _uiState.asStateFlow()
 
+    private var recommendationJob: Job? = null
+    fun retry() { MetadataHealth.retry(); _uiState.value.selectedMood?.let(::selectMood) }
+
     fun selectMood(mood: MoodItem) {
-        viewModelScope.launch {
+        recommendationJob?.cancel()
+        recommendationJob = viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
                 selectedMood = mood,
                 isLoading = true,
@@ -43,7 +49,7 @@ class MoodViewModel(application: Application) : AndroidViewModel(application) {
                 statusMessage = if (results.isNotEmpty()) {
                     "Showing matches for: ${mood.name} — ${mood.description}"
                 } else {
-                    "No matches found for ${mood.name.lowercase()} right now. Try another mood!"
+                    MetadataHealth.failure.value?.message ?: "No matches found for ${mood.name.lowercase()} right now. Try another mood."
                 },
                 recommendations = results
             )

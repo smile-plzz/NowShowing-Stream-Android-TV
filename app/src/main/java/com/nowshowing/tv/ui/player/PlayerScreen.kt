@@ -1092,6 +1092,7 @@ internal fun TvPlayerActionButton(
     icon: androidx.compose.ui.graphics.vector.ImageVector?,
     isAccent: Boolean = false,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -1104,6 +1105,7 @@ internal fun TvPlayerActionButton(
     }
 
     val textColor = when {
+        !enabled -> TextMuted
         isFocused -> Color.Black
         isAccent -> AccentCyan
         else -> TextPrimary
@@ -1124,7 +1126,7 @@ internal fun TvPlayerActionButton(
                 color = if (isFocused) Color.White else if (isAccent) AccentCyan.copy(alpha = 0.5f) else Color.White.copy(alpha = 0.12f),
                 shape = RoundedCornerShape(8.dp)
             )
-            .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
+            .clickable(enabled = enabled, interactionSource = interactionSource, indication = null, onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -1140,7 +1142,7 @@ internal fun TvPlayerActionButton(
         Text(
             text = label,
             color = textColor,
-            fontSize = 14.sp,
+            fontSize = 16.sp,
             fontWeight = FontWeight.Bold
         )
     }

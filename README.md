@@ -2,11 +2,18 @@
 
 A standalone movie and series discovery app for Android TV / Google TV, by Ismail Hossain.
 
-**Development candidate: 1.5.0-rc.2 · Android version code 15002**
+**Sideload release: 1.5.0 · Android version code 15003**
 
 [Published APK releases](https://github.com/smile-plzz/NowShowing-Stream-Android-TV/releases) · [Build runs and candidate artifacts](https://github.com/smile-plzz/NowShowing-Stream-Android-TV/actions/workflows/build-apk.yml) · [Installation](docs/INSTALLATION.md)
 
-A candidate version in source does not mean it has been published. Download the version you intend to test from an actual release or successful CI artifact bundle.
+Download the APK from the versioned GitHub Release. Releases include both APK variants, checksums, public certificate details and exact build information. Development-signed downloads are explicitly marked as prereleases; they are usable sideload builds, not a claim of permanent signing.
+
+## Final UI polish
+- Scrollable remote navigation keeps every destination reachable on narrower TV layouts.
+- Settings is grouped into Playback, Metadata, Privacy, Help and About.
+- Readable, scrollable diagnostic reports and disabled busy actions provide clear feedback.
+- Personal keys save explicitly; switching back to the demo key is a separate action.
+- Browse/Mood recovery states explain failures. First-use player hints disappear after eight seconds; remote help remains available.
 
 ## Daily TV use
 - D-pad browsing, search, watchlist, three genre shelves and curated featured/movie/series picks.
@@ -40,7 +47,7 @@ Kotlin, Compose, ViewModels/StateFlow, Retrofit/OkHttp, Coil, SQLiteOpenHelper, 
 - [Architecture](docs/ARCHITECTURE.md) · [Web playback](docs/WEB_PLAYBACK.md)
 - [Remote controls](docs/REMOTE_NAVIGATION.md) · [Troubleshooting](docs/TROUBLESHOOTING.md)
 - [Known limitations](docs/KNOWN_LIMITATIONS.md) · [Privacy and blocking](docs/PRIVACY_AND_BLOCKING.md)
-- [Candidate notes](docs/releases/v1.5.0-rc.2.md) · [Signing](docs/RELEASE_SIGNING.md)
+- [Release notes](docs/releases/v1.5.0.md) · [Signing](docs/RELEASE_SIGNING.md)
 - [Release checklist](docs/RELEASE_CHECKLIST.md) · [Real-TV acceptance](docs/TV_ACCEPTANCE.md)
 
 Historical design documents are retained for context and are not the current implementation specification.

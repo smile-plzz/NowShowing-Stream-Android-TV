@@ -1,4 +1,4 @@
-# Known limitations — 1.5.0-rc.2
+# Known limitations — 1.5.0
 
 - Movie/series sources are external web/iframe providers inside WebView. Native diagnostic demos are independent of selected IMDb titles. No stream extraction or DRM bypass is implemented.
 - Web completion/progress is not integrated. Default-on autoplay does not automatically advance these providers; use manual Next episode. No web timestamp resume or completion-driven related panel is claimed.

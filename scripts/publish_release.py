@@ -1,5 +1,7 @@
 """Create a draft with all assets, then publish; never overwrite an existing release."""
 import json
+import os
+from package_release import read_version, verify_bundle
 from pathlib import Path
 import shutil
 import subprocess
@@ -10,7 +12,10 @@ def gh(*args, **kwargs):
 
 
 def main():
-    info = json.loads(Path("dist/build-info.json").read_text())
+    info = verify_bundle("dist", os.environ.get("GITHUB_SHA"))
+    version, code = read_version(Path("app/build.gradle.kts").read_text())
+    if (info["version"], info["versionCode"]) != (version, code):
+        raise ValueError("Bundle version differs from the publishing checkout")
     tag = "v" + info["version"]
     existing = subprocess.run(["gh", "release", "view", tag, "--json", "tagName"],
                               capture_output=True, text=True)

@@ -53,6 +53,7 @@ fun BrowseScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val gridState = rememberLazyGridState()
+    val failure by com.nowshowing.tv.data.repository.MetadataHealth.failure.collectAsState()
 
     LaunchedEffect(kind) {
         viewModel.loadBrowse(kind)
@@ -98,6 +99,16 @@ fun BrowseScreen(
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator(color = AccentCyan)
+            }
+        } else if (uiState.items.isEmpty()) {
+            Column(Modifier.fillMaxSize().padding(40.dp), verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("Titles are unavailable", color = TextPrimary, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                Text(failure?.message ?: "Try loading this collection again.", color = TextMuted, fontSize = 16.sp)
+                Spacer(Modifier.height(16.dp))
+                com.nowshowing.tv.ui.player.TvPlayerActionButton("Retry collection", null) { viewModel.retryBrowse(kind) }
+                Spacer(Modifier.height(8.dp))
+                com.nowshowing.tv.ui.player.TvPlayerActionButton("Metadata settings", null) { onNavigate("settings") }
             }
         } else {
             LazyVerticalGrid(

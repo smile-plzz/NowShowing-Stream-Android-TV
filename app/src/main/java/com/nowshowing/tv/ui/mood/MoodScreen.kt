@@ -91,7 +91,7 @@ fun MoodScreen(
                         text = uiState.statusMessage,
                         color = TextMuted,
                         fontSize = 13.sp,
-                        maxLines = 1,
+                        maxLines = 3,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
@@ -132,11 +132,14 @@ fun MoodScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "Pick a mood above to generate precision recommendations.",
-                        color = TextMuted,
-                        fontSize = 14.sp
-                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(if (uiState.selectedMood == null) "Choose a mood to discover something new." else uiState.statusMessage,
+                            color = TextMuted, fontSize = 17.sp)
+                        if (uiState.selectedMood != null) {
+                            Spacer(Modifier.height(12.dp))
+                            com.nowshowing.tv.ui.player.TvPlayerActionButton("Try this mood again", null) { viewModel.retry() }
+                        }
+                    }
                 }
             } else {
                 LazyVerticalGrid(

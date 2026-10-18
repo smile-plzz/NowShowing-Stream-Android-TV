@@ -21,13 +21,16 @@ Include the version/build from Settings, TV model, Android version, source name,
 
 Avoid clearing app storage as a routine troubleshooting step. It removes watchlists, viewing history, source preferences, and caches.
 
-## Metadata recovery in 1.5.0-rc.2
-Quota reached, invalid/inactive key, connection failure and service failure have different explanations. Home → Retry metadata resets the bounded request circuit; Search → Retry search does likewise. Avoid repeated retries during a provider quota outage. Settings → Metadata accepts one authorized personal OMDb key; blank restores the demo key. No pooling is performed.
+## Metadata recovery in 1.5.0
+Quota reached, invalid/inactive key, connection failure and service failure have different explanations. Home → Retry metadata resets the bounded request circuit; Search → Retry search does likewise. Avoid repeated retries during a provider quota outage. Settings → Metadata accepts one authorized personal OMDb key; the explicit Use demo key action restores the shared key. No pooling is performed.
 
 Warm metadata remains useful; expired fallback is identified on Home/Diagnostics and retained at most 30 days after expiry. Clear metadata & image caches rebuilds only these caches and preserves watchlist, history, watched labels and settings. Cache clearing cannot fix an exhausted key and removes useful offline metadata.
 
 ## Diagnostic report
-Settings → Refresh diagnostics, then Copy or Share. Reports include app version/code/commit, Android/device/WebView, public certificate, cache sizes, heap snapshot and safe metadata error categories. They exclude API keys, provider URLs and viewing history. If no share app is installed, photograph the visible report. A successful provider page load is not proof of video playback.
+Settings → About → Refresh report, then View, Copy or Share. Reports include app version/code/commit, Android/device/WebView, public certificate, cache sizes, heap snapshot and safe metadata error categories. They exclude API keys, provider URLs and viewing history. If no share app is installed, photograph the visible report. A successful provider page load is not proof of video playback.
 
 ## Episode ending remains on provider screen
 Current web sources lack a verified completion contract. Open controls with Back, then Next episode (initial focus for series). Autoplay's setting is persisted but cannot provide automatic web advancement. Missing episode metadata offers recovery; source catalog availability can differ from OMDb. See TV_ACCEPTANCE.md.
+
+## Navigation or settings feels cramped
+The top navigation and Settings tabs scroll horizontally. Keep pressing Left/Right to reach an offscreen destination. Settings separates playback, metadata, privacy, help and diagnostics. Player hints disappear after eight seconds; Back/Menu always provides repeatable help.
