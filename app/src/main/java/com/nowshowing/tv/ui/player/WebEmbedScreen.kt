@@ -49,6 +49,11 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
     var section by remember(state.webEmbedUrl) { mutableStateOf("controls") }
     val helpPrefs = remember { context.getSharedPreferences("tv_remote_help", Context.MODE_PRIVATE) }
     var seenHelp by remember { mutableStateOf(helpPrefs.getBoolean("seen", false)) }
+    var showHint by remember(state.webEmbedUrl) { mutableStateOf(!seenHelp) }
+    LaunchedEffect(state.webEmbedUrl, seenHelp) {
+        showHint = !seenHelp
+        if (!seenHelp) { kotlinx.coroutines.delay(8_000); showHint = false }
+    }
     var failure by remember(state.webEmbedUrl) { mutableStateOf<String?>(null) }
     var loading by remember(state.webEmbedUrl) { mutableStateOf(true) }
     var attempt by remember { mutableIntStateOf(0) }
@@ -200,12 +205,16 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
             }
         }
 
-        if (!menu && !seenHelp) {
+        if (!menu && showHint) {
             Text("Arrows move pointer · OK clicks · Back opens controls and help", color = TextPrimary,
                 fontSize = 16.sp, modifier = Modifier.align(Alignment.BottomCenter).background(BgDark).padding(16.dp))
         }
         if (loading && !menu) {
-            CircularProgressIndicator(Modifier.align(Alignment.TopEnd).padding(24.dp), color = AccentCyan)
+            Row(Modifier.align(Alignment.TopEnd).background(BgDark).padding(20.dp),
+                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                CircularProgressIndicator(Modifier.size(24.dp), color = AccentCyan)
+                Text("Opening ${state.currentSource.name} · Back for controls", color = TextPrimary, fontSize = 16.sp)
+            }
         }
         if (menu) {
             Column(

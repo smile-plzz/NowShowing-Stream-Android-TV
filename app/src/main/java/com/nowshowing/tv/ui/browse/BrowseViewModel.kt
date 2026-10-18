@@ -35,6 +35,8 @@ class BrowseViewModel(application: Application) : AndroidViewModel(application) 
     private var browseJob: Job? = null
     private var rawItems: List<OmdbTitleDetail> = emptyList()
 
+    fun retryBrowse(kind: String) { com.nowshowing.tv.data.repository.MetadataHealth.retry(); loadBrowse(kind) }
+
     fun loadBrowse(kind: String) {
         if (_uiState.value.kind == kind && (rawItems.isNotEmpty() || browseJob?.isActive == true)) return
         browseJob?.cancel()

@@ -30,6 +30,10 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -109,6 +113,7 @@ fun TvFocusableCard(
                     ),
                     shape = RoundedCornerShape(10.dp)
                 )
+                .semantics { contentDescription = listOf(title, year, badge.orEmpty()).filter { it.isNotBlank() }.joinToString(", ") }
                 .focusRequester(returnRequester)
                 .clickable(
                     interactionSource = interactionSource,
@@ -116,50 +121,16 @@ fun TvFocusableCard(
                     onClick = { rememberSelection(); onClick() }
                 )
         ) {
-            // Poster Image with Coil Downsampling & Shimmer
-            if (posterUrl.isNotBlank() && posterUrl != "N/A") {
-                val context = LocalContext.current
-                SubcomposeAsyncImage(
-                    model = ImageRequest.Builder(context)
-                        .data(posterUrl)
-                        .size(300, 450)
-                        .crossfade(false)
-                        .build(),
-                    contentDescription = title,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
-                    loading = {
-                        ShimmerBox(modifier = Modifier.fillMaxSize())
-                    },
-                    error = {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(SurfaceDark),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "No Poster",
-                                color = TextMuted,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
-                    }
-                )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(SurfaceDark),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "No Poster",
-                        color = TextMuted,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium
-                    )
+            // Stable artwork bounds, with no subcomposition per lazy-grid poster.
+            var artworkFailed by remember(posterUrl) { mutableStateOf(false) }
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(if (artworkFailed || posterUrl.isBlank() || posterUrl == "N/A") "Artwork unavailable" else "Loading artwork…",
+                    color = TextMuted, fontSize = 14.sp)
+                if (posterUrl.isNotBlank() && posterUrl != "N/A") {
+                    coil.compose.AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current).data(posterUrl).size(300, 450).crossfade(false).build(),
+                        contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize(),
+                        onError = { artworkFailed = true })
                 }
             }
 

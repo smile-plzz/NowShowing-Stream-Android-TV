@@ -14,20 +14,23 @@
 | Recently opened restarts the video | Expected for providers without their own resume behavior. The app remembers episode/source, not an inaccessible timestamp. |
 | Home shelves are empty | Try Refresh shelves and check network/API quota. Valid cached shelves and local history are independent of provider playback. |
 | A source breaks while filtering is enabled | Try a different source first. Review only that source's existing exemption controls if necessary; HTTPS/certificate protections remain enforced. |
-| Native playback needs checking | Settings > Playback diagnostics opens fixed demo videos. They test Media3 and codecs; they do not resolve your selected movie. |
+| Native playback needs checking | Settings > Help > Native playback checks opens fixed demo videos. They test Media3 and codecs; they do not resolve your selected movie. |
 
 ## Reporting a problem
 Include the version/build from Settings, TV model, Android version, source name, movie title or season/episode, steps taken, and whether another source works. Never post passwords, signing keys, private cookies, or tokens.
 
 Avoid clearing app storage as a routine troubleshooting step. It removes watchlists, viewing history, source preferences, and caches.
 
-## Metadata recovery in 1.5.0-rc.2
-Quota reached, invalid/inactive key, connection failure and service failure have different explanations. Home → Retry metadata resets the bounded request circuit; Search → Retry search does likewise. Avoid repeated retries during a provider quota outage. Settings → Metadata accepts one authorized personal OMDb key; blank restores the demo key. No pooling is performed.
+## Metadata recovery in 1.5.0
+Quota reached, invalid/inactive key, connection failure and service failure have different explanations. Home → Retry metadata resets the bounded request circuit; Search → Retry search does likewise. Avoid repeated retries during a provider quota outage. Settings → Metadata accepts one authorized personal OMDb key; the explicit Use demo key action restores the shared key. No pooling is performed.
 
 Warm metadata remains useful; expired fallback is identified on Home/Diagnostics and retained at most 30 days after expiry. Clear metadata & image caches rebuilds only these caches and preserves watchlist, history, watched labels and settings. Cache clearing cannot fix an exhausted key and removes useful offline metadata.
 
 ## Diagnostic report
-Settings → Refresh diagnostics, then Copy or Share. Reports include app version/code/commit, Android/device/WebView, public certificate, cache sizes, heap snapshot and safe metadata error categories. They exclude API keys, provider URLs and viewing history. If no share app is installed, photograph the visible report. A successful provider page load is not proof of video playback.
+Settings → About → Refresh report, then View, Copy or Share. Reports include app version/code/commit, Android/device/WebView, public certificate, cache sizes, heap snapshot and safe metadata error categories. They exclude API keys, provider URLs and viewing history. If no share app is installed, photograph the visible report. A successful provider page load is not proof of video playback.
 
 ## Episode ending remains on provider screen
 Current web sources lack a verified completion contract. Open controls with Back, then Next episode (initial focus for series). Autoplay's setting is persisted but cannot provide automatic web advancement. Missing episode metadata offers recovery; source catalog availability can differ from OMDb. See TV_ACCEPTANCE.md.
+
+## Navigation or settings feels cramped
+The top navigation and Settings tabs scroll horizontally. Keep pressing Left/Right to reach an offscreen destination. Settings separates playback, metadata, privacy, help and diagnostics. Player hints disappear after eight seconds; Back/Menu always provides repeatable help.

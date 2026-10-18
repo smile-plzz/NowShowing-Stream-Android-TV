@@ -1,4 +1,4 @@
-# Current architecture — 1.5.0-rc.2
+# Current architecture — 1.5.0
 
 This describes implemented source behavior. It supersedes historical Room/native-only designs. Device performance and provider compatibility require separate TV validation.
 
@@ -48,3 +48,10 @@ Coil decoded image memory is capped at 16 MiB, disk at 50 MiB. Poster requests r
 `FilterListManager` fetches the maintained Android repository's raw bundled list paths. Updates serialize against initialization, cap each response at 512 KiB, validate supported rule-shaped text, close responses and use AtomicFile replacement with rollback. Each list updates independently; result is COMPLETE, PARTIAL or FAILED. Unchanged/failed lists retain known-good files or bundled fallback.
 
 Settings shows installed version/code/commit, build variant, device model, Android/API, WebView, public signing certificate SHA-256, cache payload/image sizes, heap snapshot and safe metadata error categories. Reports exclude viewing history, provider URLs, keys and device serials. Copy/share uses the Android clipboard/share chooser; TVs without targets can photograph the visible report. A heap snapshot is not a memory-leak diagnosis. Certificate permanence cannot be inferred from the APK; compare it with the previous install.
+
+## Final TV UI pass
+Primary navigation is a bounded LazyRow rather than an overflowing fixed Row. Tabs expose selection semantics and one focus target. Settings keeps five section tabs above a keyed scrolling body; Metadata opens initially when a metadata failure is recorded. Busy actions are disabled and diagnostic exports require a completed report. The report dialog has focusable text chunks and restores focus on close.
+
+Poster cards use AsyncImage with stable dimensions and static loading/error text instead of SubcomposeAsyncImage per lazy item. Browse has retry/settings recovery actions; Mood cancels superseded work and distinguishes service failure from no matching recommendations. First-use pointer hints hide after eight seconds; app controls/help remain available. These changes are covered by JVM Compose layout/interaction tests, not a claim of physical-TV profiling.
+
+Before public publication, the publisher independently rechecks APK checksums, both variants, public certificate report presence, version/code, exact commit and required prerelease status. It never overwrites an existing version.

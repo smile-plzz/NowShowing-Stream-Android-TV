@@ -16,6 +16,37 @@ def read_version(text):
     return name[1], int(code[1])
 
 
+def verify_bundle(directory, expected_commit=None):
+    """Refuse incomplete, mixed-version or modified downloads before publication."""
+    directory = Path(directory)
+    info = json.loads((directory / "build-info.json").read_text())
+    version, code = read_version(f'versionName = "{info["version"]}"\nversionCode = {info["versionCode"]}')
+    if code <= 0 or not re.fullmatch(r"[0-9a-f]{40}", info["commit"]):
+        raise ValueError("Invalid build identity")
+    if expected_commit and info["commit"] != expected_commit:
+        raise ValueError("Artifact commit differs from the publishing checkout")
+    if info["signingMode"] not in {"development", "permanent"}:
+        raise ValueError("Unknown signing mode")
+    if (info["signingMode"] != "permanent" or "-" in version) and info["prerelease"] is not True:
+        raise ValueError("Candidate/development signing requires prerelease status")
+    expected = {f"NowShowing-TV-{version}-{kind}.apk" for kind in ("release", "debug")}
+    checksums = {}
+    for line in (directory / "SHA256SUMS.txt").read_text().splitlines():
+        digest, name = line.split("  ", 1)
+        if name not in expected or name in checksums or not re.fullmatch(r"[0-9a-f]{64}", digest):
+            raise ValueError("Unexpected checksum entry")
+        checksums[name] = digest
+    if set(checksums) != expected:
+        raise ValueError("Both APK checksums are required")
+    certificates = (directory / "SIGNING-CERTIFICATES.txt").read_text()
+    for name, digest in checksums.items():
+        if hashlib.sha256((directory / name).read_bytes()).hexdigest() != digest:
+            raise ValueError("APK checksum mismatch")
+        if name not in certificates:
+            raise ValueError("Missing public signing report")
+    return info
+
+
 def main():
     version, code = read_version(Path("app/build.gradle.kts").read_text())
     mode = os.environ.get("SIGNING_MODE", "development")
@@ -44,6 +75,7 @@ def main():
         "signingMode": mode, "run": os.environ.get("GITHUB_RUN_ID"),
         "prerelease": "-" in version or mode != "permanent"
     }, indent=2) + "\n")
+    verify_bundle(out, os.environ["GITHUB_SHA"])
 
 
 if __name__ == "__main__":

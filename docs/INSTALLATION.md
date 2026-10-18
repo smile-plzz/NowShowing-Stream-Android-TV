@@ -1,4 +1,4 @@
-> Candidate 1.5.0-rc.2 is available only when its CI artifact or published release exists. PR bundles are under the successful Actions run → Artifacts → NowShowing-TV-Release-Bundle. Extract the bundle before sideloading. They are development signed and may not upgrade an existing installation. Compare public certificate fingerprints first.
+> Download from the actual versioned GitHub Release. Compare public signing certificates before upgrading an existing installation. A certificate mismatch cannot be repaired by renaming the APK; uninstalling erases local data.
 
 # Install and update NowShowing TV
 
@@ -7,7 +7,7 @@ Android TV or Google TV, Android 8.0 / API 26 or later. Samsung Tizen and LG web
 
 ## Download
 Open [GitHub Releases](https://github.com/smile-plzz/NowShowing-Stream-Android-TV/releases).
-If **v1.5.0-rc.2** has actually been published, expand its Assets and download **NowShowing-TV-1.5.0-rc.2-release.apk**. Otherwise use the successful candidate CI artifact linked from the PR; do not assume a release tag exists.
+Open **v1.5.0**, expand Assets, and download **NowShowing-TV-1.5.0-release.apk**. If marked Prerelease, read the signing notice before updating. Debug APKs are for troubleshooting.
 The debug APK is for development. Source-code ZIP/TAR downloads are not installable apps.
 
 The release includes SHA256SUMS.txt, public signing-certificate fingerprints, and build-info.json. These identify exactly which version, commit, and signing mode you downloaded. This candidate uses development signing until a permanent key is configured; read the release notes before updating.
@@ -26,7 +26,7 @@ Use Android SDK Platform Tools on your computer. Enable developer options and th
 Older devices commonly expose network ADB on port 5555:
 ```sh
 adb connect TV_IP:5555
-adb install -r NowShowing-TV-1.5.0-rc.2-release.apk
+adb install -r NowShowing-TV-1.5.0-release.apk
 adb shell am start -n com.nowshowing.tv/.ui.MainActivity
 ```
 Newer devices may require Wireless debugging pairing instead:
@@ -38,7 +38,7 @@ Use the ports shown on your TV; the pairing and debugging ports can differ. Conf
 
 ## Updating without losing local data
 Install the newer APK over the existing app. Android preserves local data when the package name and signing certificate match and the version code is accepted.
-This build is version **1.5.0-rc.2**, Android version code **15002**. Older builds may show 1.0.0 in Android despite a different GitHub release tag.
+This build is version **1.5.0**, Android version code **15003**. Older builds may show 1.0.0 in Android despite a different GitHub release tag.
 
 If Android reports a signing mismatch / UPDATE_INCOMPATIBLE, stop. Reinstalling or clearing app storage erases local watchlists, history, preferences, and caches. A previous runner-generated development certificate cannot be reconstructed from its APK. Obtain a matching-key build if the old key exists; otherwise a deliberate fresh installation is required. There is currently no in-app export/restore.
 
@@ -51,7 +51,7 @@ Open a title, select an episode if needed, then Open player.
 - Back exits provider fullscreen first, opens app controls next, then returns to the title.
 - Menu opens app controls directly.
 - Return to video returns control to the pointer.
-- Change source offers existing movie providers. Demo streams live under Settings > Playback diagnostics.
+- Change source offers existing movie providers. Demo streams live under Settings > Help > Native playback checks.
 - Remote help is always available in the player and Settings.
 
 Recently opened remembers the title, episode, and source. It does not guarantee timestamp resume inside third-party players. See [known limitations](KNOWN_LIMITATIONS.md) and [troubleshooting](TROUBLESHOOTING.md).

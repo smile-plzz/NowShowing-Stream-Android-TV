@@ -144,7 +144,10 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically) {
                         Text("Find your next watch", color = TextMuted, fontSize = 14.sp)
-                        TvPlayerActionButton("Manage history", null, modifier = Modifier.focusRequester(historyFocus)) { manageHistory = true }
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            TvPlayerActionButton(if (uiState.isLoading) "Loading…" else "Refresh", null, enabled = !uiState.isLoading) { viewModel.retryMetadata() }
+                            TvPlayerActionButton("Manage history", null, modifier = Modifier.focusRequester(historyFocus)) { manageHistory = true }
+                        }
                     }
                 }
                 if (uiState.recentlyOpened.isNotEmpty()) {
@@ -194,12 +197,12 @@ fun HomeScreen(
                     }
                 }
 
-                item(key = "load_feedback") {
+                if (uiState.isLoading || uiState.message != null) item(key = "load_feedback") {
                     Column(Modifier.padding(horizontal = 48.dp, vertical = 8.dp)) {
                         if (uiState.isLoading) Text("Loading more shelves…", color = TextMuted, fontSize = 13.sp)
                         uiState.message?.let { Text(it, color = TextMuted, fontSize = 14.sp) }
                         if (!uiState.isLoading) {
-                            TvPlayerActionButton(if (uiState.message != null) "Retry metadata" else "Refresh shelves", null, modifier = Modifier.focusRequester(recoveryFocus)) { viewModel.retryMetadata() }
+                            TvPlayerActionButton("Retry metadata", null, modifier = Modifier.focusRequester(recoveryFocus)) { viewModel.retryMetadata() }
                             if (uiState.message != null) TvPlayerActionButton("Metadata settings", null) { onNavigate("settings") }
                         }
                     }

@@ -1,3 +1,7 @@
+# 1.5.0 — final UI and distribution polish
+
+Scrollable TV navigation; five clear Settings sections; readable diagnostic dialog; explicit personal/demo-key actions; disabled busy controls; Browse/Mood recovery; cancellation of superseded Mood requests; disappearing first-use hints; static AsyncImage artwork states. Adds Compose UI regressions and publication bundle integrity checks. The gated workflow ships versioned APKs with checksums and public certificate/build details. Development signing is explicitly distributed as a prerelease. Web autoplay/progress and physical-TV validation remain limited as documented.
+
 # 1.5.0-rc.2 — daily-use candidate
 
 Metadata recovery/caching, watched-label preservation, safe filter replacement, direct player entry, default Play focus, cached related titles, bounded image/network work, manual episode controls and persisted autoplay preference, About and redacted Diagnostics. Web completion remains unsupported. Tests and release build evidence belong to the final CI run; TV checks remain pending. See docs/releases/v1.5.0-rc.2.md.

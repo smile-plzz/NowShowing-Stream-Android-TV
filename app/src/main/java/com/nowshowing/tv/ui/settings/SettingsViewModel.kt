@@ -17,6 +17,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 data class SettingsUiState(
+    val reportReady: Boolean = false,
+    val isRefreshingDiagnostics: Boolean = false,
+    val hasPersonalKey: Boolean = false,
     val autoplay: Boolean = true,
     val metadataStatus: String = "No failure recorded; not a connectivity test",
     val diagnosticText: String = "Select Refresh diagnostics to collect device and cache information.",
@@ -53,6 +56,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun refreshState() {
         _uiState.value = _uiState.value.copy(
             autoplay = playback.autoplay,
+            hasPersonalKey = !getApplication<Application>().getSharedPreferences("metadata", android.content.Context.MODE_PRIVATE).getString("key", null).isNullOrBlank(),
             isDomainValidationEnabled = preferences.isDomainValidationEnabled,
             isTrackerBlockingEnabled = preferences.isTrackerBlockingEnabled,
             isRedirectIsolationEnabled = preferences.isRedirectIsolationEnabled,
@@ -105,16 +109,18 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     fun toggleAutoplay() { playback.autoplay = !playback.autoplay; refreshState() }
 
-    fun saveMetadataKey(value: String) {
+    fun saveMetadataKey(value: String): Boolean {
         val clean = value.trim()
         if (clean.isNotEmpty() && !clean.matches(Regex("[A-Za-z0-9]{6,64}"))) {
             _uiState.value = _uiState.value.copy(maintenanceMessage = "Enter a valid OMDb key (letters and numbers).")
-            return
+            return false
         }
         getApplication<Application>().getSharedPreferences("metadata", android.content.Context.MODE_PRIVATE)
             .edit().apply { if (clean.isBlank()) remove("key") else putString("key", clean) }.apply()
         MetadataHealth.retry()
+        refreshState()
         _uiState.value = _uiState.value.copy(maintenanceMessage = "Metadata configuration saved. Retry Home or Search.")
+        return true
     }
 
     fun retryMetadata() {
@@ -123,9 +129,15 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun refreshDiagnostics() {
+        if (_uiState.value.isRefreshingDiagnostics) return
+        _uiState.value = _uiState.value.copy(isRefreshingDiagnostics = true, reportReady = false)
         viewModelScope.launch {
-            val report = withContext(Dispatchers.IO) { diagnosticReport(getApplication()) }
-            _uiState.value = _uiState.value.copy(diagnosticText = report)
+            val report = withContext(Dispatchers.IO) {
+                runCatching { diagnosticReport(getApplication()) }.getOrNull()
+            }
+            _uiState.value = _uiState.value.copy(isRefreshingDiagnostics = false, reportReady = report != null,
+                diagnosticText = report ?: "Report unavailable. Try refreshing again.",
+                maintenanceMessage = if (report == null) "Diagnostic report could not be created. Please retry." else _uiState.value.maintenanceMessage)
         }
     }
 
