@@ -1,4 +1,4 @@
-# Current playback contract — 1.5.0
+# Current playback contract — 1.5.1
 
 Selected movies and series use existing provider HTML/iframe players in Android System WebView. Media3 remains available for direct diagnostic demo streams; choosing a demo does not play the selected movie.
 

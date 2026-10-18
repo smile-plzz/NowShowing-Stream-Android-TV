@@ -8,9 +8,12 @@ import java.util.concurrent.TimeUnit
 
 object ApiClient {
     const val DEFAULT_OMDB_KEY = "f5dad388"
-    fun metadataKey(context: android.content.Context): String =
-        context.getSharedPreferences("metadata", android.content.Context.MODE_PRIVATE)
-            .getString("key", null)?.takeIf { it.isNotBlank() } ?: DEFAULT_OMDB_KEY
+    fun metadataKeys(context: android.content.Context): List<String> {
+        // Reuse the legacy preference so single-key installations upgrade without re-entry.
+        val stored = context.getSharedPreferences("metadata", android.content.Context.MODE_PRIVATE)
+            .getString("key", null).orEmpty()
+        return MetadataCredentials.parse(stored)?.takeIf { it.isNotEmpty() } ?: listOf(DEFAULT_OMDB_KEY)
+    }
 
     private const val BASE_URL = "https://www.omdbapi.com/"
 

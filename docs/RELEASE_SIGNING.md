@@ -1,7 +1,7 @@
 # Release signing and publication
 
 ## Current status
-v1.5.0 is a sideload release. Its build-info.json reports the actual signing mode; development signing forces GitHub prerelease status even though the app version is 1.5.0. Permanent-signing availability has not been verified for this pass; PR builds deliberately ignore signing secrets. The workflow automatically marks development-signed publications as prereleases.
+v1.5.1 is a sideload release. Its build-info.json reports the actual signing mode; development signing forces GitHub prerelease status even though the app version is 1.5.1. Permanent-signing availability has not been verified for this pass; PR builds deliberately ignore signing secrets. The workflow automatically marks development-signed publications as prereleases.
 
 Debug signing is not a production identity. Each runner may generate a different key, so it does not guarantee future in-place updates. The private key from a previous runner is not recoverable from its APK.
 
@@ -20,8 +20,8 @@ Adopting a new permanent key may require one intentional fresh install if the ol
 
 ## Version convention
 Update app/build.gradle.kts:
-- versionName: semantic user-facing version, such as 1.5.0
-- versionCode: strictly increasing Android integer; this candidate is 15003
+- versionName: semantic user-facing version, such as 1.5.1
+- versionCode: strictly increasing Android integer; this candidate is 15004
 - Git tag: v plus versionName
 - Release notes: docs/releases/v<versionName>.md
 

@@ -20,6 +20,7 @@ data class SettingsUiState(
     val reportReady: Boolean = false,
     val isRefreshingDiagnostics: Boolean = false,
     val hasPersonalKey: Boolean = false,
+    val personalKeyCount: Int = 0,
     val autoplay: Boolean = true,
     val metadataStatus: String = "No failure recorded; not a connectivity test",
     val diagnosticText: String = "Select Refresh diagnostics to collect device and cache information.",
@@ -56,6 +57,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun refreshState() {
         _uiState.value = _uiState.value.copy(
             autoplay = playback.autoplay,
+            personalKeyCount = com.nowshowing.tv.data.api.MetadataCredentials.parse(getApplication<Application>().getSharedPreferences("metadata", android.content.Context.MODE_PRIVATE).getString("key", "").orEmpty())?.size ?: 0,
             hasPersonalKey = !getApplication<Application>().getSharedPreferences("metadata", android.content.Context.MODE_PRIVATE).getString("key", null).isNullOrBlank(),
             isDomainValidationEnabled = preferences.isDomainValidationEnabled,
             isTrackerBlockingEnabled = preferences.isTrackerBlockingEnabled,
@@ -110,13 +112,13 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun toggleAutoplay() { playback.autoplay = !playback.autoplay; refreshState() }
 
     fun saveMetadataKey(value: String): Boolean {
-        val clean = value.trim()
-        if (clean.isNotEmpty() && !clean.matches(Regex("[A-Za-z0-9]{6,64}"))) {
-            _uiState.value = _uiState.value.copy(maintenanceMessage = "Enter a valid OMDb key (letters and numbers).")
+        val keys = com.nowshowing.tv.data.api.MetadataCredentials.parse(value)
+        if (keys == null) {
+            _uiState.value = _uiState.value.copy(maintenanceMessage = "Enter up to five valid OMDb keys, separated by commas or spaces.")
             return false
         }
         getApplication<Application>().getSharedPreferences("metadata", android.content.Context.MODE_PRIVATE)
-            .edit().apply { if (clean.isBlank()) remove("key") else putString("key", clean) }.apply()
+            .edit().apply { if (keys.isEmpty()) remove("key") else putString("key", keys.joinToString(",")) }.apply()
         MetadataHealth.retry()
         refreshState()
         _uiState.value = _uiState.value.copy(maintenanceMessage = "Metadata configuration saved. Retry Home or Search.")
