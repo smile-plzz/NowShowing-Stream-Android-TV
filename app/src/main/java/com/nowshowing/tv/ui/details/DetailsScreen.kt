@@ -99,8 +99,17 @@ fun DetailsScreen(
         } else {
             val detail = uiState.detail
             if (detail == null) {
+                val (recoveryFocus, _) = rememberReturnFocusRequester("details-action:play")
+                val focusState = com.nowshowing.tv.ui.common.LocalReturnFocus.current
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = "Could not load title details.", color = TextMuted, fontSize = 16.sp)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(com.nowshowing.tv.data.repository.MetadataHealth.failure.value?.message ?: "Could not load title details.", color = TextMuted, fontSize = 16.sp)
+                        com.nowshowing.tv.ui.player.TvPlayerActionButton("Retry details", null, modifier = Modifier.focusRequester(recoveryFocus)) {
+                            focusState?.pending = "details-action:play"
+                            com.nowshowing.tv.data.repository.MetadataHealth.retry()
+                            viewModel.loadDetails(imdbId, type)
+                        }
+                    }
                 }
             } else {
                 LazyColumn(
@@ -108,6 +117,10 @@ fun DetailsScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(bottom = 48.dp)
                 ) {
+                    if (com.nowshowing.tv.data.repository.MetadataHealth.usedStaleCache) {
+                        item(key = "stale_notice") { Text("Some metadata this session uses expired cached results. Check Settings → Diagnostics for service status.",
+                            color = TextMuted, fontSize = 16.sp, modifier = Modifier.padding(horizontal = 48.dp, vertical = 8.dp)) }
+                    }
                     // Hero Backdrop & Main Metadata Row
                     item(key = "header_info") {
                         Box(
@@ -539,7 +552,6 @@ private fun SourceChip(
                 color = if (isFocused) Color.White else if (isSelected) AccentCyan else Color.Transparent,
                 shape = RoundedCornerShape(6.dp)
             )
-            .focusable(interactionSource = interactionSource)
             .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -580,7 +592,6 @@ private fun SeasonPill(
                 color = if (isFocused) Color.White else if (isSelected) AccentCyan else Color.White.copy(alpha = 0.08f),
                 shape = RoundedCornerShape(8.dp)
             )
-            .focusable(interactionSource = interactionSource)
             .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {

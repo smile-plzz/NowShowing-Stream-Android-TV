@@ -1,28 +1,20 @@
-# Release checklist — 1.5.0-rc.1
+# Release checklist — 1.5.0-rc.2
 
-## Automated gates
-- JVM tests, including pointer acceleration, navigation policy, metadata cache, and history labels.
-- Python release-version parsing tests.
-- Debug and minified release APK assembly.
-- apksigner verification for both packaged APKs.
-- Versioned names, SHA-256 checksums, certificate report, exact source commit, and Android version code.
-- Publication only after a successful build; existing release versions cannot be overwritten.
-- No private keystore/password in release assets.
+## Implemented/prepared
+- [x] New version 1.5.0-rc.2 / 15002; no overwrite of a published version.
+- [x] Current architecture, playback, controls, limitations and acceptance documentation.
+- [x] Metadata/storage/filter/episode-policy regression tests added.
+- [x] Existing workflow packages APKs, checksums, public certificate details and build-info.json.
 
-## Honest release status
-This version is a prerelease sideload candidate. No permanent signing secrets were configured when prepared. Configuring a permanent key and verifying an upgrade on a real TV remain owner release tasks; see RELEASE_SIGNING.md. CI success is recorded by its workflow run, not assumed by this document.
+## Required before a dependable public release
+- [ ] Final commit JVM/Robolectric and release-script tests green.
+- [ ] Debug and minified release APKs assembled; apksigner verifies both.
+- [ ] Artifact version/commit/checksum agree with source and release notes.
+- [ ] Signing mode checked from actual build; stable certificate confirmed against installed build.
+- [ ] Same-certificate update tested without losing saved data.
+- [ ] Real-TV acceptance completed, including source playback, focus, cache recovery and long browsing.
+- [ ] Remaining provider-specific/manual progression limitations recorded.
+- [ ] Merge and public publication explicitly authorized; publish through existing workflow.
+- [ ] Actual published tag and downloadable asset links checked afterward.
 
-## Real-device acceptance
-Prior web playback has been owner-tested. Verify the new changes before promoting to stable:
-- Movie and series playback on the owner's TV, including one known-working source.
-- Short pointer taps, held acceleration, OK without repeat clicks, and provider fullscreen.
-- Fullscreen -> Back -> player -> Back -> app controls -> Back -> title.
-- First-use tips, dismissal, reset, and help.
-- Source/episode checkmarks versus remote focus.
-- Episode metadata, season selection, and handling missing metadata.
-- Returning to the selected browsing card and episode.
-- Recent history/watchlist persistence on same-certificate upgrade.
-- Settings diagnostics, Home, search, mood, and watchlist regression.
-- Background/foreground, slow network, unavailable providers, and longer viewing.
-
-Do not claim permanent-signing readiness, universal provider compatibility, or measured iframe progress until those capabilities are actually established.
+A PR build or candidate version in README is not a published release. CI does not establish provider playback or real-device performance. PR artifacts use development signing; a new signing identity may require uninstall/data loss and must not be introduced silently.

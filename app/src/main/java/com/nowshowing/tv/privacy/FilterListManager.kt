@@ -1,6 +1,9 @@
 package com.nowshowing.tv.privacy
 
 import android.content.Context
+import android.util.AtomicFile
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -12,6 +15,8 @@ import java.util.concurrent.TimeUnit
 
 object FilterListManager {
 
+    private val updateMutex = Mutex()
+
     val engine = ContentBlockEngine()
 
     @Volatile
@@ -22,32 +27,28 @@ object FilterListManager {
         .readTimeout(20, TimeUnit.SECONDS)
         .build()
 
-    suspend fun initialize(context: Context) = withContext(Dispatchers.IO) {
-        if (isInitialized) return@withContext
+    suspend fun initialize(context: Context) = withContext(Dispatchers.IO) { updateMutex.withLock {
+        if (isInitialized) return@withLock
 
         val adRules = loadRules(context, "filters_adblock.txt")
         val trackerRules = loadRules(context, "filters_tracking.txt")
 
         engine.loadRules(adRules, trackerRules)
         isInitialized = true
-    }
+    } }
 
     private fun loadRules(context: Context, fileName: String): List<String> {
         val rules = mutableListOf<String>()
 
         // 1. Check if an updated version exists in local storage
         val customFile = File(context.filesDir, "filters/$fileName")
-        if (customFile.exists() && customFile.length() > 0) {
+        if (customFile.exists() || File(customFile.path + ".bak").exists()) {
             try {
-                customFile.forEachLine { line ->
-                    if (line.isNotBlank() && !line.startsWith("!")) {
-                        rules.add(line)
-                    }
+                val text = AtomicFile(customFile).openRead().use { readBounded(it) }
+                if (text != null && validFilterContent(text)) {
+                    return text.lineSequence().map { it.trim() }.filter { it.isNotBlank() && !it.startsWith("!") }.toList()
                 }
-                if (rules.isNotEmpty()) {
-                    return rules
-                }
-            } catch (_: Exception) {}
+            } catch (_: Exception) { /* Keep the bundled baseline. */ }
         }
 
         // 2. Fall back to bundled asset rules
@@ -66,49 +67,58 @@ object FilterListManager {
 
     suspend fun updateRulesOnline(
         context: Context,
-        adRulesUrl: String = "https://raw.githubusercontent.com/smile-plzz/NowShowing-Stream/main/android-tv/app/src/main/assets/filters/filters_adblock.txt",
-        trackerRulesUrl: String = "https://raw.githubusercontent.com/smile-plzz/NowShowing-Stream/main/android-tv/app/src/main/assets/filters/filters_tracking.txt"
-    ): Boolean = withContext(Dispatchers.IO) {
-        val filterDir = File(context.filesDir, "filters").apply { mkdirs() }
-
-        val newAdRules = fetchUrlContent(adRulesUrl)
-        val newTrackerRules = fetchUrlContent(trackerRulesUrl)
-
-        var success = false
-
-        if (!newAdRules.isNullOrBlank() && newAdRules.lines().size > 10) {
-            val tempFile = File(filterDir, "filters_adblock.txt.tmp")
-            tempFile.writeText(newAdRules)
-            val destFile = File(filterDir, "filters_adblock.txt")
-            tempFile.renameTo(destFile)
-            success = true
+        adRulesUrl: String = "https://raw.githubusercontent.com/smile-plzz/NowShowing-Stream-Android-TV/main/app/src/main/assets/filters/filters_adblock.txt",
+        trackerRulesUrl: String = "https://raw.githubusercontent.com/smile-plzz/NowShowing-Stream-Android-TV/main/app/src/main/assets/filters/filters_tracking.txt"
+    ): FilterUpdateResult = withContext(Dispatchers.IO) { updateMutex.withLock {
+        val filterDir = File(context.filesDir, "filters")
+        if (!filterDir.isDirectory && !filterDir.mkdirs()) return@withLock FilterUpdateResult.FAILED
+        fun update(url: String, name: String): Boolean {
+            val text = fetchUrlContent(url) ?: return false
+            if (!validFilterContent(text)) return false
+            val destination = AtomicFile(File(filterDir, name))
+            var stream: java.io.FileOutputStream? = null
+            return try {
+                stream = destination.startWrite()
+                stream.write(text.toByteArray(Charsets.UTF_8))
+                destination.finishWrite(stream)
+                destination.openRead().use { readBounded(it) } == text
+            } catch (_: Exception) {
+                runCatching { destination.failWrite(stream) }
+                false
+            }
         }
-
-        if (!newTrackerRules.isNullOrBlank() && newTrackerRules.lines().size > 5) {
-            val tempFile = File(filterDir, "filters_tracking.txt.tmp")
-            tempFile.writeText(newTrackerRules)
-            val destFile = File(filterDir, "filters_tracking.txt")
-            tempFile.renameTo(destFile)
-            success = true
+        val ad = update(adRulesUrl, "filters_adblock.txt")
+        val tracker = update(trackerRulesUrl, "filters_tracking.txt")
+        if (ad || tracker) {
+            engine.loadRules(loadRules(context, "filters_adblock.txt"), loadRules(context, "filters_tracking.txt"))
+            isInitialized = true
         }
-
-        if (success) {
-            isInitialized = false
-            initialize(context)
+        when {
+            ad && tracker -> FilterUpdateResult.COMPLETE
+            ad || tracker -> FilterUpdateResult.PARTIAL
+            else -> FilterUpdateResult.FAILED
         }
+    } }
 
-        return@withContext success
+    private fun readBounded(stream: java.io.InputStream): String? {
+        val output = java.io.ByteArrayOutputStream()
+        val buffer = ByteArray(8192)
+        while (output.size() <= 512 * 1024) {
+            val count = stream.read(buffer, 0, minOf(buffer.size, 512 * 1024 + 1 - output.size()))
+            if (count < 0) break
+            output.write(buffer, 0, count)
+        }
+        val bytes = output.toByteArray()
+        return if (bytes.size > 512 * 1024) null else bytes.toString(Charsets.UTF_8)
     }
 
-    private fun fetchUrlContent(url: String): String? {
-        return try {
-            val request = Request.Builder().url(url).build()
-            val response = httpClient.newCall(request).execute()
-            if (response.isSuccessful) {
-                response.body?.string()
-            } else null
-        } catch (_: Exception) {
-            null
+    private fun fetchUrlContent(url: String): String? = try {
+        val request = Request.Builder().url(url).build()
+        httpClient.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) null else response.body?.let { body ->
+                // Enforce the cap while reading, including unknown Content-Length responses.
+                body.byteStream().use { readBounded(it) }
+            }
         }
-    }
+    } catch (_: Exception) { null }
 }

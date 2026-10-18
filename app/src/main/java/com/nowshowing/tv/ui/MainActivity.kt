@@ -192,7 +192,7 @@ class MainActivity : ComponentActivity() {
                         val type = backStackEntry.arguments?.getString("type") ?: "movie"
                         val detailsVm: DetailsViewModel = viewModel()
 
-                        ReturnFocusScope {
+                        ReturnFocusScope(initialKey = "details-action:play") {
                         DetailsScreen(
                             imdbId = imdbId,
                             type = type,

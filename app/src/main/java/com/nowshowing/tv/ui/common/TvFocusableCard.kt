@@ -95,7 +95,7 @@ fun TvFocusableCard(
                 .width(width)
                 .height(height)
                 .shadow(
-                    elevation = if (isFocused) 12.dp else 4.dp,
+                    elevation = if (isFocused) 6.dp else 0.dp,
                     shape = RoundedCornerShape(10.dp),
                     ambientColor = if (isFocused) FocusGlow else Color.Black,
                     spotColor = if (isFocused) FocusGlow else Color.Black
@@ -123,7 +123,7 @@ fun TvFocusableCard(
                     model = ImageRequest.Builder(context)
                         .data(posterUrl)
                         .size(300, 450)
-                        .crossfade(true)
+                        .crossfade(false)
                         .build(),
                     contentDescription = title,
                     contentScale = ContentScale.Crop,

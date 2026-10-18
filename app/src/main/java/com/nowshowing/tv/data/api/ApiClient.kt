@@ -8,11 +8,15 @@ import java.util.concurrent.TimeUnit
 
 object ApiClient {
     const val DEFAULT_OMDB_KEY = "f5dad388"
+    fun metadataKey(context: android.content.Context): String =
+        context.getSharedPreferences("metadata", android.content.Context.MODE_PRIVATE)
+            .getString("key", null)?.takeIf { it.isNotBlank() } ?: DEFAULT_OMDB_KEY
+
     private const val BASE_URL = "https://www.omdbapi.com/"
 
     private val okHttpClient by lazy {
         val logging = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BASIC
+            level = HttpLoggingInterceptor.Level.NONE // URLs contain the metadata API credential.
         }
 
         OkHttpClient.Builder()

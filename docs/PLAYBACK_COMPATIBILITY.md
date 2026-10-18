@@ -1,3 +1,5 @@
+> Historical planning/reference document. Current implemented behavior is specified in [README](../README.md), [Architecture](ARCHITECTURE.md) and [Web playback](WEB_PLAYBACK.md). Native-only, Room, automatic iframe completion and demo-as-movie claims below are superseded. Candidate device checks are in TV_ACCEPTANCE.md.
+
 > **October 17, 2026 playback update:** See [WEB_PLAYBACK.md](WEB_PLAYBACK.md) for the current dual-engine playback contract. Earlier native-only / zero-WebView requirements below are historical and superseded. Real-provider TV testing remains required.
 
 # Playback Compatibility & Source Matrix: NowShowing TV

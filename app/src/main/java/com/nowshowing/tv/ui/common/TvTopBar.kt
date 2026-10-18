@@ -184,7 +184,6 @@ private fun NavTabItem(
                 color = if (isFocused) FocusGlow else if (isSelected) AccentCyan.copy(alpha = 0.4f) else Color.Transparent,
                 shape = RoundedCornerShape(8.dp)
             )
-            .focusable(interactionSource = interactionSource)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,

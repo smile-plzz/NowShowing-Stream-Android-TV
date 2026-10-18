@@ -9,6 +9,8 @@ internal class MetadataCache<T>(
     private data class Entry<T>(val value: T, val expiresAt: Long)
     private val entries = LinkedHashMap<String, Entry<T>>(16, 0.75f, true)
 
+    @Synchronized fun clear() { entries.clear() }
+
     @Synchronized fun get(key: String): T? {
         val entry = entries[key] ?: return null
         if (entry.expiresAt <= now()) { entries.remove(key); return null }

@@ -6,7 +6,8 @@ data class OmdbSearchResponse(
     @SerializedName("Search") val search: List<OmdbTitleShort>?,
     @SerializedName("totalResults") val totalResults: String?,
     @SerializedName("Response") val response: String,
-    @SerializedName("Error") val error: String?
+    @SerializedName("Error") val error: String?,
+    @Transient val isStale: Boolean = false
 )
 
 data class OmdbTitleShort(

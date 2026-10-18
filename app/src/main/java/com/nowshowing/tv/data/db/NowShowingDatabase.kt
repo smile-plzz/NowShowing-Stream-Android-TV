@@ -36,6 +36,7 @@ class NowShowingDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_
         const val DATABASE_NAME = "nowshowing_tv.db"
         const val DATABASE_VERSION = 2
 
+        private const val STALE_RETENTION_MS = 30L * 24 * 60 * 60 * 1000
         private const val TABLE_WATCHLIST = "watchlist"
         private const val TABLE_CONTINUE = "continue_watching"
         private const val TABLE_CACHE = "metadata_cache"
@@ -148,7 +149,12 @@ class NowShowingDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_
                 put("imdb_id", item.imdbID); put("title", item.title)
                 put("poster", item.poster); put("year", item.year); put("type", item.type)
                 put("season", item.season); put("episode", item.episode)
-                put("source_id", item.sourceId); put("watched", if (item.watched) 1 else 0)
+                put("source_id", item.sourceId)
+                // Manual watched is a title-level label; reopening any episode preserves it.
+                val watched = db.rawQuery("SELECT watched FROM recently_opened WHERE imdb_id = ?", arrayOf(item.imdbID)).use {
+                    if (it.moveToFirst()) it.getInt(0) != 0 else item.watched
+                }
+                put("watched", if (watched) 1 else 0)
                 put("updated_at", item.updatedAt)
             }
             db.insertWithOnConflict("recently_opened", null, values, SQLiteDatabase.CONFLICT_REPLACE)
@@ -309,7 +315,12 @@ class NowShowingDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_
             put("query", clean)
             put("timestamp", System.currentTimeMillis())
         }
-        db.insertWithOnConflict(TABLE_SEARCH_HISTORY, null, values, SQLiteDatabase.CONFLICT_REPLACE)
+        db.beginTransaction()
+        try {
+            db.insertWithOnConflict(TABLE_SEARCH_HISTORY, null, values, SQLiteDatabase.CONFLICT_REPLACE)
+            db.execSQL("DELETE FROM $TABLE_SEARCH_HISTORY WHERE query NOT IN (SELECT query FROM $TABLE_SEARCH_HISTORY ORDER BY timestamp DESC, query LIMIT 8)")
+            db.setTransactionSuccessful()
+        } finally { db.endTransaction() }
     }
 
     fun clearSearchHistory() {
@@ -321,11 +332,27 @@ class NowShowingDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_
     // Metadata Cache
     // =========================================================================
 
-    fun getCachedPayload(key: String): String? {
+    fun pruneMetadata(db: SQLiteDatabase = writableDatabase) {
+        db.delete(TABLE_CACHE, "expires_at < ?", arrayOf((System.currentTimeMillis() - STALE_RETENTION_MS).toString()))
+        // Each payload is capped too: at most 500 x 64 KiB of metadata.
+        db.execSQL("DELETE FROM $TABLE_CACHE WHERE cache_key NOT IN (SELECT cache_key FROM $TABLE_CACHE ORDER BY expires_at DESC, cache_key LIMIT 500)")
+    }
+
+    fun clearMetadata() { writableDatabase.delete(TABLE_CACHE, null, null) }
+    fun metadataBytes(): Long = readableDatabase.rawQuery("SELECT COALESCE(SUM(length(CAST(payload AS BLOB))), 0) FROM $TABLE_CACHE", null).use {
+        it.moveToFirst(); it.getLong(0)
+    }
+
+    fun cachedDetailPayloads(): List<String> = readableDatabase.rawQuery(
+        "SELECT payload FROM $TABLE_CACHE WHERE cache_key LIKE 'details_%' AND expires_at > ? ORDER BY expires_at DESC LIMIT 100",
+        arrayOf(System.currentTimeMillis().toString())
+    ).use { cursor -> buildList { while (cursor.moveToNext()) add(cursor.getString(0)) } }
+
+    fun getCachedPayload(key: String, allowStale: Boolean = false): String? {
         val db = readableDatabase
         val cursor = db.rawQuery(
             "SELECT payload FROM $TABLE_CACHE WHERE cache_key = ? AND expires_at > ? LIMIT 1",
-            arrayOf(key, System.currentTimeMillis().toString())
+            arrayOf(key, (System.currentTimeMillis() - if (allowStale) STALE_RETENTION_MS else 0L).toString())
         )
         cursor.use {
             if (it.moveToFirst()) {
@@ -336,12 +363,18 @@ class NowShowingDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_
     }
 
     fun setCachedPayload(key: String, payload: String, ttlMs: Long = 24 * 60 * 60 * 1000L) {
+        if (payload.toByteArray(Charsets.UTF_8).size > 65536) return
         val db = writableDatabase
         val values = ContentValues().apply {
             put("cache_key", key)
             put("payload", payload)
             put("expires_at", System.currentTimeMillis() + ttlMs)
         }
-        db.insertWithOnConflict(TABLE_CACHE, null, values, SQLiteDatabase.CONFLICT_REPLACE)
+        db.beginTransaction()
+        try {
+            db.insertWithOnConflict(TABLE_CACHE, null, values, SQLiteDatabase.CONFLICT_REPLACE)
+            pruneMetadata(db)
+            db.setTransactionSuccessful()
+        } finally { db.endTransaction() }
     }
 }

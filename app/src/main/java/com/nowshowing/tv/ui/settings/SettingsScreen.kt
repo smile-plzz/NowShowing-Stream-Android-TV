@@ -33,6 +33,9 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
@@ -70,6 +73,8 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    var metadataKey by remember { mutableStateOf("") }
+    var reportMessage by remember { mutableStateOf("") }
     var resetTips by remember { mutableStateOf(false) }
 
     Column(
@@ -109,6 +114,57 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(20.dp))
             }
 
+            item(key = "autoplay") {
+                SettingToggleItem("Autoplay next episode", "Default on. Applies only where verified video completion is supported. Web providers currently require manual Next episode.",
+                    uiState.autoplay, viewModel::toggleAutoplay)
+                Spacer(Modifier.height(16.dp))
+            }
+            item(key = "metadata") {
+                Text("Metadata & recovery", color = TextPrimary, fontSize = 20.sp)
+                Text(uiState.metadataStatus, color = TextMuted, fontSize = 16.sp)
+                Text("Use your own authorized OMDb key. Stored locally on this TV; APK keys are not secret. No key pooling or quota multiplication.", color = TextMuted, fontSize = 15.sp)
+                OutlinedTextField(value = metadataKey, onValueChange = { metadataKey = it },
+                    label = { Text("Your OMDb key (blank restores demo key)") }, singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(),
+                    colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary,
+                        focusedBorderColor = AccentCyan, unfocusedBorderColor = TextMuted,
+                        focusedLabelColor = AccentCyan, unfocusedLabelColor = TextMuted,
+                        cursorColor = AccentCyan, focusedContainerColor = SurfaceDark, unfocusedContainerColor = SurfaceDark))
+                TvPlayerActionButton("Save metadata key", null) { viewModel.saveMetadataKey(metadataKey); metadataKey = "" }
+                TvPlayerActionButton("Retry metadata", null) { viewModel.retryMetadata() }
+                TvPlayerActionButton(if (uiState.isClearingCache) "Clearing caches…" else "Clear metadata & image caches", null) { viewModel.clearCaches() }
+                Text("Cache clearing preserves watchlist, history, manual watched labels and settings.", color = TextMuted, fontSize = 15.sp)
+                uiState.maintenanceMessage?.let { Text(it, color = AccentCyan, fontSize = 16.sp) }
+                Spacer(Modifier.height(20.dp))
+            }
+            item(key = "about") {
+                Text("About NowShowing TV", color = TextPrimary, fontSize = 20.sp)
+                Text("By Ismail Hossain · Standalone Android TV app. Movie and series playback uses external web providers. Native demo streams are diagnostic only.", color = TextMuted, fontSize = 16.sp)
+                Text("Source & releases: github.com/smile-plzz/NowShowing-Stream-Android-TV", color = TextMuted, fontSize = 15.sp)
+                Spacer(Modifier.height(16.dp))
+            }
+            item(key = "diagnostics") {
+                Text("Device & metadata diagnostics", color = TextPrimary, fontSize = 20.sp)
+                Text("Report excludes viewing history, URLs, keys and device serial numbers. Includes device model, certificate and recent metadata error categories.", color = TextMuted, fontSize = 15.sp)
+                TvPlayerActionButton("Refresh diagnostics", null) { viewModel.refreshDiagnostics() }
+                TvPlayerActionButton("Copy diagnostic report", null) {
+                    val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                    clipboard.setPrimaryClip(android.content.ClipData.newPlainText("NowShowing diagnostics", uiState.diagnosticText))
+                    reportMessage = "Report copied. It is also shown below."
+                }
+                TvPlayerActionButton("Share diagnostic report", null) {
+                    reportMessage = runCatching {
+                        context.startActivity(android.content.Intent.createChooser(android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                            type = "text/plain"; putExtra(android.content.Intent.EXTRA_TEXT, uiState.diagnosticText)
+                        }, "Share diagnostics"))
+                        "Choose a share destination."
+                    }.getOrElse { "No sharing app available. Use Copy diagnostic report or photograph the report below." }
+                }
+                if (reportMessage.isNotBlank()) Text(reportMessage, color = AccentCyan, fontSize = 16.sp)
+                SelectionContainer { Text(uiState.diagnosticText, color = TextPrimary, fontSize = 16.sp) }
+                Spacer(Modifier.height(20.dp))
+            }
             item(key = "remote_help") {
                 Text("Remote help", color = TextPrimary, fontSize = 20.sp)
                 Text("Arrows move the pointer · OK clicks · Hold arrows to move faster. Back exits fullscreen, then opens player controls.",
@@ -297,7 +353,6 @@ private fun SettingToggleItem(
                 color = if (isFocused) Color.White else Color.White.copy(alpha = 0.06f),
                 shape = RoundedCornerShape(10.dp)
             )
-            .focusable(interactionSource = interactionSource)
             .clickable(interactionSource = interactionSource, indication = null, onClick = onToggle)
             .padding(horizontal = 20.dp, vertical = 14.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -323,7 +378,7 @@ private fun SettingToggleItem(
         Box(modifier = Modifier.scale(1.2f)) {
             Switch(
                 checked = isEnabled,
-                onCheckedChange = { onToggle() },
+                onCheckedChange = null,
                 colors = SwitchDefaults.colors(
                     checkedThumbColor = AccentCyan,
                     checkedTrackColor = AccentCyan.copy(alpha = 0.3f),
@@ -359,7 +414,6 @@ private fun TvSettingsButton(
                 color = if (isFocused) Color.White else Color.White.copy(alpha = 0.12f),
                 shape = RoundedCornerShape(8.dp)
             )
-            .focusable(interactionSource = interactionSource)
             .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -408,7 +462,6 @@ private fun ExemptSourceRow(
                 color = if (isFocused) Color.White else Color.White.copy(alpha = 0.08f),
                 shape = RoundedCornerShape(8.dp)
             )
-            .focusable(interactionSource = interactionSource)
             .clickable(interactionSource = interactionSource, indication = null, onClick = onRemove)
             .padding(horizontal = 16.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.SpaceBetween,

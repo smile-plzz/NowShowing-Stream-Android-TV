@@ -49,6 +49,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -106,7 +107,7 @@ fun PlayerScreen(
     val primaryFocusRequester = remember { FocusRequester() }
 
     BackHandler {
-        onBack()
+        if (uiState.showNextEpisodePrompt) viewModel.dismissNextEpisodePrompt() else onBack()
     }
 
     LaunchedEffect(imdbId, season, episode, type) {
@@ -139,11 +140,18 @@ fun PlayerScreen(
         }
     }
 
-    // Next Episode Countdown Timer
-    var nextEpCountdown by remember(uiState.showNextEpisodePrompt) { mutableStateOf(30) }
+    val nextEpisodeFocus = remember { FocusRequester() }
     LaunchedEffect(uiState.showNextEpisodePrompt) {
-        if (uiState.showNextEpisodePrompt) {
-            for (i in 30 downTo 1) {
+        withFrameNanos { }
+        if (uiState.showNextEpisodePrompt) nextEpisodeFocus.requestFocus()
+        else if (uiState.playableSource != null) runCatching { primaryFocusRequester.requestFocus() }
+    }
+
+    // Next Episode Countdown Timer
+    var nextEpCountdown by remember(uiState.showNextEpisodePrompt) { mutableStateOf(10) }
+    LaunchedEffect(uiState.showNextEpisodePrompt, uiState.autoplay, uiState.nextEpisode) {
+        if (uiState.showNextEpisodePrompt && uiState.autoplay) {
+            for (i in 10 downTo 1) {
                 nextEpCountdown = i
                 delay(1000)
             }
@@ -172,7 +180,7 @@ fun PlayerScreen(
     ) {
         if (playable != null) {
             // AndroidX Media3 / ExoPlayer Native Engine
-            val exoPlayer = remember(playable.mediaUri) {
+            val exoPlayer = remember(uiState.playbackSession) {
                 ExoPlayer.Builder(context).build().apply {
                     setAudioAttributes(
                         androidx.media3.common.AudioAttributes.Builder()
@@ -199,12 +207,7 @@ fun PlayerScreen(
                             Player.STATE_BUFFERING -> viewModel.setBuffering(true)
                             Player.STATE_READY -> viewModel.setBuffering(false)
                             Player.STATE_ENDED -> {
-                                if (uiState.type == "series") {
-                                    viewModel.playNextEpisode()
-                                } else {
-                                    // Movie finished — show completion
-                                    viewModel.onMovieFinished()
-                                }
+                                viewModel.onPlaybackEnded(playable)
                             }
                             Player.STATE_IDLE -> {}
                         }
@@ -611,7 +614,7 @@ fun PlayerScreen(
                 ) {
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
-                            text = "Next in ${nextEpCountdown}s",
+                            text = if (uiState.autoplay) "Next in ${nextEpCountdown}s" else "Episode finished · Autoplay off",
                             color = AccentCyan,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
@@ -625,7 +628,8 @@ fun PlayerScreen(
                         Spacer(modifier = Modifier.height(10.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             TvPlayerActionButton(
-                                label = "Play Now",
+                                label = "Next episode",
+                                modifier = Modifier.focusRequester(nextEpisodeFocus),
                                 icon = Icons.Default.PlayArrow,
                                 isAccent = true,
                                 onClick = { viewModel.playNextEpisode() }
@@ -1006,7 +1010,6 @@ private fun SourceItemCard(
                 color = if (isFocused) Color.White else if (isSelected) AccentCyan else Color.Transparent,
                 shape = RoundedCornerShape(8.dp)
             )
-            .focusable(interactionSource = interactionSource)
             .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -1071,7 +1074,6 @@ private fun TvPlayerIconButton(
                 color = if (isFocused) Color.White else Color.Transparent,
                 shape = CircleShape
             )
-            .focusable(interactionSource = interactionSource)
             .clickable(interactionSource = interactionSource, indication = null, onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
@@ -1122,7 +1124,6 @@ internal fun TvPlayerActionButton(
                 color = if (isFocused) Color.White else if (isAccent) AccentCyan.copy(alpha = 0.5f) else Color.White.copy(alpha = 0.12f),
                 shape = RoundedCornerShape(8.dp)
             )
-            .focusable(interactionSource = interactionSource)
             .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically

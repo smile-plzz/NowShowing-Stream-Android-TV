@@ -66,6 +66,8 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    fun retrySearch() { com.nowshowing.tv.data.repository.MetadataHealth.retry(); executeSearch() }
+
     fun executeSearch(query: String = _uiState.value.query, reset: Boolean = true) {
         val trimmed = query.trim()
         if (trimmed.isBlank()) return
@@ -95,14 +97,17 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     results = updated,
+                    errorMessage = if (response.isStale) "Showing expired cached search results. ${com.nowshowing.tv.data.repository.MetadataHealth.failure.value?.message.orEmpty()}" else null,
                     currentPage = targetPage,
                     totalResults = response.totalResults?.toIntOrNull() ?: updated.size
                 )
             } else {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    results = if (reset) emptyList() else _uiState.value.results,
-                    errorMessage = if (reset) "No titles found matching \"$trimmed\"" else null
+                    results = _uiState.value.results,
+                    errorMessage = (response.error ?: "Metadata service unavailable. Retry your search.").let {
+                        if (_uiState.value.results.isNotEmpty()) "$it Previous search results are retained." else it
+                    }
                 )
             }
         }

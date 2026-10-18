@@ -152,17 +152,21 @@ fun SearchScreen(
                 modifier = Modifier
                     .fillMaxSize()
             ) {
+                if (uiState.errorMessage != null && uiState.results.isNotEmpty()) {
+                    Text(uiState.errorMessage.orEmpty(), color = TextMuted, fontSize = 15.sp,
+                        modifier = Modifier.align(Alignment.TopCenter).background(BgDark).padding(8.dp))
+                }
                 if (uiState.isLoading) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator(color = AccentCyan)
                     }
-                } else if (!uiState.errorMessage.isNullOrBlank()) {
+                } else if (!uiState.errorMessage.isNullOrBlank() && uiState.results.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(
-                            text = uiState.errorMessage ?: "",
-                            color = TextMuted,
-                            fontSize = 15.sp
-                        )
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(uiState.errorMessage.orEmpty(), color = TextMuted, fontSize = 16.sp)
+                            com.nowshowing.tv.ui.player.TvPlayerActionButton("Retry search", null) { viewModel.retrySearch() }
+                            com.nowshowing.tv.ui.player.TvPlayerActionButton("Metadata settings", null) { onNavigate("settings") }
+                        }
                     }
                 } else if (uiState.results.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -217,7 +221,6 @@ private fun FilterChip(
                 color = if (isFocused) Color.White else if (isSelected) AccentCyan else Color.Transparent,
                 shape = RoundedCornerShape(6.dp)
             )
-            .focusable(interactionSource = interactionSource)
             .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 6.dp)
     ) {
@@ -294,7 +297,6 @@ private fun KeyButton(
                 color = if (isFocused) Color.White else Color.White.copy(alpha = 0.08f),
                 shape = RoundedCornerShape(6.dp)
             )
-            .focusable(interactionSource = interactionSource)
             .clickable(interactionSource = interactionSource, indication = null, onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
@@ -327,7 +329,6 @@ private fun ActionKeyButton(
                 color = if (isFocused) Color.White else Color.Transparent,
                 shape = RoundedCornerShape(6.dp)
             )
-            .focusable(interactionSource = interactionSource)
             .clickable(interactionSource = interactionSource, indication = null, onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
@@ -367,7 +368,6 @@ private fun ActionIconButton(
                 color = if (isFocused) Color.White else Color.Transparent,
                 shape = RoundedCornerShape(6.dp)
             )
-            .focusable(interactionSource = interactionSource)
             .clickable(interactionSource = interactionSource, indication = null, onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
@@ -397,7 +397,6 @@ private fun RecentSearchChip(
                 color = if (isFocused) Color.White else Color.White.copy(alpha = 0.08f),
                 shape = RoundedCornerShape(6.dp)
             )
-            .focusable(interactionSource = interactionSource)
             .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
             .padding(horizontal = 10.dp, vertical = 6.dp)
     ) {

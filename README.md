@@ -1,48 +1,46 @@
 # NowShowing TV
 
-A movie and series discovery app for Android TV and Google TV, built by Ismail Hossain.
+A standalone movie and series discovery app for Android TV / Google TV, by Ismail Hossain.
 
-**Current candidate: 1.5.0-rc.1 · Android build 15001**
+**Development candidate: 1.5.0-rc.2 · Android version code 15002**
 
-[Download APKs from GitHub Releases](https://github.com/smile-plzz/NowShowing-Stream-Android-TV/releases/tag/v1.5.0-rc.1) · [Installation](docs/INSTALLATION.md) · [Troubleshooting](docs/TROUBLESHOOTING.md) · [Known limitations](docs/KNOWN_LIMITATIONS.md)
+[Published APK releases](https://github.com/smile-plzz/NowShowing-Stream-Android-TV/releases) · [Build runs and candidate artifacts](https://github.com/smile-plzz/NowShowing-Stream-Android-TV/actions/workflows/build-apk.yml) · [Installation](docs/INSTALLATION.md)
 
-## TV experience
-- D-pad browsing, curated shelves, search, watchlist, and mood discovery.
-- Existing movie/series web providers play inside Android System WebView; direct playback diagnostics use Media3.
-- Precise pointer taps, accelerated held movement, first-use hints, and repeatable remote help.
-- Simple playback menu with source selection, episode selection, reload, and explicit title navigation.
-- Recently opened remembers each title's episode/source. Manual watched labels and removal controls stay local to the TV.
-- Progressive shelf loading, bounded shared metadata caching, and remembered list/grid position and selected-card focus.
-- Embedded request filtering, denied popup windows, HTTPS-only transport, and default certificate validation.
+A candidate version in source does not mean it has been published. Download the version you intend to test from an actual release or successful CI artifact bundle.
 
-Page loading does not prove that a provider video is playing. Web-player subtitles, seeking, and timestamp resume remain provider-controlled. Native diagnostic videos are fixed demo streams, not substitutes for selected movies.
+## Daily TV use
+- D-pad browsing, search, watchlist, three genre shelves and curated featured/movie/series picks.
+- Title details initially focus Play; returning restores the selected action/card and saved list position.
+- Play enters the web provider directly. Arrows move the pointer; OK clicks; Back exits provider fullscreen, then opens app controls, then returns to the title.
+- Next episode is prominent in series controls. Season boundaries use known episode metadata; missing lists offer recovery rather than inventing episode numbers.
+- Autoplay defaults on and persists in Settings. Current web providers have no verified completion integration, so **web episodes still require manual Next episode**. Native completion supports a cancelable countdown where applicable; native sources currently contain diagnostic demos only.
+- Recently opened remembers episode/source. Manual Watched is a title-level label and survives reopening; it does not measure playback.
+- Related titles reuse cached candidates sharing genres, with no recommendation backend or extra metadata requests.
+- About, device/WebView/build diagnostics, copy/share report, and scoped cache recovery are in Settings.
 
-## Install and update
-Android TV / Google TV API 26+. Download the **release.apk** asset, not the source ZIP or debug build. ADB users can install with:
-```sh
-adb install -r NowShowing-TV-1.5.0-rc.1-release.apk
-```
+## Metadata and privacy
+OMDb provides metadata using a bundled public demo credential or one user-supplied authorized key stored locally on the TV. No key pooling is implemented. The APK cannot keep embedded credentials secret. API URL logging is disabled.
 
-This candidate uses development signing unless its build-info.json explicitly says permanent. A signing mismatch prevents in-place upgrades; uninstalling clears local data. See [signing and upgrade guidance](docs/RELEASE_SIGNING.md).
+Quota, invalid key, network, service failure and no-results are distinguished. Retry is bounded; successful metadata remains cached. Expired metadata may be used for up to 30 days after expiry during service failure and is identified in Home/Diagnostics. Metadata storage is bounded independently of saved user data.
 
-## Development
-JDK 21 and Android SDK 35 are required.
+Movies/series use **Android System WebView**. **Media3 serves direct diagnostic demo streams**, not native versions of selected movies. Page loading does not establish video playback, progress or completion. Request filtering and denied popup windows reduce some intrusions; filtering is not Brave Shields and does not remove every ad.
+
+## Build and test
+JDK 21, Android SDK 35, minimum device API 26.
+
 ```sh
 ./gradlew testDebugUnitTest
 ./gradlew assembleDebug assembleRelease
 python3 -m unittest discover -s scripts -p 'test_*.py'
 ```
-The app uses Jetpack Compose, Media3, SQLiteOpenHelper, Retrofit/OkHttp, and Coil. OMDb supplies metadata using an included demo key subject to its quota.
 
-## Releases
-GitHub Actions runs tests and builds both APK variants. Authorized main commits marked [publish], or a manual main workflow run with publication enabled, produce versioned APK assets, SHA-256 checksums, public signing certificates, build information, and release notes. Development-signed builds are always prereleases. See [release operations](docs/RELEASE_SIGNING.md).
+Kotlin, Compose, ViewModels/StateFlow, Retrofit/OkHttp, Coil, SQLiteOpenHelper, WebView and Media3. JVM tests include Robolectric storage/repository/filter recovery tests. CI packages both APKs, checksums, public certificate information and exact build commit. PR builds use development signing and do not publish releases.
 
 ## Documentation
-- [Remote controls](docs/REMOTE_NAVIGATION.md)
-- [Installation/update guide](docs/INSTALLATION.md)
-- [Known limitations](docs/KNOWN_LIMITATIONS.md)
-- [Troubleshooting](docs/TROUBLESHOOTING.md)
-- [Current web playback contract](docs/WEB_PLAYBACK.md)
-- [Polish and history](docs/POLISH_AND_HISTORY.md)
-- [Release notes](docs/releases/v1.5.0-rc.1.md)
-- [Release checks](docs/RELEASE_CHECKLIST.md)
+- [Architecture](docs/ARCHITECTURE.md) · [Web playback](docs/WEB_PLAYBACK.md)
+- [Remote controls](docs/REMOTE_NAVIGATION.md) · [Troubleshooting](docs/TROUBLESHOOTING.md)
+- [Known limitations](docs/KNOWN_LIMITATIONS.md) · [Privacy and blocking](docs/PRIVACY_AND_BLOCKING.md)
+- [Candidate notes](docs/releases/v1.5.0-rc.2.md) · [Signing](docs/RELEASE_SIGNING.md)
+- [Release checklist](docs/RELEASE_CHECKLIST.md) · [Real-TV acceptance](docs/TV_ACCEPTANCE.md)
+
+Historical design documents are retained for context and are not the current implementation specification.

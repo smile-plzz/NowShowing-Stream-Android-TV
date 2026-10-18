@@ -1,3 +1,5 @@
+> Historical planning/reference document. Current implemented behavior is specified in [README](README.md), [Architecture](docs/ARCHITECTURE.md) and [Web playback](docs/WEB_PLAYBACK.md). Native-only, Room, automatic iframe completion and demo-as-movie claims below are superseded. Candidate device checks are in TV_ACCEPTANCE.md.
+
 # Project Context: NowShowing TV
 
 ## 1. Project Goals
