@@ -107,18 +107,18 @@ fun SettingsScreen(viewModel: SettingsViewModel, onNavigate: (String) -> Unit) {
                     SettingsSection.METADATA -> {
                         item(key = "status") {
                             InfoCard("Metadata status", state.metadataStatus)
-                            Text(if (state.hasPersonalKey) "Using your personal OMDb key" else "Using the shared demo key",
+                            Text(if (state.hasPersonalKey) "${state.personalKeyCount} personal OMDb key(s) configured" else "Using the shared demo key",
                                 color = AccentCyan, fontSize = 16.sp, modifier = Modifier.padding(top = 10.dp))
                         }
                         item(key = "key") {
-                            Text("Personal OMDb key", color = TextPrimary, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                            Text("Add an authorized key if the demo key is unavailable. It is stored locally on this TV.", color = TextSecondary, fontSize = 16.sp)
+                            Text("Personal OMDb keys", color = TextPrimary, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                            Text("Enter up to five authorized keys, separated by commas or spaces. Stored on this TV. Invalid keys fall back in order; quota limits are respected.", color = TextSecondary, fontSize = 16.sp)
                             Spacer(Modifier.height(8.dp))
                             OutlinedTextField(value = metadataKey, onValueChange = { metadataKey = it }, singleLine = true,
-                                label = { Text("Enter OMDb key") }, visualTransformation = PasswordVisualTransformation(),
+                                label = { Text("Enter OMDb keys") }, visualTransformation = PasswordVisualTransformation(),
                                 modifier = Modifier.fillMaxWidth())
                             Spacer(Modifier.height(8.dp))
-                            TvPlayerActionButton("Save personal key", null, enabled = metadataKey.isNotBlank()) {
+                            TvPlayerActionButton("Save personal keys", null, enabled = metadataKey.isNotBlank()) {
                                 if (viewModel.saveMetadataKey(metadataKey)) metadataKey = ""
                             }
                             if (state.hasPersonalKey) TvPlayerActionButton("Use demo key", null) { viewModel.saveMetadataKey("") }

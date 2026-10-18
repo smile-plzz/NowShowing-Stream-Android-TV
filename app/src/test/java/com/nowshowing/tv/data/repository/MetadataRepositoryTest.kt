@@ -20,6 +20,7 @@ class MetadataRepositoryTest {
     @Before fun setup() {
         MetadataHealth.retry()
         val context = RuntimeEnvironment.getApplication()
+        context.getSharedPreferences("metadata", 0).edit().clear().commit()
         context.deleteDatabase(NowShowingDatabase.DATABASE_NAME)
         db = NowShowingDatabase(context)
         repository = MediaRepository(context, api, db)
@@ -51,14 +52,68 @@ class MetadataRepositoryTest {
         api.error = null; assertEquals("True", repository.search("other").response)
         assertEquals(2, api.calls)
     }
+    private fun configureKeys() {
+        RuntimeEnvironment.getApplication().getSharedPreferences("metadata", 0).edit()
+            .putString("key", "first123,second123,third123").commit()
+        MetadataHealth.retry()
+    }
+    @Test fun invalidKeyFallsBackAndRemainsSkipped() = runBlocking {
+        configureKeys()
+        api.rejectedKeys.add("first123")
+        assertEquals("True", repository.search("first").response)
+        assertEquals("True", repository.search("second").response)
+        assertEquals(listOf("first123", "second123", "second123"), api.usedKeys)
+        assertNull(MetadataHealth.failure.value)
+    }
+    @Test fun allInvalidKeysStopAndDoNotLeakCredentials() = runBlocking {
+        configureKeys()
+        api.error = "Invalid API key!"
+        assertTrue(repository.search("first").error!!.contains("invalid"))
+        repository.search("second")
+        assertEquals(3, api.calls)
+        assertEquals(MetadataFailure.KEY, MetadataHealth.failure.value)
+        assertFalse(MetadataHealth.recentErrors().joinToString().contains("first123"))
+    }
+    @Test fun quotaDoesNotCycleConfiguredCredentials() = runBlocking {
+        configureKeys()
+        api.error = "Request limit reached!"
+        repository.search("first"); repository.search("second")
+        assertEquals(listOf("first123"), api.usedKeys)
+    }
+    @Test fun networkAndNoResultsDoNotCycleKeys() = runBlocking {
+        configureKeys()
+        api.networkFailure = true
+        repository.search("first")
+        assertEquals(1, api.calls)
+        MetadataHealth.retry(); api.networkFailure = false; api.error = "Movie not found!"
+        repository.search("second")
+        assertEquals(listOf("first123", "first123"), api.usedKeys)
+    }
+    @Test fun explicitRetryRechecksRejectedCredential() = runBlocking {
+        configureKeys(); api.rejectedKeys.add("first123")
+        repository.search("first")
+        MetadataHealth.retry(); api.rejectedKeys.clear()
+        repository.search("second")
+        assertEquals(listOf("first123", "second123", "first123"), api.usedKeys)
+    }
+    @Test fun exhaustedKeysKeepExpiredSearchResults() = runBlocking {
+        configureKeys()
+        db.setCachedPayload("search_warm_1_", """{"Search":[],"Response":"True","totalResults":"0"}""", -1000)
+        api.error = "Invalid API key!"
+        assertTrue(repository.search("warm").isStale)
+        assertEquals(3, api.calls)
+    }
     private class FakeApi : OmdbApiService {
+        val rejectedKeys = mutableSetOf<String>()
+        val usedKeys = mutableListOf<String>()
         var error: String? = null
         var calls = 0
         var networkFailure = false
         override suspend fun searchTitles(apiKey: String, query: String, page: Int, type: String?): OmdbSearchResponse {
-            calls++; delay(5)
+            calls++; usedKeys.add(apiKey); delay(5)
             if (networkFailure) throw java.io.IOException("URL with secret must never reach diagnostics")
-            return OmdbSearchResponse(emptyList(), "0", if (error == null) "True" else "False", error)
+            val responseError = if (apiKey in rejectedKeys) "Invalid API key!" else error
+            return OmdbSearchResponse(emptyList(), "0", if (responseError == null) "True" else "False", responseError)
         }
         override suspend fun getDetails(apiKey: String, imdbId: String, plot: String): OmdbTitleDetail = error("unused")
         override suspend fun getDetailsByTitle(apiKey: String, title: String, type: String?, plot: String): OmdbTitleDetail = error("unused")

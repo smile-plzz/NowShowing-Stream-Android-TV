@@ -2,7 +2,7 @@
 
 A standalone movie and series discovery app for Android TV / Google TV, by Ismail Hossain.
 
-**Sideload release: 1.5.0 · Android version code 15003**
+**Sideload release: 1.5.1 · Android version code 15004**
 
 [Published APK releases](https://github.com/smile-plzz/NowShowing-Stream-Android-TV/releases) · [Build runs and candidate artifacts](https://github.com/smile-plzz/NowShowing-Stream-Android-TV/actions/workflows/build-apk.yml) · [Installation](docs/INSTALLATION.md)
 
@@ -26,7 +26,7 @@ Download the APK from the versioned GitHub Release. Releases include both APK va
 - About, device/WebView/build diagnostics, copy/share report, and scoped cache recovery are in Settings.
 
 ## Metadata and privacy
-OMDb provides metadata using a bundled public demo credential or one user-supplied authorized key stored locally on the TV. No key pooling is implemented. The APK cannot keep embedded credentials secret. API URL logging is disabled.
+OMDb provides metadata using a bundled public demo credential or up to five user-supplied authorized keys stored locally on the TV. Invalid/inactive credentials fall back in order. Quota, network, service and no-results responses do not rotate keys; cached content remains available. The APK cannot keep embedded credentials secret. API URL logging is disabled.
 
 Quota, invalid key, network, service failure and no-results are distinguished. Retry is bounded; successful metadata remains cached. Expired metadata may be used for up to 30 days after expiry during service failure and is identified in Home/Diagnostics. Metadata storage is bounded independently of saved user data.
 
@@ -47,7 +47,7 @@ Kotlin, Compose, ViewModels/StateFlow, Retrofit/OkHttp, Coil, SQLiteOpenHelper, 
 - [Architecture](docs/ARCHITECTURE.md) · [Web playback](docs/WEB_PLAYBACK.md)
 - [Remote controls](docs/REMOTE_NAVIGATION.md) · [Troubleshooting](docs/TROUBLESHOOTING.md)
 - [Known limitations](docs/KNOWN_LIMITATIONS.md) · [Privacy and blocking](docs/PRIVACY_AND_BLOCKING.md)
-- [Release notes](docs/releases/v1.5.0.md) · [Signing](docs/RELEASE_SIGNING.md)
+- [Release notes](docs/releases/v1.5.1.md) · [Signing](docs/RELEASE_SIGNING.md)
 - [Release checklist](docs/RELEASE_CHECKLIST.md) · [Real-TV acceptance](docs/TV_ACCEPTANCE.md)
 
 Historical design documents are retained for context and are not the current implementation specification.

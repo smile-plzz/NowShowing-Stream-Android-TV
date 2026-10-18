@@ -61,8 +61,8 @@ class TvPolishTest {
     @Test fun blankKeyCannotAccidentallyReplaceSavedCredential() {
         settings()
         compose.onNodeWithText("Metadata").performClick()
-        compose.onNodeWithText("Save personal key").performScrollTo().assertIsNotEnabled()
-        compose.onNodeWithText("Enter OMDb key").performScrollTo().performTextInput("abcdef12")
-        compose.onNodeWithText("Save personal key").performScrollTo().assertIsEnabled()
+        compose.onNodeWithText("Save personal keys").performScrollTo().assertIsNotEnabled()
+        compose.onNodeWithText("Enter OMDb keys").performScrollTo().performTextInput("abcdef12")
+        compose.onNodeWithText("Save personal keys").performScrollTo().assertIsEnabled()
     }
 }

@@ -1,3 +1,7 @@
+# 1.5.1 — local metadata credential recovery
+
+Ordered, masked configuration for up to five local OMDb keys; automatic invalid/inactive credential fallback; bounded attempts and session rejection tracking; retained legacy settings and stale-cache recovery. Quota, network, service and no-results responses do not cycle credentials. Additional personal credentials remain outside public source and APKs. Adds parser, selection and repository regressions.
+
 # 1.5.0 — final UI and distribution polish
 
 Scrollable TV navigation; five clear Settings sections; readable diagnostic dialog; explicit personal/demo-key actions; disabled busy controls; Browse/Mood recovery; cancellation of superseded Mood requests; disappearing first-use hints; static AsyncImage artwork states. Adds Compose UI regressions and publication bundle integrity checks. The gated workflow ships versioned APKs with checksums and public certificate/build details. Development signing is explicitly distributed as a prerelease. Web autoplay/progress and physical-TV validation remain limited as documented.
