@@ -21,3 +21,6 @@ NowShowing TV is a standalone, remote-first Android TV discovery and provider-vi
 - Stable designation: automated tests/builds establish build health, not the above device results. Development-signed packages must remain prereleases.
 
 Phone-to-TV communication is a separate TV Bridge product. It is not added as an unverified dependency here.
+
+## Side-by-side TV testing
+The `-debug.apk` download installs as **NowShowing Preview** (`com.nowshowing.tv.preview`), with separate local storage. Use this candidate to test alongside the existing NowShowing TV installation. Preview starts with its own empty watchlist/history/settings and does not migrate the installed app's data. The `-release.apk` retains `com.nowshowing.tv` and requires a matching certificate for an in-place upgrade. Preview is a debug test build; its performance is not evidence of minified release performance.

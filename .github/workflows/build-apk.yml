@@ -69,6 +69,13 @@ jobs:
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: ./gradlew assembleDebug assembleRelease --no-daemon
+      - name: Verify side-by-side preview identity
+        run: |
+          AAPT="$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -1)"
+          "$AAPT" dump badging app/build/outputs/apk/debug/app-debug.apk > /tmp/preview-badging.txt
+          grep -F "package: name='com.nowshowing.tv.preview'" /tmp/preview-badging.txt
+          grep -F "application-label:'NowShowing Preview'" /tmp/preview-badging.txt
+          "$AAPT" dump badging app/build/outputs/apk/release/app-release.apk | grep -F "package: name='com.nowshowing.tv'"
       - name: Package versioned downloads and signing report
         env:
           SIGNING_MODE: ${{ steps.signing.outputs.mode }}
