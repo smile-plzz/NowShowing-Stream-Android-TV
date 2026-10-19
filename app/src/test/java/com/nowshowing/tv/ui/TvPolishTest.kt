@@ -43,17 +43,14 @@ class TvPolishTest {
         compose.onNodeWithText("Updating…").assertIsNotEnabled()
     }
 
-    @org.robolectric.annotation.GraphicsMode(org.robolectric.annotation.GraphicsMode.Mode.NATIVE)
-    @Test fun searchOffersSystemKeyboardAndReachableRecentSearches() {
+    @Test fun searchAcceptsSystemKeyboardInputAndDpadClear() {
         val factory = ViewModelProvider.AndroidViewModelFactory.getInstance(RuntimeEnvironment.getApplication())
         val vm = ViewModelProvider(store, factory)[com.nowshowing.tv.ui.search.SearchViewModel::class.java]
         compose.setContent { NowShowingTheme { com.nowshowing.tv.ui.search.SearchScreen(vm, {}, { _, _ -> }) } }
-        compose.onNodeWithText("Type with system keyboard").performScrollTo().performClick()
-        compose.onNodeWithText("Search title").assertIsNotEnabled()
         compose.onNodeWithText("Movie or series title").performTextInput("Arrival")
-        compose.onNodeWithText("Search title").assertIsEnabled()
-        compose.onNodeWithText("Cancel").performClick()
-        assertEquals("", vm.uiState.value.query)
+        compose.runOnIdle { assertEquals("Arrival", vm.uiState.value.query) }
+        compose.onNodeWithContentDescription("Clear").performScrollTo().performClick()
+        compose.runOnIdle { assertEquals("", vm.uiState.value.query) }
         compose.onNodeWithTag("search-controls").assertExists()
     }
 

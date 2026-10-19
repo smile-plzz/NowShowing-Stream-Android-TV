@@ -71,27 +71,6 @@ fun SearchScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val gridState = rememberLazyGridState()
-    var textDialog by remember { mutableStateOf(false) }
-    var searchText by remember { mutableStateOf("") }
-    if (textDialog) androidx.compose.material3.AlertDialog(
-        onDismissRequest = { textDialog = false },
-        title = { Text("Enter a title") },
-        text = {
-            androidx.compose.material3.OutlinedTextField(
-                value = searchText, onValueChange = { searchText = it.take(200) },
-                label = { Text("Movie or series title") }, singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(onSearch = {
-                    if (searchText.isNotBlank()) {
-                        viewModel.executeSearch(searchText, reset = true); textDialog = false
-                    }
-                })
-            )
-        },
-        confirmButton = { com.nowshowing.tv.ui.player.TvPlayerActionButton("Search title", null,
-            enabled = searchText.isNotBlank()) { viewModel.executeSearch(searchText, reset = true); textDialog = false } },
-        dismissButton = { com.nowshowing.tv.ui.player.TvPlayerActionButton("Cancel", null) { textDialog = false } }
-    )
     var yearDialog by remember { mutableStateOf(false) }
     var yearText by remember { mutableStateOf("") }
     if (yearDialog) androidx.compose.material3.AlertDialog(
@@ -126,30 +105,15 @@ fun SearchScreen(
                     .testTag("search-controls")
                     .verticalScroll(rememberScrollState())
             ) {
-                // Search Input Display Box
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(SurfaceDark)
-                        .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(8.dp))
-                        .padding(horizontal = 16.dp),
-                    contentAlignment = Alignment.CenterStart
-                ) {
-                    Text(
-                        text = if (uiState.query.isEmpty()) "Search movies & TV shows…" else uiState.query,
-                        color = if (uiState.query.isEmpty()) TextMuted else TextPrimary,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-
+                androidx.compose.material3.OutlinedTextField(
+                    value = uiState.query, onValueChange = viewModel::setQuery,
+                    label = { Text("Movie or series title") },
+                    placeholder = { Text("Type or use the D-pad keyboard below") },
+                    singleLine = true, modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(onSearch = { viewModel.executeSearch(reset = true) })
+                )
                 Spacer(modifier = Modifier.height(10.dp))
-
-                com.nowshowing.tv.ui.player.TvPlayerActionButton("Type with system keyboard", null) {
-                    searchText = uiState.query; textDialog = true
-                }
 
                 // Type Filter Pills
                 Row(
