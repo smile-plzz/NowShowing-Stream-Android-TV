@@ -39,8 +39,8 @@ fun liveMemory(context: Context): String {
 object HealthReports {
     private fun prefs(context: Context) = context.getSharedPreferences("health_report", Context.MODE_PRIVATE)
     fun load(context: Context): HealthReport? = runCatching {
-        Gson().fromJson(prefs(context).getString("last", null), HealthReport::class.java)
-    }.getOrNull()?.takeIf { it.pages.isNotEmpty() }
+        Gson().fromJson(prefs(context).getString("last", null), HealthReport::class.java)?.takeIf { it.pages.isNotEmpty() }
+    }.getOrNull()
     fun delete(context: Context) { prefs(context).edit().clear().apply() }
     fun capture(context: Context): HealthReport {
         val time = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss VV"))

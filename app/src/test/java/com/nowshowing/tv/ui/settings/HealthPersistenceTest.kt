@@ -14,6 +14,10 @@ import org.robolectric.annotation.Config
 class HealthPersistenceTest {
     private val context get() = RuntimeEnvironment.getApplication()
     @After fun cleanup() { HealthReports.delete(context); MetadataHealth.retry(); context.getSharedPreferences("metadata", 0).edit().clear().commit() }
+    @Test fun invalidLocalReportIsUnavailableInsteadOfCrashing() {
+        context.getSharedPreferences("health_report", 0).edit().putString("last", "{}").commit()
+        assertNull(HealthReports.load(context))
+    }
     @Test fun frozenReportSurvivesReopeningAndDoesNotExposeConfiguredKey() {
         context.getSharedPreferences("metadata", 0).edit().putString("key", "private_key_must_not_appear").commit()
         val first = HealthReports.capture(context)
