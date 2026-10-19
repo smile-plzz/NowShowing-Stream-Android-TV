@@ -43,6 +43,7 @@ class TvPolishTest {
         compose.onNodeWithText("Updating…").assertIsNotEnabled()
     }
 
+    @org.robolectric.annotation.GraphicsMode(org.robolectric.annotation.GraphicsMode.Mode.NATIVE)
     @Test fun searchOffersSystemKeyboardAndReachableRecentSearches() {
         val factory = ViewModelProvider.AndroidViewModelFactory.getInstance(RuntimeEnvironment.getApplication())
         val vm = ViewModelProvider(store, factory)[com.nowshowing.tv.ui.search.SearchViewModel::class.java]
