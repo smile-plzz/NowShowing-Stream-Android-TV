@@ -109,7 +109,7 @@ class MetadataRepositoryTest {
         var error: String? = null
         var calls = 0
         var networkFailure = false
-        override suspend fun searchTitles(apiKey: String, query: String, page: Int, type: String?): OmdbSearchResponse {
+        override suspend fun searchTitles(apiKey: String, query: String, page: Int, type: String?, year: Int?): OmdbSearchResponse {
             calls++; usedKeys.add(apiKey); delay(5)
             if (networkFailure) throw java.io.IOException("URL with secret must never reach diagnostics")
             val responseError = if (apiKey in rejectedKeys) "Invalid API key!" else error

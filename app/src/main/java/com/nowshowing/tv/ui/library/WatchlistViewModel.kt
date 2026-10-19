@@ -21,12 +21,11 @@ class WatchlistViewModel(application: Application) : AndroidViewModel(applicatio
     private val _uiState = MutableStateFlow(WatchlistUiState())
     val uiState: StateFlow<WatchlistUiState> = _uiState.asStateFlow()
 
-    init {
-        loadWatchlist()
-    }
+    private var loadJob: kotlinx.coroutines.Job? = null
 
     fun loadWatchlist() {
-        viewModelScope.launch {
+        if (loadJob?.isActive == true) return
+        loadJob = viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = _uiState.value.items.isEmpty())
             val list = repository.getWatchlist()
             _uiState.value = WatchlistUiState(isLoading = false, items = list)

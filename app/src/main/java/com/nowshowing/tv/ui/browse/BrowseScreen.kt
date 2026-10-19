@@ -25,7 +25,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -51,9 +51,9 @@ fun BrowseScreen(
     onNavigate: (String) -> Unit,
     onTitleClick: (String, String) -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val gridState = rememberLazyGridState()
-    val failure by com.nowshowing.tv.data.repository.MetadataHealth.failure.collectAsState()
+    val failure by com.nowshowing.tv.data.repository.MetadataHealth.failure.collectAsStateWithLifecycle()
 
     LaunchedEffect(kind) {
         viewModel.loadBrowse(kind)
@@ -93,7 +93,11 @@ fun BrowseScreen(
             }
         }
 
-        if (uiState.isLoading) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 48.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(if (uiState.isLoading) "Loading collection…" else (uiState.message ?: "Sort applies to this curated collection; unknown values last."), color = TextMuted, fontSize = 14.sp, modifier = Modifier.weight(1f))
+            com.nowshowing.tv.ui.player.TvPlayerActionButton("Refresh collection", null, enabled = !uiState.isLoading) { viewModel.retryBrowse(kind) }
+        }
+        if (uiState.isLoading && uiState.items.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center

@@ -46,7 +46,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.nowshowing.tv.data.db.RecentItem
 import com.nowshowing.tv.ui.common.ShimmerBox
 import com.nowshowing.tv.ui.player.TvPlayerActionButton
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.withFrameNanos
@@ -89,7 +89,7 @@ fun HomeScreen(
     onTitleClick: (String, String) -> Unit,
     onPlayClick: (String, Int, Int, String) -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
     val recoveryFocus = remember { androidx.compose.ui.focus.FocusRequester() }
     var focusedRecovery by rememberSaveable { mutableStateOf(false) }

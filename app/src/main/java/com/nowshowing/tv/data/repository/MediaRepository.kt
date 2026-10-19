@@ -131,9 +131,9 @@ class MediaRepository(
             throw MetadataUnavailable(MetadataFailure.KEY)
         }
 
-    suspend fun search(query: String, page: Int = 1, type: String? = null): OmdbSearchResponse =
+    suspend fun search(query: String, page: Int = 1, type: String? = null, year: Int? = null): OmdbSearchResponse =
         withContext(Dispatchers.IO) {
-            val cacheKey = "search_${query.trim().lowercase()}_${page}_${type.orEmpty()}"
+            val cacheKey = "search_${query.trim().lowercase()}_${page}_${type.orEmpty()}" + (year?.let { "_year_$it" } ?: "")
             requestLocks[(cacheKey.hashCode() and Int.MAX_VALUE) % requestLocks.size].withLock {
                 fun cached(stale: Boolean): OmdbSearchResponse? = db.getCachedPayload(cacheKey, stale)?.let {
                     runCatching { gson.fromJson(it, OmdbSearchResponse::class.java) }.getOrNull()
@@ -142,7 +142,7 @@ class MediaRepository(
                 try {
                     val response = request({ key -> api.searchTitles(
                         apiKey = key, query = query, page = page,
-                        type = type?.takeUnless { it.isBlank() || it == "all" }
+                        type = type?.takeUnless { it.isBlank() || it == "all" }, year = year
                     ) }) { if (it.response == "False") it.error ?: "Service error" else null }
                     db.setCachedPayload(cacheKey, gson.toJson(response), 60 * 60 * 1000L)
                     response
@@ -214,6 +214,32 @@ class MediaRepository(
             }
             deferred.awaitAll().filterNotNull().distinctBy { it.imdbID }
         }
+
+    /** Publish warm cache first without network; then bounded batches in original seed order. */
+    suspend fun lookupTitlesProgressively(
+        titles: List<String>, type: String? = null,
+        publish: suspend (List<OmdbTitleDetail>) -> Unit
+    ): List<OmdbTitleDetail> {
+        val seeds = titles.distinct()
+        val resolved = linkedMapOf<String, OmdbTitleDetail>()
+        withContext(Dispatchers.IO) {
+            seeds.forEach { title ->
+                val key = "title_${title.trim()}_${type?.takeUnless { it.isBlank() || it == "all" }.orEmpty()}"
+                val detail = memoryCache.get(key) ?: db.getCachedPayload(key)?.let {
+                    runCatching { gson.fromJson(it, OmdbTitleDetail::class.java) }.getOrNull()
+                }
+                if (detail != null && detail.response != "False") resolved[title] = detail
+            }
+        }
+        fun snapshot() = seeds.mapNotNull { resolved[it] }.distinctBy { it.imdbID }
+        if (resolved.isNotEmpty()) publish(snapshot())
+        seeds.filterNot { it in resolved }.chunked(2).forEach { batch ->
+            val details = coroutineScope { batch.map { title -> async { title to getDetailsByTitle(title, type) } }.awaitAll() }
+            details.forEach { (title, detail) -> if (detail != null) resolved[title] = detail }
+            if (resolved.isNotEmpty()) publish(snapshot())
+        }
+        return snapshot()
+    }
 
     suspend fun getSeason(imdbId: String, season: Int): OmdbSeasonResponse? = withContext(Dispatchers.IO) {
         val cacheKey = "season_${imdbId}_$season"

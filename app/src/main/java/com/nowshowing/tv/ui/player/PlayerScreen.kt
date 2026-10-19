@@ -909,7 +909,7 @@ fun PlayerScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         contentPadding = PaddingValues(vertical = 4.dp)
                     ) {
-                        items(if (uiState.type == "diagnostic") SourceRegistry.NATIVE_SOURCES else SourceRegistry.UNSUPPORTED_WEB_SOURCES) { source ->
+                        items(SourceRegistry.UNSUPPORTED_WEB_SOURCES) { source ->
                             SourceItemCard(
                                 source = source,
                                 isSelected = source.name == uiState.currentSource.name,

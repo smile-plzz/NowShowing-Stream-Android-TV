@@ -34,9 +34,11 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -61,8 +63,21 @@ fun SearchScreen(
     onNavigate: (String) -> Unit,
     onTitleClick: (String, String) -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val gridState = rememberLazyGridState()
+    var yearDialog by remember { mutableStateOf(false) }
+    var yearText by remember { mutableStateOf("") }
+    if (yearDialog) androidx.compose.material3.AlertDialog(
+        onDismissRequest = { yearDialog = false },
+        title = { Text("Release year") },
+        text = { Column {
+            Text("OMDb title search; optional year 1888–2100.")
+            androidx.compose.material3.OutlinedTextField(yearText, { yearText = it.filter(Char::isDigit).take(4) }, label = { Text("Year") })
+        } },
+        confirmButton = { com.nowshowing.tv.ui.player.TvPlayerActionButton("Apply year", null,
+            enabled = yearText.toIntOrNull()?.let { it in 1888..2100 } == true) { viewModel.setYearFilter(yearText.toInt()); yearDialog = false } },
+        dismissButton = { com.nowshowing.tv.ui.player.TvPlayerActionButton("Cancel", null) { yearDialog = false } }
+    )
 
     Column(
         modifier = Modifier
@@ -115,6 +130,11 @@ fun SearchScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(uiState.year?.toString() ?: "Any year", uiState.year != null) { yearText = uiState.year?.toString().orEmpty(); yearDialog = true }
+                    FilterChip("Clear filters", false) { viewModel.clearFilters() }
+                }
+                Spacer(Modifier.height(8.dp))
                 // On-Screen D-Pad Alphanumeric Keyboard
                 TvOnScreenKeyboard(
                     onChar = { viewModel.onCharInput(it) },
@@ -156,7 +176,7 @@ fun SearchScreen(
                     Text(uiState.errorMessage.orEmpty(), color = TextMuted, fontSize = 15.sp,
                         modifier = Modifier.align(Alignment.TopCenter).background(BgDark).padding(8.dp))
                 }
-                if (uiState.isLoading) {
+                if (uiState.isLoading && uiState.results.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator(color = AccentCyan)
                     }
@@ -171,7 +191,7 @@ fun SearchScreen(
                 } else if (uiState.results.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text(
-                            text = "Use the remote to type a title or keyword.",
+                            text = "Search title words; plot/theme keywords are not supported.",
                             color = TextMuted,
                             fontSize = 14.sp
                         )
@@ -185,6 +205,9 @@ fun SearchScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                         modifier = Modifier.fillMaxSize()
                     ) {
+                        if (uiState.results.size < uiState.totalResults) item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
+                            com.nowshowing.tv.ui.player.TvPlayerActionButton(if (uiState.isLoading) "Loading…" else "Load more", null, enabled = !uiState.isLoading) { viewModel.executeSearch(reset = false) }
+                        }
                         items(uiState.results, key = { it.imdbID }) { movie ->
                             TvFocusableCard(
                                 title = movie.title,

@@ -34,6 +34,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nowshowing.tv.BuildConfig
 import com.nowshowing.tv.data.repository.MetadataHealth
 import com.nowshowing.tv.domain.source.SourceRegistry
@@ -47,13 +49,14 @@ private enum class SettingsSection(val label: String, val description: String) {
     PLAYBACK("Playback", "Settle in and keep watching."),
     METADATA("Metadata", "Keep titles available and recover when loading fails."),
     PRIVACY("Privacy", "Manage request filtering and source exceptions."),
-    HELP("Help", "Remote controls and playback checks."),
+    HELP("Help", "Remote controls and playback recovery."),
+    HEALTH("App health", "Run a local check or record browsing; freeze the report for photographs."),
     ABOUT("About", "App information and a report you can share for support.")
 }
 
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel, onNavigate: (String) -> Unit) {
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var sectionName by rememberSaveable {
         mutableStateOf(if (MetadataHealth.failure.value != null) SettingsSection.METADATA.name else SettingsSection.PLAYBACK.name)
@@ -67,11 +70,18 @@ fun SettingsScreen(viewModel: SettingsViewModel, onNavigate: (String) -> Unit) {
     val reportFocus = remember { FocusRequester() }
     var restoreReportFocus by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { withFrameNanos { }; entryFocus.requestFocus() }
-    LaunchedEffect(section) { if (section == SettingsSection.ABOUT) viewModel.refreshDiagnostics() }
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    var live by remember { mutableStateOf("Live readings unavailable") }
+    val recording by com.nowshowing.tv.diagnostics.BrowsingRecorder.recording.collectAsStateWithLifecycle()
+    LaunchedEffect(section, lifecycleOwner, showReport) {
+        if (section == SettingsSection.HEALTH && !showReport) lifecycleOwner.lifecycle.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
+            while (true) { live = liveMemory(context); kotlinx.coroutines.delay(2000) }
+        }
+    }
     LaunchedEffect(restoreReportFocus) {
         if (restoreReportFocus) { withFrameNanos { }; reportFocus.requestFocus(); restoreReportFocus = false }
     }
-    if (showReport) DiagnosticReportDialog(state.diagnosticText) { showReport = false; restoreReportFocus = true }
+    if (showReport) state.healthReport?.let { HealthPhotoDialog(it) { showReport = false; restoreReportFocus = true } }
 
     Column(Modifier.fillMaxSize().background(BgDark)) {
         TvTopBar("settings", onNavigate)
@@ -164,31 +174,51 @@ fun SettingsScreen(viewModel: SettingsViewModel, onNavigate: (String) -> Unit) {
                             }
                         }
                         item(key = "recovery") { InfoCard("If a source will not play", "Open controls with Back. Try Retry this source, then Change source. A loaded webpage does not prove that its video is playing. Provider subtitles and seeking stay inside the provider player.") }
-                        item(key = "demo_header") { InfoCard("Native playback checks", "These reference videos test the TV's native player. They do not play the movie you selected.") }
-                        items(SourceRegistry.NATIVE_SOURCES, key = { "demo:${it.id}" }) { source ->
-                            TvPlayerActionButton(source.name, null) { onNavigate(Screen.Player.createRoute(source.id, 1, 1, "diagnostic")) }
-                        }
                     }
-                    SettingsSection.ABOUT -> {
-                        item(key = "about") { InfoCard("NowShowing TV", "By Ismail Hossain\nVersion ${BuildConfig.VERSION_NAME} · Build ${BuildConfig.VERSION_CODE}\nA standalone Android TV app. Movie and series providers play inside Android System WebView.") }
-                        item(key = "source") { Text("Source & releases\ngithub.com/smile-plzz/NowShowing-Stream-Android-TV", color = TextSecondary, fontSize = 16.sp) }
-                        item(key = "report_intro") { InfoCard("Support report", "Includes app/device/WebView details, public certificate, cache sizes and recent metadata error categories. Excludes viewing history, provider URLs, API keys and device serial numbers. Review it before sharing.") }
-                        item(key = "refresh_report") { TvPlayerActionButton(if (state.isRefreshingDiagnostics) "Refreshing report…" else "Refresh report", null,
-                            enabled = !state.isRefreshingDiagnostics) { viewModel.refreshDiagnostics() } }
-                        if (!state.reportReady && !state.isRefreshingDiagnostics) item(key = "report_unavailable") { Feedback(state.diagnosticText) }
-                        item(key = "view_report") { TvPlayerActionButton("View diagnostic report", null, modifier = Modifier.focusRequester(reportFocus), enabled = state.reportReady) { showReport = true } }
-                        item(key = "copy_report") { TvPlayerActionButton("Copy diagnostic report", null, enabled = state.reportReady) {
+                    SettingsSection.HEALTH -> {
+                        item(key = "live") { InfoCard("Live memory · updates every 2 seconds", live) }
+                        item(key = "record_help") { InfoCard("Record real browsing", "Start recording, then browse Home, Movies, TV, Search or Watchlist for up to 60 seconds. Return here to stop and freeze a report. Recording also stops when the app is backgrounded. Settings and playback frames are excluded; no input or video FPS is measured.") }
+                        item(key = "record") { TvPlayerActionButton(if (recording) "Stop recording" else "Record browsing performance", null) {
+                            if (recording) com.nowshowing.tv.diagnostics.BrowsingRecorder.stop()
+                            else {
+                                val activity = context.findActivity()
+                                if (activity != null) { com.nowshowing.tv.diagnostics.BrowsingRecorder.start(activity.window); reportMessage = "Recording started. Navigate to a collection, then return here." }
+                                else reportMessage = "Frame recording unavailable in this window."
+                            }
+                        } }
+                        item(key = "run_health") { TvPlayerActionButton(if (state.isRefreshingDiagnostics) "Capturing report…" else "Run health check / Freeze report", null,
+                            enabled = !state.isRefreshingDiagnostics) {
+                            com.nowshowing.tv.diagnostics.BrowsingRecorder.stop()
+                            viewModel.refreshDiagnostics()
+                        } }
+                        item(key = "snapshot_help") { InfoCard("Photo report", "The saved report is a frozen local snapshot. Every page repeats its report ID, build and original capture time. No network probe or playback test runs. Unknown measurements stay unavailable. Run again to replace it.") }
+                        item(key = "view_report") { TvPlayerActionButton("View last frozen report", null, modifier = Modifier.focusRequester(reportFocus), enabled = state.healthReport != null) { showReport = true } }
+                        item(key = "delete_report") { TvPlayerActionButton("Delete saved report", null, enabled = state.healthReport != null && !state.isRefreshingDiagnostics) { viewModel.deleteReport() } }
+                        item(key = "copy_report") { TvPlayerActionButton("Copy report", null, enabled = state.reportReady) {
                             (context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(ClipData.newPlainText("NowShowing diagnostics", state.diagnosticText))
                             reportMessage = "Report copied."
                         } }
-                        item(key = "share_report") { TvPlayerActionButton("Share diagnostic report", null, enabled = state.reportReady) {
-                            reportMessage = runCatching {
-                                context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
-                                    type = "text/plain"; putExtra(Intent.EXTRA_TEXT, state.diagnosticText)
-                                }, "Share diagnostics")); "Choose a share destination."
-                            }.getOrElse { "No sharing app is available. View the report and photograph it, or use Copy." }
-                        } }
                         if (reportMessage.isNotBlank()) item(key = "report_feedback") { Feedback(reportMessage) }
+                    }
+                    SettingsSection.ABOUT -> {
+                        item(key = "about") { InfoCard("NowShowing TV", "Created by Ismail Hossain\nA standalone movie and series discovery app for Android TV.\nVersion ${BuildConfig.VERSION_NAME} · Code ${BuildConfig.VERSION_CODE}\nVariant ${BuildConfig.BUILD_TYPE}\nCommit ${BuildConfig.BUILD_COMMIT}") }
+                        listOf(
+                            "GitHub profile" to "https://github.com/smile-plzz",
+                            "Source code" to "https://github.com/smile-plzz/NowShowing-Stream-Android-TV",
+                            "Releases & downloads" to "https://github.com/smile-plzz/NowShowing-Stream-Android-TV/releases",
+                            "Report an issue" to "https://github.com/smile-plzz/NowShowing-Stream-Android-TV/issues"
+                        ).forEach { (label, url) ->
+                            item(key = label) {
+                                InfoCard(label, url)
+                                TvPlayerActionButton("Open $label", null) {
+                                    reportMessage = runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url))); "Opened $label." }
+                                        .getOrElse { "No browser is available. The full address remains visible above." }
+                                }
+                            }
+                        }
+                        item(key = "limits") { InfoCard("Playback & troubleshooting", "Metadata: OMDb API. Playback: Android System WebView and external providers; availability varies. Page loading does not prove playback. Web progress/completion is unavailable. Use Back → Retry or Change source. Diagnostics are in App health.") }
+                        item(key = "dependencies") { InfoCard("Built with", "Kotlin, Android Jetpack Compose, Coil, Retrofit, OkHttp, Gson, SQLite and AndroidX Media3. Source includes build dependencies and project documentation. Content and metadata belong to their respective owners.") }
+                        if (reportMessage.isNotBlank()) item(key = "link_feedback") { Feedback(reportMessage) }
                     }
                 }
             }
@@ -229,25 +259,8 @@ private fun SettingToggleItem(title: String, description: String, enabled: Boole
     }
 }
 
-@Composable
-private fun DiagnosticReportDialog(report: String, onClose: () -> Unit) {
-    val close = remember { FocusRequester() }
-    Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Column(Modifier.widthIn(max = 840.dp).fillMaxWidth(0.92f).fillMaxHeight(0.9f)
-            .background(BgDark, RoundedCornerShape(20.dp)).padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Diagnostic report", color = TextPrimary, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-            Text("Use arrows to read each section. Back or Done closes the report.", color = TextSecondary, fontSize = 16.sp)
-            TvPlayerActionButton("Done", null, modifier = Modifier.focusRequester(close), onClick = onClose)
-            LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                items(report.lines().chunked(3)) { lines ->
-                    val interaction = remember { MutableInteractionSource() }
-                    val focused by interaction.collectIsFocusedAsState()
-                    Text(lines.joinToString("\n"), color = TextPrimary, fontSize = 16.sp, lineHeight = 24.sp,
-                        modifier = Modifier.fillMaxWidth().border(2.dp, if (focused) AccentCyan else Color.Transparent, RoundedCornerShape(8.dp))
-                            .focusable(interactionSource = interaction).padding(12.dp))
-                }
-            }
-        }
-        LaunchedEffect(Unit) { withFrameNanos { }; close.requestFocus() }
-    }
+private fun Context.findActivity(): android.app.Activity? = when (this) {
+    is android.app.Activity -> this
+    is android.content.ContextWrapper -> baseContext.findActivity()
+    else -> null
 }
