@@ -32,8 +32,10 @@ data class BrowseUiState(
     val years: List<Int> = emptyList(), val totalLoaded: Int = 0
 )
 
-class BrowseViewModel(application: Application) : AndroidViewModel(application) {
-    private val repository = MediaRepository(application)
+class BrowseViewModel @JvmOverloads constructor(
+    application: Application,
+    private val repository: MediaRepository = MediaRepository(application)
+) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow(BrowseUiState())
     val uiState = _uiState.asStateFlow()
     private var browseJob: Job? = null

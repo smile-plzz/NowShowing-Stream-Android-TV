@@ -53,6 +53,15 @@ jobs:
           chmod +x gradlew
           python3 -m unittest discover -s scripts -p 'test_*.py'
           ./gradlew testDebugUnitTest --no-daemon
+      - name: Upload unit test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NowShowing-TV-Test-Results
+          path: |
+            app/build/test-results/testDebugUnitTest/
+            app/build/reports/tests/testDebugUnitTest/
+          if-no-files-found: ignore
       - name: Build debug and release APKs
         env:
           RELEASE_KEYSTORE_PATH: ${{ runner.temp }}/release-key.jks

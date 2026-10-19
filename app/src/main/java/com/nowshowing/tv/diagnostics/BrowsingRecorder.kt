@@ -23,11 +23,12 @@ object BrowsingRecorder {
     private var missingCallbacks = 0
     private val durations = DoubleArray(12000)
     private val screens = linkedSetOf<String>()
+    private val browseScreens = setOf("Home", "Movies", "TV", "Search", "Watchlist", "Mood", "Details")
     var lastSummary: String = "Not recorded. Select Record browsing performance, then navigate for up to 60 seconds."
         private set
     private val timeout = Runnable { stop("60 second limit") }
     private val listener = Window.OnFrameMetricsAvailableListener { _, metrics, dropped ->
-        if (_recording.value && screen in setOf("Home", "Movies", "TV", "Search", "Watchlist", "Mood", "Details")) {
+        if (_recording.value && screen in browseScreens) {
             val ns = metrics.getMetric(FrameMetrics.TOTAL_DURATION)
             if (ns >= 0) {
                 val ms = ns / 1_000_000.0

@@ -40,7 +40,7 @@ Real TV checks:
 5. Navigate deep into a shelf/grid, enter Details, return; verify scroll and focus. Repeat Details -> Player -> Back.
 6. Rapidly submit different searches and filters; the newest request wins.
 7. Upgrade an existing v1 install with the same signing key and confirm watchlist/native progress remain intact.
-8. Regression-test web playback, source switching, fullscreen/Back, native diagnostic streams, moods, and watchlist.
+8. Regression-test web playback, source switching, fullscreen/Back, safe rejection of removed diagnostic-stream routes, moods, and watchlist.
 
 ## Distribution
 Use the PR's successful build artifacts. APK installation updates require the same signing certificate as the installed version. The current workflow uses a development signing fallback when no release keystore is configured; different runner-generated certificates can require reinstalling. A stable production signing key remains a separate release-operations task.
