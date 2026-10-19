@@ -187,6 +187,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, onNavigate: (String) -> Unit) {
                             com.nowshowing.tv.diagnostics.BrowsingRecorder.stop()
                             viewModel.refreshDiagnostics()
                         } }
+                        if (!state.reportReady && !state.isRefreshingDiagnostics) item(key = "capture_status") { Feedback(state.diagnosticText) }
                         item(key = "snapshot_help") { InfoCard("Photo report", "The saved report is a frozen local snapshot. Every page repeats its report ID, build and original capture time. No network probe or playback test runs. Unknown measurements stay unavailable. Run again to replace it.") }
                         item(key = "view_report") { TvPlayerActionButton("View last frozen report", null, modifier = Modifier.focusRequester(reportFocus), enabled = state.healthReport != null) { showReport = true } }
                         item(key = "delete_report") { TvPlayerActionButton("Delete saved report", null, enabled = state.healthReport != null && !state.isRefreshingDiagnostics) { viewModel.deleteReport() } }

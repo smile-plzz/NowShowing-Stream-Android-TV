@@ -41,6 +41,7 @@ data class SettingsUiState(
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
 
+    private var reportRevision = 0
     private val playback = PlaybackPreferences(application)
     private val preferences = ProtectionPreferences(application)
     private val statistics = BlockingStatistics(application)
@@ -50,9 +51,10 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     init {
         refreshState()
+        val revision = reportRevision
         viewModelScope.launch {
             val last = withContext(Dispatchers.IO) { HealthReports.load(getApplication()) }
-            if (!_uiState.value.isRefreshingDiagnostics && _uiState.value.healthReport == null) {
+            if (revision == reportRevision && !_uiState.value.isRefreshingDiagnostics && _uiState.value.healthReport == null) {
                 _uiState.value = _uiState.value.copy(healthReport = last, reportReady = last != null,
                     diagnosticText = last?.text() ?: _uiState.value.diagnosticText)
             }
@@ -140,6 +142,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     fun refreshDiagnostics() {
         if (_uiState.value.isRefreshingDiagnostics) return
+        reportRevision++
         _uiState.value = _uiState.value.copy(isRefreshingDiagnostics = true, reportReady = false)
         viewModelScope.launch {
             val report = withContext(Dispatchers.IO) {
@@ -153,6 +156,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun deleteReport() {
+        reportRevision++
         HealthReports.delete(getApplication())
         _uiState.value = _uiState.value.copy(healthReport = null, reportReady = false, diagnosticText = "No saved report.")
     }
