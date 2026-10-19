@@ -11,7 +11,9 @@ import org.junit.Assert.*
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [28], application = Application::class, qualifiers = "w960dp-h540dp")
 class HealthPhotoTest {
@@ -24,7 +26,8 @@ class HealthPhotoTest {
         val layouts = mutableListOf<TextLayoutResult>()
         compose.onNodeWithTag("health-photo-body").performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
         assertTrue(layouts.isNotEmpty())
-        assertFalse("Evidence must fit without clipping", layouts.first().hasVisualOverflow)
+        val layout = layouts.first()
+        assertFalse("Evidence must fit: size=${layout.size}, lines=${layout.lineCount}, paragraphHeight=${layout.multiParagraph.height}, paragraphWidth=${layout.multiParagraph.width}", layout.hasVisualOverflow)
         compose.onNodeWithText("Next").performClick()
         compose.onNodeWithText("App health · Page 2 of 3").assertExists()
         compose.onNodeWithText("Report frozen1 · 1.6.0-rc.1 (16000)\n2026-10-19 09:00:00 Asia/Dhaka").assertExists()

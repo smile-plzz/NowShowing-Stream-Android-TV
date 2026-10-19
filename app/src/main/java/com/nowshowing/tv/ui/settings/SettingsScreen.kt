@@ -61,6 +61,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, onNavigate: (String) -> Unit) {
     var metadataKey by remember { mutableStateOf("") }
     var reportMessage by remember { mutableStateOf("") }
     var showReport by remember { mutableStateOf(false) }
+    var photoReport by remember { mutableStateOf<HealthReport?>(null) }
     var tipsReset by remember { mutableStateOf(false) }
     val entryFocus = remember { FocusRequester() }
     val reportFocus = remember { FocusRequester() }
@@ -77,7 +78,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, onNavigate: (String) -> Unit) {
     LaunchedEffect(restoreReportFocus) {
         if (restoreReportFocus) { withFrameNanos { }; reportFocus.requestFocus(); restoreReportFocus = false }
     }
-    if (showReport) state.healthReport?.let { HealthPhotoDialog(it) { showReport = false; restoreReportFocus = true } }
+    if (showReport) photoReport?.let { HealthPhotoDialog(it) { showReport = false; restoreReportFocus = true } }
 
     Column(Modifier.fillMaxSize().background(BgDark)) {
         TvTopBar("settings", onNavigate)
@@ -189,7 +190,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, onNavigate: (String) -> Unit) {
                         } }
                         if (!state.reportReady && !state.isRefreshingDiagnostics) item(key = "capture_status") { Feedback(state.diagnosticText) }
                         item(key = "snapshot_help") { InfoCard("Photo report", "The saved report is a frozen local snapshot. Every page repeats its report ID, build and original capture time. No network probe or playback test runs. Unknown measurements stay unavailable. Run again to replace it.") }
-                        item(key = "view_report") { TvPlayerActionButton("View last frozen report", null, modifier = Modifier.focusRequester(reportFocus), enabled = state.healthReport != null) { showReport = true } }
+                        item(key = "view_report") { TvPlayerActionButton("View last frozen report", null, modifier = Modifier.focusRequester(reportFocus), enabled = state.healthReport != null) { photoReport = state.healthReport; showReport = true } }
                         item(key = "delete_report") { TvPlayerActionButton("Delete saved report", null, enabled = state.healthReport != null && !state.isRefreshingDiagnostics) { viewModel.deleteReport() } }
                         item(key = "copy_report") { TvPlayerActionButton("Copy report", null, enabled = state.reportReady) {
                             (context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(ClipData.newPlainText("NowShowing diagnostics", state.diagnosticText))

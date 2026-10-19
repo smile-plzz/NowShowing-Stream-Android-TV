@@ -173,7 +173,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             _uiState.value = _uiState.value.copy(isClearingCache = false, maintenanceMessage =
                 if (success) "Metadata and image caches cleared. Watchlist, history, watched labels and settings preserved. Visible screens may retain loaded titles until reopened."
                 else "Cache clearing could not complete. Your saved data was preserved.")
-            refreshDiagnostics()
         }
     }
 
