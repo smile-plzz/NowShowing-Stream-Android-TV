@@ -21,7 +21,7 @@ Adopting a new permanent key may require one intentional fresh install if the ol
 ## Version convention
 Update app/build.gradle.kts:
 - versionName: semantic user-facing version, such as 1.5.1
-- versionCode: strictly increasing Android integer; this candidate is 15004
+- versionCode: strictly increasing Android integer; the 1.6.0-rc.2 candidate is 16001
 - Git tag: v plus versionName
 - Release notes: docs/releases/v<versionName>.md
 

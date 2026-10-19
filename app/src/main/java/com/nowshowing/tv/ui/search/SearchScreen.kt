@@ -205,10 +205,6 @@ fun SearchScreen(
                 modifier = Modifier
                     .fillMaxSize()
             ) {
-                if (uiState.errorMessage != null && uiState.results.isNotEmpty()) {
-                    Text(uiState.errorMessage.orEmpty(), color = TextMuted, fontSize = 15.sp,
-                        modifier = Modifier.align(Alignment.TopCenter).background(BgDark).padding(8.dp))
-                }
                 if (uiState.isLoading && uiState.results.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator(color = AccentCyan)
@@ -231,6 +227,10 @@ fun SearchScreen(
                     }
                 } else {
                     Column(Modifier.fillMaxSize()) {
+                    uiState.errorMessage?.let {
+                        Text(it, color = TextMuted, fontSize = 14.sp, modifier = Modifier.padding(bottom = 8.dp))
+                        com.nowshowing.tv.ui.player.TvPlayerActionButton("Retry search", null, enabled = !uiState.isLoading) { viewModel.retrySearch() }
+                    }
                     Text(
                         text = "${uiState.results.size} of ${uiState.totalResults} results · ${uiState.resultQuery}",
                         color = TextMuted, fontSize = 13.sp, modifier = Modifier.padding(bottom = 8.dp)
