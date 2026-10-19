@@ -2,7 +2,7 @@
 
 A standalone movie and series discovery app for Android TV / Google TV, by Ismail Hossain.
 
-**Development candidate: 1.6.0-rc.1 · Android version code 16000**
+**Development candidate: 1.6.0-rc.2 · Android version code 16001**
 
 Last published release remains 1.5.1 until a candidate is accepted. See [App health and TV measurements](docs/APP_HEALTH.md).
 
@@ -22,6 +22,8 @@ Download the APK from the versioned GitHub Release. Releases include both APK va
 Home/Browse show fresh cached cards first and publish incremental results with two global network slots. Refresh retains populated grids. Browse sorts and genre/start-year filters apply only to the loaded curated collection, not a complete catalog. Search supports title words, type and optional release year with Load more. Live popularity/new-release rankings and plot-keyword discovery are deferred; curated seeds are not live rankings.
 
 ## Daily TV use
+- System-keyboard title entry alongside the D-pad keyboard; scrollable search controls and result counts.
+- Watchlist filters for movies/series, sorting by saved date/title/release year, and a shortcut to find titles. All operations stay local.
 - D-pad browsing, search, watchlist, three genre shelves and curated featured/movie/series picks.
 - Title details initially focus Play; returning restores the selected action/card and saved list position.
 - Play enters the web provider directly. Arrows move the pointer; OK clicks; Back exits provider fullscreen, then opens app controls, then returns to the title.

@@ -20,6 +20,7 @@ data class SearchUiState(
     val isLoading: Boolean = false,
     val results: List<OmdbTitleShort> = emptyList(),
     val totalResults: Int = 0,
+    val resultQuery: String = "",
     val currentPage: Int = 1,
     val errorMessage: String? = null
 )
@@ -44,9 +45,14 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    fun setQuery(query: String) {
+        searchJob?.cancel()
+        _uiState.value = _uiState.value.copy(query = query.take(200), isLoading = false, errorMessage = null)
+    }
+
     fun onCharInput(c: Char) {
         searchJob?.cancel()
-        _uiState.value = _uiState.value.copy(query = _uiState.value.query + c, isLoading = false)
+        setQuery(_uiState.value.query + c)
     }
 
     fun onBackspace() {
@@ -122,6 +128,7 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                     results = updated,
                     errorMessage = if (response.isStale) "Showing expired cached search results. ${com.nowshowing.tv.data.repository.MetadataHealth.failure.value?.message.orEmpty()}" else null,
                     currentPage = targetPage,
+                    resultQuery = trimmed,
                     totalResults = response.totalResults?.toIntOrNull() ?: updated.size
                 )
             } else {

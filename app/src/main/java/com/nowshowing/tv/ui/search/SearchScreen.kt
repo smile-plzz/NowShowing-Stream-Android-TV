@@ -1,5 +1,11 @@
 package com.nowshowing.tv.ui.search
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -65,6 +71,27 @@ fun SearchScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val gridState = rememberLazyGridState()
+    var textDialog by remember { mutableStateOf(false) }
+    var searchText by remember { mutableStateOf("") }
+    if (textDialog) androidx.compose.material3.AlertDialog(
+        onDismissRequest = { textDialog = false },
+        title = { Text("Enter a title") },
+        text = {
+            androidx.compose.material3.OutlinedTextField(
+                value = searchText, onValueChange = { searchText = it.take(200) },
+                label = { Text("Movie or series title") }, singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = {
+                    if (searchText.isNotBlank()) {
+                        viewModel.executeSearch(searchText, reset = true); textDialog = false
+                    }
+                })
+            )
+        },
+        confirmButton = { com.nowshowing.tv.ui.player.TvPlayerActionButton("Search title", null,
+            enabled = searchText.isNotBlank()) { viewModel.executeSearch(searchText, reset = true); textDialog = false } },
+        dismissButton = { com.nowshowing.tv.ui.player.TvPlayerActionButton("Cancel", null) { textDialog = false } }
+    )
     var yearDialog by remember { mutableStateOf(false) }
     var yearText by remember { mutableStateOf("") }
     if (yearDialog) androidx.compose.material3.AlertDialog(
@@ -96,6 +123,8 @@ fun SearchScreen(
                 modifier = Modifier
                     .width(360.dp)
                     .fillMaxHeight()
+                    .testTag("search-controls")
+                    .verticalScroll(rememberScrollState())
             ) {
                 // Search Input Display Box
                 Box(
@@ -117,6 +146,10 @@ fun SearchScreen(
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
+
+                com.nowshowing.tv.ui.player.TvPlayerActionButton("Type with system keyboard", null) {
+                    searchText = uiState.query; textDialog = true
+                }
 
                 // Type Filter Pills
                 Row(
@@ -197,6 +230,11 @@ fun SearchScreen(
                         )
                     }
                 } else {
+                    Column(Modifier.fillMaxSize()) {
+                    Text(
+                        text = "${uiState.results.size} of ${uiState.totalResults} results · ${uiState.resultQuery}",
+                        color = TextMuted, fontSize = 13.sp, modifier = Modifier.padding(bottom = 8.dp)
+                    )
                     LazyVerticalGrid(
                     state = gridState,
                         columns = GridCells.Adaptive(minSize = 135.dp),
@@ -220,6 +258,7 @@ fun SearchScreen(
                             com.nowshowing.tv.ui.player.TvPlayerActionButton(if (uiState.isLoading) "Loading…" else "Load more", null, enabled = !uiState.isLoading) { viewModel.executeSearch(reset = false) }
                         }
 
+                    }
                     }
                 }
             }
