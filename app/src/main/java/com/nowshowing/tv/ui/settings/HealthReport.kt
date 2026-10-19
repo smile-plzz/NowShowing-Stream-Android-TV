@@ -21,7 +21,7 @@ data class HealthReport(val id: String, val capturedAt: String, val version: Str
 
 /** Conservatively split long evidence into continuation pages; never ellipsize or discard values. */
 fun photoPages(title: String, text: String): List<HealthPage> {
-    val lines = text.lines().flatMap { if (it.isEmpty()) listOf("") else it.chunked(48) }
+    val lines = text.lines().flatMap { if (it.isEmpty()) listOf("") else it.chunked(32) }
     return lines.chunked(5).mapIndexed { index, chunk ->
         HealthPage(if (index == 0) title else "$title · continued ${index + 1}", chunk.joinToString("\n"))
     }
@@ -49,6 +49,7 @@ object HealthReports {
                 addAll(photoPages("Summary", "Local snapshot; no automatic upload.\nMetadata: ${MetadataHealth.failure.value?.name ?: "No failure recorded"}\nNetwork probe: skipped; playback not tested.\nNext: record browsing and photograph its pages.\nCompare three matched runs on the same TV."))
                 addAll(photoPages("Browsing performance", BrowsingRecorder.lastSummary))
                 addAll(photoPages("Memory", liveMemory(context)))
+                addAll(photoPages("Metadata requests", com.nowshowing.tv.diagnostics.MetadataMetrics.summary()))
                 // diagnosticReport constructs an allowlist of public environment fields and error categories.
                 val environment = diagnosticReport(context)
                 addAll(photoPages("Environment, cache & metadata", environment))

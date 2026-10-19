@@ -1,6 +1,7 @@
 package com.nowshowing.tv.data.repository
 
 import android.content.Context
+import com.nowshowing.tv.diagnostics.MetadataMetrics
 import com.google.gson.Gson
 import com.nowshowing.tv.data.api.ApiClient
 import com.nowshowing.tv.data.db.ContinueItem
@@ -106,8 +107,11 @@ class MediaRepository(
                         throw MetadataUnavailable(MetadataFailure.KEY)
                     }
                 try {
+                    MetadataMetrics.requests.incrementAndGet()
+                    val started = android.os.SystemClock.elapsedRealtime()
                     val result = fetch(key)
                     error(result)?.let { throw MetadataUnavailable(classifyMetadataError(it)) }
+                    MetadataMetrics.success(android.os.SystemClock.elapsedRealtime() - started)
                     if (MetadataHealth.generation == generation) MetadataHealth.success()
                     return@withPermit result
                 } catch (cancelled: CancellationException) { throw cancelled
@@ -148,7 +152,7 @@ class MediaRepository(
                     response
                 } catch (failure: MetadataUnavailable) {
                     if (failure.failure != MetadataFailure.NO_RESULTS) cached(true)?.let {
-                        MetadataHealth.stale(); return@withContext it.copy(isStale = true)
+                        MetadataMetrics.staleHits.incrementAndGet(); MetadataHealth.stale(); return@withContext it.copy(isStale = true)
                     }
                     OmdbSearchResponse(null, "0", "False", failure.failure.message)
                 }
@@ -159,11 +163,12 @@ class MediaRepository(
         withContext(Dispatchers.IO) {
             // Striped locks bound synchronization memory and coalesce matching concurrent lookups.
             requestLocks[(key.hashCode() and Int.MAX_VALUE) % requestLocks.size].withLock {
-                memoryCache.get(key)?.let { return@withContext it }
+                memoryCache.get(key)?.let { MetadataMetrics.memoryHits.incrementAndGet(); return@withContext it }
                 db.getCachedPayload(key)?.let { json ->
                     try {
                         val detail = gson.fromJson(json, OmdbTitleDetail::class.java)
                         if (detail != null && detail.response != "False") {
+                            MetadataMetrics.diskHits.incrementAndGet()
                             // Disk expiry stays authoritative; do not extend it in the memory tier.
                             return@withContext detail
                         }
@@ -186,7 +191,7 @@ class MediaRepository(
                     if (failure.failure == MetadataFailure.NO_RESULTS) return@withContext null
                     db.getCachedPayload(key, allowStale = true)?.let { json ->
                         runCatching { gson.fromJson(json, OmdbTitleDetail::class.java) }.getOrNull()?.let {
-                            MetadataHealth.stale(); return@withContext it
+                            MetadataMetrics.staleHits.incrementAndGet(); MetadataHealth.stale(); return@withContext it
                         }
                     }
                     null

@@ -6,6 +6,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.font.FontWeight
@@ -29,7 +30,7 @@ fun HealthPhotoDialog(report: HealthReport, onClose: () -> Unit) {
                 Text("Report ${report.id} · ${report.version}\n${report.capturedAt}", color = AccentCyan, fontSize = 14.sp, lineHeight = 19.sp)
                 Text(report.pages[index].title, color = TextPrimary, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 Text(report.pages[index].body, color = TextPrimary, fontSize = if (compact) 17.sp else 21.sp,
-                    lineHeight = if (compact) 23.sp else 29.sp, modifier = Modifier.weight(1f))
+                    lineHeight = if (compact) 23.sp else 29.sp, modifier = Modifier.weight(1f).testTag("health-photo-body"))
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     // Keep navigation enabled at both ends so focus never disappears during paging.
                     TvPlayerActionButton("Previous", null) { if (index > 0) index-- }

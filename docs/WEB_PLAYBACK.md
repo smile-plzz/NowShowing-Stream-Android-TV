@@ -1,6 +1,6 @@
 # Current playback contract — 1.5.1
 
-Selected movies and series use existing provider HTML/iframe players in Android System WebView. Media3 remains available for direct diagnostic demo streams; choosing a demo does not play the selected movie.
+Selected movies and series use existing provider HTML/iframe players in Android System WebView. Demo streams and launch routes are removed. Media3/resolver code remains internally tested but has no registered native source.
 
 ## Startup and remote input
 Pressing Play enters the provider page immediately, with pointer focus. There is no app-owned Enter Player/Start gate. Some providers still require an OK click on their own play button. `mediaPlaybackRequiresUserGesture=false` does not guarantee provider autoplay; no arbitrary DOM/pixel clicks or unverified autoplay URL parameters are injected.
@@ -12,7 +12,7 @@ Autoplay is ON by default and persists in Settings. **Current web providers have
 
 Use manual Next episode. The app resolves known episode numbers, fetches the next season at a known boundary and recognizes the last known episode. Missing metadata yields a recovery message rather than selecting invented episode numbers. Metadata can lag the provider catalog; use explicit season/episode selection when necessary. Automatic post-movie recommendations likewise require a completion signal, so cached related titles appear on Details instead.
 
-Native playback uses actual player events. A supported native series completion can show a ten-second countdown, Next episode and Dismiss; OFF leaves advancement manual. Events are tied to the current native source/session. Currently native catalog entries are fixed diagnostic videos, so they do not establish feature support for movies/series providers.
+Native playback uses actual player events. A supported native series completion can show a ten-second countdown, Next episode and Dismiss; OFF leaves advancement manual. Events are tied to the current native source/session. There are no registered native catalog entries; this infrastructure does not establish feature support for web providers.
 
 ## Protection and lifecycle
 HTTPS only; no mixed content, file/content access, downloads, permissions, external navigation intents or privileged JavaScript bridges. Popup windows are denied. Main-frame host isolation and request filtering follow settings/source exceptions. Default SSL rejection is preserved. HTTPS provider child frames remain possible.

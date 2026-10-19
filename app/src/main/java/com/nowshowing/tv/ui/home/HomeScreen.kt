@@ -239,7 +239,7 @@ fun HomeScreen(
                 // Popular Movies
                 item(key = "pop_movies") {
                     TvContentRow(
-                        title = "Popular Movies",
+                        title = "Curated Movies",
                         isLoading = uiState.isLoading,
                         items = uiState.popularMovies,
                         onItemClick = { m -> onTitleClick(m.imdbID, "movie") }
@@ -249,7 +249,7 @@ fun HomeScreen(
                 // Popular TV Shows
                 item(key = "pop_tv") {
                     TvContentRow(
-                        title = "Popular TV Shows",
+                        title = "Curated TV Shows",
                         isLoading = uiState.isLoading,
                         items = uiState.popularTv,
                         onItemClick = { m -> onTitleClick(m.imdbID, "series") }

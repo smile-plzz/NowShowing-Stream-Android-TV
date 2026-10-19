@@ -1,6 +1,6 @@
 # Known limitations — 1.5.1
 
-- Movie/series sources are external web/iframe providers inside WebView. Native diagnostic demos are independent of selected IMDb titles. No stream extraction or DRM bypass is implemented.
+- Movie/series sources are external web/iframe providers inside WebView. Native diagnostic demos have been removed. No stream extraction or DRM bypass is implemented.
 - Web completion/progress is not integrated. Default-on autoplay does not automatically advance these providers; use manual Next episode. No web timestamp resume or completion-driven related panel is claimed.
 - Recently opened means a page was opened. Manual Watched is a title-level label, preserved across reopening any episode. Measured native Continue Watching is separate.
 - Provider play buttons, seeking, subtitles, catalog, availability and fullscreen quirks remain provider-dependent. Page loading does not prove video playback.

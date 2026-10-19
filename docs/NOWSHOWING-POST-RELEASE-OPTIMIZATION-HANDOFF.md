@@ -1,3 +1,5 @@
+> Implementation authorized by Ismail on 19 October 2026. This handoff remains the historical planning baseline; current candidate behavior and open device gates are documented in [v1.6.0-rc.1](releases/v1.6.0-rc.1.md) and [App health](APP_HEALTH.md).
+
 # NowShowing TV - Post-release optimization handoff
 
 Prepared: 19 October 2026, Asia/Dhaka  

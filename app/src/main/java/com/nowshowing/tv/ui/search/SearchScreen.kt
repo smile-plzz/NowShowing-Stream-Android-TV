@@ -205,9 +205,6 @@ fun SearchScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                         modifier = Modifier.fillMaxSize()
                     ) {
-                        if (uiState.results.size < uiState.totalResults) item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
-                            com.nowshowing.tv.ui.player.TvPlayerActionButton(if (uiState.isLoading) "Loading…" else "Load more", null, enabled = !uiState.isLoading) { viewModel.executeSearch(reset = false) }
-                        }
                         items(uiState.results, key = { it.imdbID }) { movie ->
                             TvFocusableCard(
                                 title = movie.title,
@@ -219,6 +216,10 @@ fun SearchScreen(
                                 onClick = { onTitleClick(movie.imdbID, movie.type) }
                             )
                         }
+                        if (uiState.results.size < uiState.totalResults) item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
+                            com.nowshowing.tv.ui.player.TvPlayerActionButton(if (uiState.isLoading) "Loading…" else "Load more", null, enabled = !uiState.isLoading) { viewModel.executeSearch(reset = false) }
+                        }
+
                     }
                 }
             }

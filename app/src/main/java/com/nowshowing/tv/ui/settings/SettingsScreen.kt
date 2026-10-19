@@ -32,16 +32,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nowshowing.tv.BuildConfig
 import com.nowshowing.tv.data.repository.MetadataHealth
-import com.nowshowing.tv.domain.source.SourceRegistry
 import com.nowshowing.tv.ui.common.TvSectionTab
 import com.nowshowing.tv.ui.common.TvTopBar
-import com.nowshowing.tv.ui.navigation.Screen
 import com.nowshowing.tv.ui.player.TvPlayerActionButton
 import com.nowshowing.tv.ui.theme.*
 
@@ -213,6 +209,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, onNavigate: (String) -> Unit) {
                                 TvPlayerActionButton("Open $label", null) {
                                     reportMessage = runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url))); "Opened $label." }
                                         .getOrElse { "No browser is available. The full address remains visible above." }
+                                    android.widget.Toast.makeText(context, reportMessage, android.widget.Toast.LENGTH_LONG).show()
                                 }
                             }
                         }

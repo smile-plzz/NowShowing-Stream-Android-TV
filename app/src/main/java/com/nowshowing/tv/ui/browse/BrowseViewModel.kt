@@ -27,7 +27,9 @@ fun sortTitles(items: List<OmdbTitleDetail>, mode: SortMode): List<OmdbTitleDeta
 data class BrowseUiState(
     val kind: String = "movies", val title: String = "Curated Movies",
     val isLoading: Boolean = true, val items: List<OmdbTitleDetail> = emptyList(),
-    val sortMode: SortMode = SortMode.FEATURED, val message: String? = null
+    val sortMode: SortMode = SortMode.FEATURED, val message: String? = null,
+    val genre: String? = null, val year: Int? = null, val genres: List<String> = emptyList(),
+    val years: List<Int> = emptyList(), val totalLoaded: Int = 0
 )
 
 class BrowseViewModel(application: Application) : AndroidViewModel(application) {
@@ -58,5 +60,14 @@ class BrowseViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
     fun setSortMode(mode: SortMode) { _uiState.value = _uiState.value.copy(sortMode = mode); applySort() }
-    private fun applySort() { _uiState.value = _uiState.value.copy(items = sortTitles(rawItems, _uiState.value.sortMode)) }
+    fun setGenre(genre: String?) { _uiState.value = _uiState.value.copy(genre = genre); applySort() }
+    fun setYear(year: Int?) { _uiState.value = _uiState.value.copy(year = year); applySort() }
+    fun clearFilters() { _uiState.value = _uiState.value.copy(genre = null, year = null); applySort() }
+    private fun applySort() {
+        val state = _uiState.value
+        fun genres(item: OmdbTitleDetail) = item.genre.orEmpty().split(",").map { it.trim() }.filter { it.isNotBlank() && it != "N/A" }
+        val filtered = rawItems.filter { (state.genre == null || state.genre in genres(it)) && (state.year == null || startYear(it.year) == state.year) }
+        _uiState.value = state.copy(items = sortTitles(filtered, state.sortMode), totalLoaded = rawItems.size,
+            genres = rawItems.flatMap { genres(it) }.distinct().sorted(), years = rawItems.map { startYear(it.year) }.filter { it > 0 }.distinct().sortedDescending())
+    }
 }

@@ -2,7 +2,9 @@
 
 A standalone movie and series discovery app for Android TV / Google TV, by Ismail Hossain.
 
-**Sideload release: 1.5.1 · Android version code 15004**
+**Development candidate: 1.6.0-rc.1 · Android version code 16000**
+
+Last published release remains 1.5.1 until a candidate is accepted. See [App health and TV measurements](docs/APP_HEALTH.md).
 
 [Published APK releases](https://github.com/smile-plzz/NowShowing-Stream-Android-TV/releases) · [Build runs and candidate artifacts](https://github.com/smile-plzz/NowShowing-Stream-Android-TV/actions/workflows/build-apk.yml) · [Installation](docs/INSTALLATION.md)
 
@@ -10,27 +12,31 @@ Download the APK from the versioned GitHub Release. Releases include both APK va
 
 ## Final UI polish
 - Scrollable remote navigation keeps every destination reachable on narrower TV layouts.
-- Settings is grouped into Playback, Metadata, Privacy, Help and About.
+- Settings is grouped into Playback, Metadata, Privacy, Help, App health and About.
 - Readable, scrollable diagnostic reports and disabled busy actions provide clear feedback.
 - Personal keys save explicitly; switching back to the demo key is a separate action.
 - Browse/Mood recovery states explain failures. First-use player hints disappear after eight seconds; remote help remains available.
+
+## Browsing and discovery
+
+Home/Browse show fresh cached cards first and publish incremental results with two global network slots. Refresh retains populated grids. Browse sorts and genre/start-year filters apply only to the loaded curated collection, not a complete catalog. Search supports title words, type and optional release year with Load more. Live popularity/new-release rankings and plot-keyword discovery are deferred; curated seeds are not live rankings.
 
 ## Daily TV use
 - D-pad browsing, search, watchlist, three genre shelves and curated featured/movie/series picks.
 - Title details initially focus Play; returning restores the selected action/card and saved list position.
 - Play enters the web provider directly. Arrows move the pointer; OK clicks; Back exits provider fullscreen, then opens app controls, then returns to the title.
 - Next episode is prominent in series controls. Season boundaries use known episode metadata; missing lists offer recovery rather than inventing episode numbers.
-- Autoplay defaults on and persists in Settings. Current web providers have no verified completion integration, so **web episodes still require manual Next episode**. Native completion supports a cancelable countdown where applicable; native sources currently contain diagnostic demos only.
+- Autoplay defaults on and persists in Settings. Current web providers have no verified completion integration, so **web episodes still require manual Next episode**. No native demo streams are exposed.
 - Recently opened remembers episode/source. Manual Watched is a title-level label and survives reopening; it does not measure playback.
 - Related titles reuse cached candidates sharing genres, with no recommendation backend or extra metadata requests.
-- About, device/WebView/build diagnostics, copy/share report, and scoped cache recovery are in Settings.
+- About has owner/source/releases/issues links. App health has opt-in browsing recording, frozen numbered photo pages, live memory and one reopenable/deletable local report; scoped cache recovery remains in Metadata.
 
 ## Metadata and privacy
 OMDb provides metadata using a bundled public demo credential or up to five user-supplied authorized keys stored locally on the TV. Invalid/inactive credentials fall back in order. Quota, network, service and no-results responses do not rotate keys; cached content remains available. The APK cannot keep embedded credentials secret. API URL logging is disabled.
 
 Quota, invalid key, network, service failure and no-results are distinguished. Retry is bounded; successful metadata remains cached. Expired metadata may be used for up to 30 days after expiry during service failure and is identified in Home/Diagnostics. Metadata storage is bounded independently of saved user data.
 
-Movies/series use **Android System WebView**. **Media3 serves direct diagnostic demo streams**, not native versions of selected movies. Page loading does not establish video playback, progress or completion. Request filtering and denied popup windows reduce some intrusions; filtering is not Brave Shields and does not remove every ad.
+Movies/series use **Android System WebView**. All demo media playback has been removed. Media3/resolver infrastructure remains internally tested, without a registered native source. Page loading does not establish video playback, progress or completion. Request filtering and denied popup windows reduce some intrusions; filtering is not Brave Shields and does not remove every ad.
 
 ## Build and test
 JDK 21, Android SDK 35, minimum device API 26.
@@ -47,7 +53,7 @@ Kotlin, Compose, ViewModels/StateFlow, Retrofit/OkHttp, Coil, SQLiteOpenHelper, 
 - [Architecture](docs/ARCHITECTURE.md) · [Web playback](docs/WEB_PLAYBACK.md)
 - [Remote controls](docs/REMOTE_NAVIGATION.md) · [Troubleshooting](docs/TROUBLESHOOTING.md)
 - [Known limitations](docs/KNOWN_LIMITATIONS.md) · [Privacy and blocking](docs/PRIVACY_AND_BLOCKING.md)
-- [Release notes](docs/releases/v1.5.1.md) · [Signing](docs/RELEASE_SIGNING.md)
+- [Candidate release notes](docs/releases/v1.6.0-rc.1.md) · [Signing](docs/RELEASE_SIGNING.md)
 - [Release checklist](docs/RELEASE_CHECKLIST.md) · [Real-TV acceptance](docs/TV_ACCEPTANCE.md)
 
 Historical design documents are retained for context and are not the current implementation specification.
