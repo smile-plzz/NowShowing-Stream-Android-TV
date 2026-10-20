@@ -277,7 +277,7 @@ private fun SurpriseMeButton(onClick: () -> Unit) {
 }
 
 @Composable
-private fun YearPicker(selected: Int?, onDismiss: () -> Unit, onApply: (Int?) -> Unit) {
+internal fun YearPicker(selected: Int?, onDismiss: () -> Unit, onApply: (Int?) -> Unit) {
     val years = remember { listOf<Int?>(null) + (java.time.Year.now().value downTo 1888).toList() }
     val index = years.indexOf(selected).coerceAtLeast(0)
     val list = rememberLazyListState(initialFirstVisibleItemIndex = index)
