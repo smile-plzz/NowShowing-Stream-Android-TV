@@ -34,11 +34,9 @@ class MoodViewModel @JvmOverloads constructor(
     private var requestId = 0L
     private var recommendationJob: Job? = null
     fun selectYear(year: Int?) {
-        _uiState.value = _uiState.value.copy(selectedYear = year)
-        publishResults()
+        publishResults(_uiState.value.copy(selectedYear = year))
     }
-    private fun publishResults() {
-        val state = _uiState.value
+    private fun publishResults(state: MoodUiState = _uiState.value) {
         val results = allResults.filter { state.selectedYear == null ||
             com.nowshowing.tv.domain.recommendation.LocalRelevance.startYear(it.year) == state.selectedYear }
         _uiState.value = state.copy(recommendations = results,
@@ -52,8 +50,7 @@ class MoodViewModel @JvmOverloads constructor(
         recommendationJob?.cancel()
         snapshots[mood.name]?.let {
             allResults = it
-            _uiState.value = _uiState.value.copy(selectedMood = mood, isLoading = false)
-            publishResults()
+            publishResults(_uiState.value.copy(selectedMood = mood, isLoading = false))
             return
         }
         recommendationJob = viewModelScope.launch {
@@ -74,8 +71,7 @@ class MoodViewModel @JvmOverloads constructor(
             if (identity != requestId) return@launch
             snapshots[mood.name] = results
             allResults = results
-            _uiState.value = _uiState.value.copy(isLoading = false)
-            publishResults()
+            publishResults(_uiState.value.copy(isLoading = false))
         }
     }
 

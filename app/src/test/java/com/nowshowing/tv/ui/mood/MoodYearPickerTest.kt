@@ -9,6 +9,7 @@ import org.junit.*
 import org.junit.Assert.*
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.shadows.ShadowDialog
 import org.robolectric.annotation.Config
 
 @OptIn(ExperimentalTestApi::class)
@@ -27,7 +28,9 @@ class MoodYearPickerTest {
         var applied = false
         var dismissed = false
         compose.setContent { NowShowingTheme { YearPicker(null, { dismissed = true }, { applied = true }) } }
-        compose.onNodeWithText("All Years").assertIsFocused().performKeyInput { pressKey(Key.Back) }
+        compose.onNodeWithText("All Years").assertIsFocused()
+        // Back is handled by the dialog window, outside the Compose owner used for key injection.
+        compose.runOnIdle { ShadowDialog.getLatestDialog().onBackPressed() }
         compose.runOnIdle {
             assertTrue(dismissed)
             assertFalse(applied)
