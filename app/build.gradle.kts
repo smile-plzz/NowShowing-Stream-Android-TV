@@ -12,8 +12,8 @@ android {
         applicationId = "com.nowshowing.tv"
         minSdk = 26
         targetSdk = 35
-        versionCode = 16001
-        versionName = "1.6.0-rc.2"
+        versionCode = 16002
+        versionName = "1.6.0-rc.3"
 
         val buildCommit = System.getenv("GITHUB_SHA")?.takeIf { it.matches(Regex("[0-9a-fA-F]{40}")) } ?: "local"
         buildConfigField("String", "BUILD_COMMIT", "\"$buildCommit\"")

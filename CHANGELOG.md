@@ -183,3 +183,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `INSTALLATION.md` — Sideloading via ADB (USB/Wi-Fi), flash drive, and launcher integration.
   - `RELEASE_CHECKLIST.md` — Pre-distribution readiness checklist.
 - Project workflow tracking: `context.md`, `dev-log.md`, `CHANGELOG.md`.
+
+## 1.6.0-rc.3 (unreleased source)
+
+Mood phrases and six specific choices; local exact-year picker; bounded IMDb-ID seed/cached recommendation candidates; conservative theme-aware More Like This; creator social links. Android verification and TV acceptance pending. Dynamic collection sourcing remains unresolved.

@@ -1,45 +1,56 @@
 package com.nowshowing.tv.domain.mood
 
 import com.nowshowing.tv.data.repository.MediaRepository
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 object MoodRecommendationEngine {
 
     val MOODS = listOf(
-        MoodItem("Happy", "😊", "Happy vibes", "Light-hearted fun and feel-good stories."),
-        MoodItem("Sad", "😢", "Emotional depth", "Films that let you feel it all, deeply."),
-        MoodItem("Excited", "🤩", "Pure excitement", "High-energy films that get your pulse going."),
-        MoodItem("Relaxed", "😌", "Calm & peaceful", "Gentle, easy films for winding down."),
-        MoodItem("Angry", "😤", "Fueled by fire", "Intense stories that channel the rage."),
-        MoodItem("Scared", "😱", "Edge-of-seat fear", "Horror and thrillers for the brave."),
-        MoodItem("Inspired", "✨", "Inspired & lifted", "Films that spark something inside you."),
-        MoodItem("Nostalgic", "🕰️", "Throwback feels", "Classic stories from eras gone by."),
-        MoodItem("Curious", "🔍", "Curious mind", "Mysteries, puzzles and strange worlds."),
-        MoodItem("Romantic", "💕", "Love in the air", "Stories of connection, longing, and love."),
-        MoodItem("Adventurous", "🌍", "Adventure calls", "Epic journeys and far-flung worlds."),
-        MoodItem("Thoughtful", "🤔", "Deep thoughts", "Films that leave you pondering life."),
-        MoodItem("Anxious", "😰", "On edge", "Comforting, gentle picks to ease the feeling."),
-        MoodItem("Hopeful", "🌅", "Full of hope", "Stories that restore your faith in everything."),
-        MoodItem("Playful", "🎮", "Playful energy", "Fun, silly, and wonderfully light."),
-        MoodItem("Adult", "🎭", "Mature themes", "Complex, grown-up cinema for serious viewing."),
-        MoodItem("Wired", "⚡", "Wired & buzzed", "Fast-paced, kinetic, caffeine cinema."),
-        MoodItem("Vengeful", "🗡️", "Revenge mode", "Cold, calculated payback stories."),
-        MoodItem("Goofy", "🤪", "Pure goofiness", "Absurd comedy that makes no apologies."),
-        MoodItem("Eerie", "👁️", "Unsettling vibes", "Slow-burn dread and atmospheric horror."),
-        MoodItem("Empowered", "💪", "Feeling powerful", "Characters who rise, overcome, and win."),
-        MoodItem("Jaded", "😒", "Seen it all", "Cynical, sharp, and darkly funny films."),
-        MoodItem("Awestruck", "🤯", "Mind blown", "Visuals and ideas that defy imagination."),
-        MoodItem("Challenged", "🧩", "Brain engaged", "Films that demand your full attention."),
-        MoodItem("Giddy", "🥳", "Giddy and joyful", "Pure celebration and contagious happiness."),
-        MoodItem("Focused", "🎯", "Laser focused", "Tight, precise, no-fluff storytelling."),
-        MoodItem("Escapist", "🚀", "Escape hatch", "Worlds so good you forget this one."),
-        MoodItem("Intrigued", "🕵️", "Deeply intrigued", "Slow reveals and layered mysteries."),
-        MoodItem("Tense", "😬", "Tension maxed", "Nerve-shredding, palm-sweating cinema.")
+        MoodItem("Happy", "😊", "Need a Laugh", "Light-hearted fun and feel-good stories."),
+        MoodItem("Sad", "😢", "Let Me Cry", "Films that let you feel it all, deeply."),
+        MoodItem("Excited", "🤩", "Bring the Adrenaline", "High-energy films that get your pulse going."),
+        MoodItem("Relaxed", "😌", "Help Me Unwind", "Gentle, easy films for winding down."),
+        MoodItem("Angry", "😤", "Fuel My Rage", "Intense stories that channel the rage."),
+        MoodItem("Scared", "😱", "Scare Me Tonight", "Horror and thrillers for the brave."),
+        MoodItem("Inspired", "✨", "Get Me Motivated", "Films that spark something inside you."),
+        MoodItem("Nostalgic", "🕰️", "Take Me Back", "Classic stories from eras gone by."),
+        MoodItem("Curious", "🔍", "Feed My Curiosity", "Mysteries, puzzles and strange worlds."),
+        MoodItem("Romantic", "💕", "Make Me Swoon", "Stories of connection, longing, and love."),
+        MoodItem("Adventurous", "🌍", "Take Me Somewhere", "Epic journeys and far-flung worlds."),
+        MoodItem("Thoughtful", "🤔", "Question My World", "Films that leave you pondering life."),
+        MoodItem("Anxious", "😰", "Calm My Nerves", "Comforting, gentle picks to ease the feeling."),
+        MoodItem("Hopeful", "🌅", "Give Me Hope", "Stories that restore your faith in everything."),
+        MoodItem("Playful", "🎮", "Keep It Playful", "Fun, silly, and wonderfully light."),
+        MoodItem("Adult", "🎭", "Keep It Grown", "Complex, grown-up cinema for serious viewing."),
+        MoodItem("Wired", "⚡", "Keep Me Wired", "Fast-paced, kinetic, caffeine cinema."),
+        MoodItem("Vengeful", "🗡️", "Make Them Pay", "Cold, calculated payback stories."),
+        MoodItem("Goofy", "🤪", "Make It Ridiculous", "Absurd comedy that makes no apologies."),
+        MoodItem("Eerie", "👁️", "Something Feels Wrong", "Slow-burn dread and atmospheric horror."),
+        MoodItem("Empowered", "💪", "Make Me Fearless", "Characters who rise, overcome, and win."),
+        MoodItem("Jaded", "😒", "Keep It Cynical", "Cynical, sharp, and darkly funny films."),
+        MoodItem("Awestruck", "🤯", "Blow My Mind", "Visuals and ideas that defy imagination."),
+        MoodItem("Challenged", "🧩", "Make Me Think", "Films that demand your full attention."),
+        MoodItem("Giddy", "🥳", "Lift My Spirits", "Pure celebration and contagious happiness."),
+        MoodItem("Focused", "🎯", "Keep Me Hooked", "Tight, precise, no-fluff storytelling."),
+        MoodItem("Escapist", "🚀", "Get Me Away", "Worlds so good you forget this one."),
+        MoodItem("Intrigued", "🕵️", "Keep Me Guessing", "Slow reveals and layered mysteries."),
+        MoodItem("Tense", "😬", "Keep Me Tense", "Nerve-shredding, palm-sweating cinema."),
+        MoodItem("heartbreak", "💔", "Break My Heart", "Relationship loss and heartbreak."),
+        MoodItem("complicated_love", "💞", "Love Gets Complicated", "Messy relationships and conflicting commitments."),
+        MoodItem("friendship", "🤝", "Friendship Hits Different", "Friendship, belonging and found family."),
+        MoodItem("paranoia", "👀", "Trust Absolutely Nobody", "Conspiracies, distrust and hidden motives."),
+        MoodItem("redemption", "🌤", "One Last Chance", "Rebuilding a life and earning a second chance."),
+        MoodItem("underdog", "🏆", "Root For Underdogs", "Outsiders overcoming the odds.")
     )
 
     val MOOD_MAP = mapOf(
+        "heartbreak" to MoodRule(listOf("Romance", "Drama"), listOf("breakup", "break up", "separation", "loss", "lost love", "divorce")),
+        "complicated_love" to MoodRule(listOf("Romance", "Drama"), listOf("affair", "marriage", "divorce", "triangle", "unfaithful")),
+        "friendship" to MoodRule(listOf("Drama", "Comedy", "Adventure"), listOf("friendship", "friends", "best friend", "bond")),
+        "paranoia" to MoodRule(listOf("Thriller", "Mystery"), listOf("conspiracy", "conspiracies", "undercover", "betrayal", "surveillance")),
+        "redemption" to MoodRule(listOf("Drama", "Crime"), listOf("redemption", "redeem", "second chance", "rebuild", "rehabilitation")),
+        "underdog" to MoodRule(listOf("Sport", "Drama"), listOf("underdog", "underdogs", "against the odds", "unlikely", "struggling boxer")),
         "Happy" to MoodRule(listOf("Comedy", "Musical", "Family", "Adventure"), listOf("feel good", "lighthearted", "heartwarming", "joyful", "uplifting")),
         "Sad" to MoodRule(listOf("Drama", "Romance"), listOf("poignant", "tearjerker", "bittersweet", "melancholy", "reflective", "indie", "slice of life")),
         "Excited" to MoodRule(listOf("Action", "Thriller", "Sci-Fi", "Sport"), listOf("high octane", "edge of your seat", "explosive", "pulse pounding", "adrenaline")),
@@ -75,7 +86,8 @@ object MoodRecommendationEngine {
         "Happy" to listOf("happy", "great", "good mood", "joy", "glad", "cheerful"),
         "Sad" to listOf("sad", "down", "blue", "crying", "lonely", "heartbroken"),
         "Angry" to listOf("angry", "mad", "furious", "annoyed", "pissed"),
-        "Scared" to listOf("scared", "afraid", "anxious", "nervous", "terrified"),
+        "Anxious" to listOf("anxious", "nervous", "stressed", "overwhelmed"),
+        "Scared" to listOf("scared", "afraid", "terrified"),
         "Excited" to listOf("excited", "pumped", "thrilled", "hyped"),
         "Relaxed" to listOf("relaxed", "calm", "chill", "tired", "sleepy", "exhausted"),
         "Romantic" to listOf("love", "romantic", "crush", "in love"),
@@ -85,6 +97,7 @@ object MoodRecommendationEngine {
 
     fun guessMoodFromText(text: String): String {
         val lower = text.lowercase()
+        MOODS.firstOrNull { it.label.equals(text.trim(), ignoreCase = true) || it.name.equals(text.trim(), ignoreCase = true) }?.let { return it.name }
         for ((mood, keywords) in KEYWORD_MOOD_MAP) {
             if (keywords.any { lower.contains(it) }) return mood
         }
@@ -95,62 +108,17 @@ object MoodRecommendationEngine {
         repository: MediaRepository,
         mood: String,
         type: String? = null
-    ): List<RankedMovie> = coroutineScope {
-        val rule = MOOD_MAP[mood] ?: MoodRule(listOf(mood), listOf(mood))
-        val termsPool = (rule.genres + rule.keywords).shuffled()
-        val selectedTerms = if (termsPool.size >= 3) termsPool.take(3) else listOf(mood)
-
-        // Step 1: Search titles across selected terms in parallel
-        val searchDeferred = selectedTerms.map { term ->
-            async { repository.search(term, 1, type) }
+    ): List<RankedMovie> {
+        val rule = MOOD_MAP[mood] ?: return emptyList()
+        val candidates = repository.moodCandidates(mood)
+        return withContext(Dispatchers.Default) { candidates.filter { type == null || it.type == type }
+            .mapNotNull { detail ->
+                val score = com.nowshowing.tv.domain.recommendation.LocalRelevance.moodScore(detail, rule)
+                if (score == 0) null else RankedMovie(detail.imdbID, detail.title,
+                    detail.poster?.takeUnless { it == "N/A" }.orEmpty(), detail.year,
+                    detail.type ?: "movie", score, detail.imdbRating?.toFloatOrNull() ?: 0f)
+            }.sortedWith(compareByDescending<RankedMovie> { it.matchScore }
+                .thenByDescending { it.rating }.thenBy { it.imdbID })
         }
-        val searchResults = searchDeferred.awaitAll()
-
-        // Step 2: Merge and deduplicate candidates by imdbID
-        val candidatesMap = mutableMapOf<String, com.nowshowing.tv.data.model.OmdbTitleShort>()
-        for (res in searchResults) {
-            res.search?.forEach { item ->
-                if (!candidatesMap.containsKey(item.imdbID)) {
-                    candidatesMap[item.imdbID] = item
-                }
-            }
-        }
-        val candidates = candidatesMap.values.toList()
-        if (candidates.isEmpty()) return@coroutineScope emptyList<RankedMovie>()
-
-        // Step 3: Verify real genres and ratings for top candidates
-        val targetGenres = rule.genres.map { it.lowercase() }
-        val scoped = candidates.take(24)
-
-        val detailDeferred = scoped.map { movie ->
-            async { repository.getDetails(movie.imdbID) }
-        }
-        val details = detailDeferred.awaitAll()
-
-        val rankedList = scoped.mapIndexed { idx, movie ->
-            val detail = details[idx]
-            val genreStr = (detail?.genre ?: "").lowercase()
-            var matchScore = 0
-            for (g in targetGenres) {
-                if (genreStr.contains(g)) matchScore++
-            }
-            val rating = detail?.imdbRating?.toFloatOrNull() ?: 0f
-
-            RankedMovie(
-                imdbID = movie.imdbID,
-                title = movie.title,
-                poster = if (movie.poster != "N/A") movie.poster else "",
-                year = movie.year,
-                type = movie.type,
-                matchScore = matchScore,
-                rating = rating
-            )
-        }
-
-        // Step 4: Rank by match score DESC, then rating DESC
-        rankedList.sortedWith(
-            compareByDescending<RankedMovie> { it.matchScore }
-                .thenByDescending { it.rating }
-        )
     }
 }
