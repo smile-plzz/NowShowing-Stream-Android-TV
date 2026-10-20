@@ -28,7 +28,7 @@ class MediaSourceResolverTest {
 
     @Test
     fun testResolutionOfNativeHlsSource() {
-        val hlsSource = SourceRegistry.NATIVE_SOURCES.first { it.id == "native_mux_hls" }
+        val hlsSource = com.nowshowing.tv.domain.source.VideoSource(id = "test_hls", name = "Fixture HLS", type = com.nowshowing.tv.domain.source.SourceType.NATIVE_STREAM, directStreamUrl = "https://example.org/fixture.m3u8")
         val result = resolver.resolve(
             source = hlsSource,
             imdbId = "tt1375666",
@@ -47,7 +47,7 @@ class MediaSourceResolverTest {
 
     @Test
     fun testResolutionOfNativeMp4Source() {
-        val mp4Source = SourceRegistry.NATIVE_SOURCES.first { it.id == "native_bbb_mp4" }
+        val mp4Source = com.nowshowing.tv.domain.source.VideoSource(id = "test_mp4", name = "Fixture MP4", type = com.nowshowing.tv.domain.source.SourceType.NATIVE_STREAM, directStreamUrl = "https://example.org/fixture.mp4")
         val result = resolver.resolve(
             source = mp4Source,
             imdbId = "tt0903747",

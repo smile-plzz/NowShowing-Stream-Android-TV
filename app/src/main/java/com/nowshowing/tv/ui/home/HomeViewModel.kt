@@ -73,24 +73,28 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             // Each shelf publishes independently. Network concurrency is bounded in the repository.
             coroutineScope {
                 launch {
-                    val titles = repository.lookupTitles(MediaRepository.TRENDING_SEED)
-                    _uiState.update { it.copy(trending = titles.ifEmpty { it.trending }, heroTitle = titles.firstOrNull() ?: it.heroTitle) }
+                    repository.lookupTitlesProgressively(MediaRepository.TRENDING_SEED) { titles ->
+                        _uiState.update { it.copy(trending = titles.ifEmpty { it.trending }, heroTitle = it.heroTitle ?: titles.firstOrNull()) }
+                    }
                 }.join()
                 MediaRepository.GENRE_ROWS.take(3).forEach { seed ->
                     launch {
-                        val titles = repository.lookupTitles(seed.seed)
+                        repository.lookupTitlesProgressively(seed.seed) { titles ->
                         _uiState.update { s ->
                             s.copy(genreRows = s.genreRows.map { if (it.seed.id == seed.id) GenreRowState(seed, titles.ifEmpty { it.items }) else it })
+                        }
                         }
                     }.join()
                 }
                 launch {
-                    val titles = repository.lookupTitles(MediaRepository.POPULAR_MOVIES.take(8), "movie")
-                    _uiState.update { it.copy(popularMovies = titles.ifEmpty { it.popularMovies }) }
+                    repository.lookupTitlesProgressively(MediaRepository.POPULAR_MOVIES.take(8), "movie") { titles ->
+                        _uiState.update { it.copy(popularMovies = titles.ifEmpty { it.popularMovies }) }
+                    }
                 }.join()
                 launch {
-                    val titles = repository.lookupTitles(MediaRepository.POPULAR_TV.take(8), "series")
-                    _uiState.update { it.copy(popularTv = titles.ifEmpty { it.popularTv }) }
+                    repository.lookupTitlesProgressively(MediaRepository.POPULAR_TV.take(8), "series") { titles ->
+                        _uiState.update { it.copy(popularTv = titles.ifEmpty { it.popularTv }) }
+                    }
                 }
             }
             _uiState.update {

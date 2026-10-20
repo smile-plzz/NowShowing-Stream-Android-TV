@@ -1,6 +1,8 @@
 package com.nowshowing.tv.ui
 
 import android.os.Bundle
+import androidx.compose.runtime.getValue
+import androidx.navigation.compose.currentBackStackEntryAsState
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -42,6 +44,10 @@ class MainActivity : ComponentActivity() {
             NowShowingTheme {
                 val navController = rememberNavController()
 
+                val entry by navController.currentBackStackEntryAsState()
+                androidx.compose.runtime.LaunchedEffect(entry?.destination?.route) {
+                    com.nowshowing.tv.diagnostics.BrowsingRecorder.setScreen(entry?.destination?.route)
+                }
                 NavHost(
                     navController = navController,
                     startDestination = Screen.Home.route
@@ -252,6 +258,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onPause() {
+        com.nowshowing.tv.diagnostics.BrowsingRecorder.stop("app backgrounded")
         super.onPause()
         // Release screen stay-awake flag when backgrounded/standby to conserve power and allow TV sleep
         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)

@@ -1,3 +1,7 @@
+# 1.6.0-rc.1 (candidate)
+
+Progressive cached-first collections, refresh/sort corrections, local photo diagnostics and opt-in window-frame recording, demo media removal, expanded About, OMDb year search and loaded collection filters. See docs/releases/v1.6.0-rc.1.md. Real-TV acceptance remains pending.
+
 # 1.5.1 — local metadata credential recovery
 
 Ordered, masked configuration for up to five local OMDb keys; automatic invalid/inactive credential fallback; bounded attempts and session rejection tracking; retained legacy settings and stale-cache recovery. Quota, network, service and no-results responses do not cycle credentials. Additional personal credentials remain outside public source and APKs. Adds parser, selection and repository regressions.

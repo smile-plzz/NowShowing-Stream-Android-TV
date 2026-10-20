@@ -86,3 +86,7 @@
 | **TC-PRIV-05** | Per-Source Exemption Override | Open Player HUD -> click Shields button or disable shields in Settings for current source. | WebView reloads with filtering disabled for that source domain. Shields HUD indicates "OFF (Disabled for this source)". |
 | **TC-PRIV-06** | Privacy Settings & Statistics Persistence | In Settings screen, toggle Ad/Tracker/Popup blocking or click "Reset Statistics". | Toggle states persist across app restarts in SharedPreferences; local counters reset to zero cleanly. |
 
+
+## 1.6 candidate regressions
+
+Run year-range/unknown-date sorting, filter-aware cache identity and pagination, cached progressive ordering, demo-registry exclusion/fallback tests, long-evidence continuation and photo-page layout/navigation tests. Validate refresh after partial data and sorting during loads on the TV. See APP_HEALTH.md for lifecycle, photo readability and three-run comparison gates. Build debug and minified release. Phone checks remain landscape sideload only; no portrait support claim.

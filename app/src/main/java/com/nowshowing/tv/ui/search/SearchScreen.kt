@@ -1,5 +1,11 @@
 package com.nowshowing.tv.ui.search
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -34,9 +40,11 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -61,8 +69,21 @@ fun SearchScreen(
     onNavigate: (String) -> Unit,
     onTitleClick: (String, String) -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val gridState = rememberLazyGridState()
+    var yearDialog by remember { mutableStateOf(false) }
+    var yearText by remember { mutableStateOf("") }
+    if (yearDialog) androidx.compose.material3.AlertDialog(
+        onDismissRequest = { yearDialog = false },
+        title = { Text("Release year") },
+        text = { Column {
+            Text("OMDb title search; optional year 1888–2100.")
+            androidx.compose.material3.OutlinedTextField(yearText, { yearText = it.filter(Char::isDigit).take(4) }, label = { Text("Year") })
+        } },
+        confirmButton = { com.nowshowing.tv.ui.player.TvPlayerActionButton("Apply year", null,
+            enabled = yearText.toIntOrNull()?.let { it in 1888..2100 } == true) { viewModel.setYearFilter(yearText.toInt()); yearDialog = false } },
+        dismissButton = { com.nowshowing.tv.ui.player.TvPlayerActionButton("Cancel", null) { yearDialog = false } }
+    )
 
     Column(
         modifier = Modifier
@@ -81,26 +102,17 @@ fun SearchScreen(
                 modifier = Modifier
                     .width(360.dp)
                     .fillMaxHeight()
+                    .testTag("search-controls")
+                    .verticalScroll(rememberScrollState())
             ) {
-                // Search Input Display Box
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(SurfaceDark)
-                        .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(8.dp))
-                        .padding(horizontal = 16.dp),
-                    contentAlignment = Alignment.CenterStart
-                ) {
-                    Text(
-                        text = if (uiState.query.isEmpty()) "Search movies & TV shows…" else uiState.query,
-                        color = if (uiState.query.isEmpty()) TextMuted else TextPrimary,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-
+                androidx.compose.material3.OutlinedTextField(
+                    value = uiState.query, onValueChange = viewModel::setQuery,
+                    label = { Text("Movie or series title") },
+                    placeholder = { Text("Type or use the D-pad keyboard below") },
+                    singleLine = true, modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(onSearch = { viewModel.executeSearch(reset = true) })
+                )
                 Spacer(modifier = Modifier.height(10.dp))
 
                 // Type Filter Pills
@@ -115,6 +127,11 @@ fun SearchScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(uiState.year?.toString() ?: "Any year", uiState.year != null) { yearText = uiState.year?.toString().orEmpty(); yearDialog = true }
+                    FilterChip("Clear filters", false) { viewModel.clearFilters() }
+                }
+                Spacer(Modifier.height(8.dp))
                 // On-Screen D-Pad Alphanumeric Keyboard
                 TvOnScreenKeyboard(
                     onChar = { viewModel.onCharInput(it) },
@@ -152,11 +169,7 @@ fun SearchScreen(
                 modifier = Modifier
                     .fillMaxSize()
             ) {
-                if (uiState.errorMessage != null && uiState.results.isNotEmpty()) {
-                    Text(uiState.errorMessage.orEmpty(), color = TextMuted, fontSize = 15.sp,
-                        modifier = Modifier.align(Alignment.TopCenter).background(BgDark).padding(8.dp))
-                }
-                if (uiState.isLoading) {
+                if (uiState.isLoading && uiState.results.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator(color = AccentCyan)
                     }
@@ -171,12 +184,21 @@ fun SearchScreen(
                 } else if (uiState.results.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text(
-                            text = "Use the remote to type a title or keyword.",
+                            text = "Search title words; plot/theme keywords are not supported.",
                             color = TextMuted,
                             fontSize = 14.sp
                         )
                     }
                 } else {
+                    Column(Modifier.fillMaxSize()) {
+                    uiState.errorMessage?.let {
+                        Text(it, color = TextMuted, fontSize = 14.sp, modifier = Modifier.padding(bottom = 8.dp))
+                        com.nowshowing.tv.ui.player.TvPlayerActionButton("Retry search", null, enabled = !uiState.isLoading) { viewModel.retrySearch() }
+                    }
+                    Text(
+                        text = "${uiState.results.size} of ${uiState.totalResults} results · ${uiState.resultQuery}",
+                        color = TextMuted, fontSize = 13.sp, modifier = Modifier.padding(bottom = 8.dp)
+                    )
                     LazyVerticalGrid(
                     state = gridState,
                         columns = GridCells.Adaptive(minSize = 135.dp),
@@ -196,6 +218,11 @@ fun SearchScreen(
                                 onClick = { onTitleClick(movie.imdbID, movie.type) }
                             )
                         }
+                        if (uiState.results.size < uiState.totalResults) item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
+                            com.nowshowing.tv.ui.player.TvPlayerActionButton(if (uiState.isLoading) "Loading…" else "Load more", null, enabled = !uiState.isLoading) { viewModel.executeSearch(reset = false) }
+                        }
+
+                    }
                     }
                 }
             }

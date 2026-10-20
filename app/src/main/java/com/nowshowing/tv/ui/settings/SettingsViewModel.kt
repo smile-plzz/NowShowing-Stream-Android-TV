@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 data class SettingsUiState(
+    val healthReport: HealthReport? = null,
     val reportReady: Boolean = false,
     val isRefreshingDiagnostics: Boolean = false,
     val hasPersonalKey: Boolean = false,
@@ -40,6 +41,7 @@ data class SettingsUiState(
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
 
+    private var reportRevision = 0
     private val playback = PlaybackPreferences(application)
     private val preferences = ProtectionPreferences(application)
     private val statistics = BlockingStatistics(application)
@@ -49,6 +51,14 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     init {
         refreshState()
+        val revision = reportRevision
+        viewModelScope.launch {
+            val last = withContext(Dispatchers.IO) { HealthReports.load(getApplication()) }
+            if (revision == reportRevision && !_uiState.value.isRefreshingDiagnostics && _uiState.value.healthReport == null) {
+                _uiState.value = _uiState.value.copy(healthReport = last, reportReady = last != null,
+                    diagnosticText = last?.text() ?: _uiState.value.diagnosticText)
+            }
+        }
         viewModelScope.launch { MetadataHealth.failure.collect { failure ->
             _uiState.value = _uiState.value.copy(metadataStatus = failure?.message ?: "No failure recorded; not a connectivity test")
         } }
@@ -132,15 +142,23 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     fun refreshDiagnostics() {
         if (_uiState.value.isRefreshingDiagnostics) return
+        reportRevision++
         _uiState.value = _uiState.value.copy(isRefreshingDiagnostics = true, reportReady = false)
         viewModelScope.launch {
             val report = withContext(Dispatchers.IO) {
-                runCatching { diagnosticReport(getApplication()) }.getOrNull()
+                runCatching { HealthReports.capture(getApplication()) }.getOrNull()
             }
             _uiState.value = _uiState.value.copy(isRefreshingDiagnostics = false, reportReady = report != null,
-                diagnosticText = report ?: "Report unavailable. Try refreshing again.",
+                healthReport = report ?: _uiState.value.healthReport,
+                diagnosticText = report?.text() ?: "Report unavailable. Try refreshing again.",
                 maintenanceMessage = if (report == null) "Diagnostic report could not be created. Please retry." else _uiState.value.maintenanceMessage)
         }
+    }
+
+    fun deleteReport() {
+        reportRevision++
+        HealthReports.delete(getApplication())
+        _uiState.value = _uiState.value.copy(healthReport = null, reportReady = false, diagnosticText = "No saved report.")
     }
 
     fun clearCaches() {
@@ -155,7 +173,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             _uiState.value = _uiState.value.copy(isClearingCache = false, maintenanceMessage =
                 if (success) "Metadata and image caches cleared. Watchlist, history, watched labels and settings preserved. Visible screens may retain loaded titles until reopened."
                 else "Cache clearing could not complete. Your saved data was preserved.")
-            refreshDiagnostics()
         }
     }
 

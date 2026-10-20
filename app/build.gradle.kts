@@ -12,8 +12,8 @@ android {
         applicationId = "com.nowshowing.tv"
         minSdk = 26
         targetSdk = 35
-        versionCode = 15004
-        versionName = "1.5.1"
+        versionCode = 16001
+        versionName = "1.6.0-rc.2"
 
         val buildCommit = System.getenv("GITHUB_SHA")?.takeIf { it.matches(Regex("[0-9a-fA-F]{40}")) } ?: "local"
         buildConfigField("String", "BUILD_COMMIT", "\"$buildCommit\"")
@@ -36,6 +36,9 @@ android {
     }
 
     buildTypes {
+        debug {
+            applicationIdSuffix = ".preview"
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
@@ -115,6 +118,7 @@ dependencies {
 
     // Testing
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
     testImplementation("androidx.compose.ui:ui-test-junit4")
     testImplementation("org.robolectric:robolectric:4.14.1")
     testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")

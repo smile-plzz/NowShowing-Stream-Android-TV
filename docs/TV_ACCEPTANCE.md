@@ -10,7 +10,7 @@ Record installed version/code/commit from Settings, device model/Android/WebView
 6. Browse many titles for 10–15 minutes, repeatedly open/back, change sections and return after a long video. Record lag, missing posters, focus failures and crashes. Compare the same workload/build conditions. No speedup or memory-leak fix is presumed.
 7. Mark a recent title Watched, reopen it (and another episode), and confirm the title-level label remains. Save a watchlist entry. Clear metadata/artwork caches in Settings → Metadata; verify watchlist, watched labels, history and autoplay setting remain.
 8. Try filter update online and offline. Failure must say failed/partial and keep protection active. Confirm popup denial and usable provider playback with normal protection and any explicit source exemption.
-9. Background/foreground and TV standby during playback; leave the player and verify audio/resources do not linger. Play a native diagnostic demo separately, without treating it as a selected movie.
+9. Background/foreground and TV standby during playback; leave the player and verify audio/resources do not linger. Verify obsolete diagnostic routes cannot launch sample media. Photograph the App health pages and compare matched browsing recordings.
 
 For a failure, supply: exact action sequence, title/source/season/episode voluntarily if relevant, installed build, approximate time, and a redacted diagnostic report. Viewing history is not collected in reports automatically.
 

@@ -25,9 +25,11 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -51,9 +53,26 @@ fun BrowseScreen(
     onNavigate: (String) -> Unit,
     onTitleClick: (String, String) -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val gridState = rememberLazyGridState()
-    val failure by com.nowshowing.tv.data.repository.MetadataHealth.failure.collectAsState()
+    var filterMenu by remember { mutableStateOf<String?>(null) }
+    if (filterMenu != null) androidx.compose.material3.AlertDialog(
+        onDismissRequest = { filterMenu = null },
+        title = { Text(if (filterMenu == "genre") "Genre · loaded titles only" else "Start year · loaded titles only") },
+        text = { androidx.compose.foundation.lazy.LazyColumn(Modifier.height(260.dp)) {
+            item { com.nowshowing.tv.ui.player.TvPlayerActionButton("All", null) {
+                if (filterMenu == "genre") viewModel.setGenre(null) else viewModel.setYear(null)
+                filterMenu = null
+            } }
+            if (filterMenu == "genre") {
+                items(uiState.genres.size) { i -> com.nowshowing.tv.ui.player.TvPlayerActionButton(uiState.genres[i], null) { viewModel.setGenre(uiState.genres[i]); filterMenu = null } }
+            } else {
+                items(uiState.years.size) { i -> com.nowshowing.tv.ui.player.TvPlayerActionButton(uiState.years[i].toString(), null) { viewModel.setYear(uiState.years[i]); filterMenu = null } }
+            }
+        } },
+        confirmButton = { com.nowshowing.tv.ui.player.TvPlayerActionButton("Done", null) { filterMenu = null } }
+    )
+    val failure by com.nowshowing.tv.data.repository.MetadataHealth.failure.collectAsStateWithLifecycle()
 
     LaunchedEffect(kind) {
         viewModel.loadBrowse(kind)
@@ -93,7 +112,16 @@ fun BrowseScreen(
             }
         }
 
-        if (uiState.isLoading) {
+        androidx.compose.foundation.lazy.LazyRow(contentPadding = PaddingValues(horizontal = 48.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            item { com.nowshowing.tv.ui.player.TvPlayerActionButton("Genre: ${uiState.genre ?: "All"}", null) { filterMenu = "genre" } }
+            item { com.nowshowing.tv.ui.player.TvPlayerActionButton("Year: ${uiState.year ?: "All"}", null) { filterMenu = "year" } }
+            item { com.nowshowing.tv.ui.player.TvPlayerActionButton("Clear filters", null) { viewModel.clearFilters() } }
+        }
+        Row(Modifier.fillMaxWidth().padding(horizontal = 48.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(if (uiState.isLoading) "Loading collection…" else (uiState.message ?: "${uiState.items.size}/${uiState.totalLoaded} loaded titles · curated collection; unknown values last."), color = TextMuted, fontSize = 14.sp, modifier = Modifier.weight(1f))
+            com.nowshowing.tv.ui.player.TvPlayerActionButton("Refresh collection", null, enabled = !uiState.isLoading) { viewModel.retryBrowse(kind) }
+        }
+        if (uiState.isLoading && uiState.items.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -103,9 +131,10 @@ fun BrowseScreen(
         } else if (uiState.items.isEmpty()) {
             Column(Modifier.fillMaxSize().padding(40.dp), verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("Titles are unavailable", color = TextPrimary, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                Text(if (uiState.totalLoaded > 0) "No loaded titles match these filters" else "Titles are unavailable", color = TextPrimary, fontSize = 22.sp, fontWeight = FontWeight.Bold)
                 Text(failure?.message ?: "Try loading this collection again.", color = TextMuted, fontSize = 16.sp)
                 Spacer(Modifier.height(16.dp))
+                com.nowshowing.tv.ui.player.TvPlayerActionButton("Clear filters", null) { viewModel.clearFilters() }
                 com.nowshowing.tv.ui.player.TvPlayerActionButton("Retry collection", null) { viewModel.retryBrowse(kind) }
                 Spacer(Modifier.height(8.dp))
                 com.nowshowing.tv.ui.player.TvPlayerActionButton("Metadata settings", null) { onNavigate("settings") }

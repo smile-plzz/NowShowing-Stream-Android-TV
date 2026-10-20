@@ -14,7 +14,7 @@
 | Recently opened restarts the video | Expected for providers without their own resume behavior. The app remembers episode/source, not an inaccessible timestamp. |
 | Home shelves are empty | Try Refresh shelves and check network/API quota. Valid cached shelves and local history are independent of provider playback. |
 | A source breaks while filtering is enabled | Try a different source first. Review only that source's existing exemption controls if necessary; HTTPS/certificate protections remain enforced. |
-| Native playback needs checking | Settings > Help > Native playback checks opens fixed demo videos. They test Media3 and codecs; they do not resolve your selected movie. |
+| Browsing is slow | Settings > App health > Record browsing performance, browse normally, then freeze and photograph the report. See APP_HEALTH.md. No native demo playback is available. |
 
 ## Reporting a problem
 Include the version/build from Settings, TV model, Android version, source name, movie title or season/episode, steps taken, and whether another source works. Never post passwords, signing keys, private cookies, or tokens.

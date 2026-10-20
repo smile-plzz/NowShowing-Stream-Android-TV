@@ -39,7 +39,7 @@ Web playback enters directly with pointer input focused. App controls are availa
 
 No current provider exposes a verified completion/progress contract to this app. Web opening history is recorded, but web timestamp resume and automatic next episode are not claimed. Series controls expose manual Next episode and season/episode selection. Next resolves actual episode numbers and known season boundaries; missing metadata yields an explanation. Source changes cancel pending advancement.
 
-`PlaybackPreferences` persists default-on autoplay. For supported native series, a genuine `STATE_ENDED` event bound to the current source instance prepares a ten-second cancelable countdown; OFF requires manual activation. Duplicate/stale events are ignored per session. Current native sources are diagnostic demo streams, so this is not advertised as web autoplay. There is no post-movie recommendation overlay for web completion; related titles appear on Details.
+`PlaybackPreferences` persists default-on autoplay. For supported native series, a genuine `STATE_ENDED` event bound to the current source instance prepares a ten-second cancelable countdown; OFF requires manual activation. Duplicate/stale events are ignored per session. No native sources are registered after demo removal, so this is not advertised as web autoplay. There is no post-movie recommendation overlay for web completion; related titles appear on Details.
 
 ## Performance bounds
 Coil decoded image memory is capped at 16 MiB, disk at 50 MiB. Poster requests remain 300×450; backdrops 1280×720. Poster crossfades and unfocused card shadows are removed. Lazy item keys remain stable. Home loads shelves sequentially, with metadata calls bounded to two, and displays three genre rows rather than five. These are engineering limits, not measured frame-rate claims. Navigation-heavy and long-session behavior needs the TV workload in TV_ACCEPTANCE.md.
@@ -55,3 +55,9 @@ Primary navigation is a bounded LazyRow rather than an overflowing fixed Row. Ta
 Poster cards use AsyncImage with stable dimensions and static loading/error text instead of SubcomposeAsyncImage per lazy item. Browse has retry/settings recovery actions; Mood cancels superseded work and distinguishes service failure from no matching recommendations. First-use pointer hints hide after eight seconds; app controls/help remain available. These changes are covered by JVM Compose layout/interaction tests, not a claim of physical-TV profiling.
 
 Before public publication, the publisher independently rechecks APK checksums, both variants, public certificate report presence, version/code, exact commit and required prerelease status. It never overwrites an existing version.
+
+## 1.6 browsing and health additions
+
+Progressive collection loading reads fresh cached seeds on IO before resolving missing seeds in pairs. Home retains visible shelf priority. Browse retains cards during forced reload and separates loading from sorting. Genre/start-year filters use loaded details only; OMDb title search includes year in cache and pagination identity. Subscriptions in Home/Browse/Search/Watchlist/Settings are lifecycle-aware.
+
+`diagnostics/BrowsingRecorder` owns an opt-in bounded window listener; MainActivity stops it on pause. `MetadataMetrics` retains anonymous process counters only. Settings health models freeze on IO and retain one local report with `@Keep` serialization fields. Photo pages have manual focusable navigation. See [App health](APP_HEALTH.md) for methods and limits. Existing database tables and saved user data are unchanged.

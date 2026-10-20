@@ -9,38 +9,6 @@ object SourceRegistry {
     private const val KEY_PREFERRED_SOURCE = "preferred_source_name"
     private const val KEY_CUSTOM_STREAM_URL = "custom_direct_stream_url"
 
-    // Primary Native-Playable Media Sources (Verified HLS, DASH, and MP4 direct streams)
-    val NATIVE_SOURCES = listOf(
-        VideoSource(
-            id = "native_mux_hls",
-            name = "Native HLS (Mux Stream)",
-            type = SourceType.NATIVE_STREAM,
-            directStreamUrl = "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
-            description = "Multi-bitrate adaptive HLS stream with subtitle tracks"
-        ),
-        VideoSource(
-            id = "native_tears_hls",
-            name = "Tears of Steel (HLS Demo)",
-            type = SourceType.AUTHORIZED_SAMPLE,
-            directStreamUrl = "https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8",
-            description = "High-definition 1080p HLS stream via Unified Streaming"
-        ),
-        VideoSource(
-            id = "native_bbb_mp4",
-            name = "Big Buck Bunny (MP4)",
-            type = SourceType.AUTHORIZED_SAMPLE,
-            directStreamUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-            description = "Full HD progressive MP4 stream (Blender Open Movie)"
-        ),
-        VideoSource(
-            id = "native_sintel_mp4",
-            name = "Sintel (MP4)",
-            type = SourceType.AUTHORIZED_SAMPLE,
-            directStreamUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
-            description = "High-definition MP4 stream (Blender Foundation)"
-        )
-    )
-
     // Web player providers: rendered in the sandboxed WebView, never passed to ExoPlayer.
     val UNSUPPORTED_WEB_SOURCES = listOf(
         VideoSource(
@@ -134,7 +102,7 @@ object SourceRegistry {
     )
 
     // Complete registry combining native and classified legacy sources
-    val SOURCES = NATIVE_SOURCES + UNSUPPORTED_WEB_SOURCES
+    val SOURCES = UNSUPPORTED_WEB_SOURCES
 
     fun getNativeCompatibleSources(): List<VideoSource> {
         return SOURCES.filter { it.isNativeCompatible }

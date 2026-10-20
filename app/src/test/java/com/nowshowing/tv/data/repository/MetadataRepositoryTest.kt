@@ -103,14 +103,34 @@ class MetadataRepositoryTest {
         assertTrue(repository.search("warm").isStale)
         assertEquals(3, api.calls)
     }
+    @Test fun yearFiltersHaveDistinctCacheAndPaginationIdentity() = runBlocking {
+        repository.search("same", year = 2024)
+        repository.search("same", year = 2025)
+        repository.search("same", page = 2, year = 2024)
+        repository.search("same", year = 2024)
+        assertEquals(listOf(2024, 2025, 2024), api.years)
+        assertEquals(3, api.calls)
+    }
+    @Test fun warmProgressiveCollectionPublishesWithoutNetworkAndKeepsSeedOrder() = runBlocking {
+        val first = "Progressive unique first"
+        val second = "Progressive unique second"
+        db.setCachedPayload("title_${first}_movie", """{"Title":"First","Year":"2024","imdbID":"tt901001","Response":"True"}""")
+        db.setCachedPayload("title_${second}_movie", """{"Title":"Second","Year":"2023","imdbID":"tt901002","Response":"True"}""")
+        val snapshots = mutableListOf<List<String>>()
+        val result = repository.lookupTitlesProgressively(listOf(first, second, first), "movie") { list -> snapshots.add(list.map { it.imdbID }) }
+        assertEquals(listOf("tt901001", "tt901002"), result.map { it.imdbID })
+        assertEquals(listOf(result.map { it.imdbID }), snapshots)
+        assertEquals(0, api.calls)
+    }
     private class FakeApi : OmdbApiService {
         val rejectedKeys = mutableSetOf<String>()
         val usedKeys = mutableListOf<String>()
+        val years = mutableListOf<Int?>()
         var error: String? = null
         var calls = 0
         var networkFailure = false
-        override suspend fun searchTitles(apiKey: String, query: String, page: Int, type: String?): OmdbSearchResponse {
-            calls++; usedKeys.add(apiKey); delay(5)
+        override suspend fun searchTitles(apiKey: String, query: String, page: Int, type: String?, year: Int?): OmdbSearchResponse {
+            calls++; usedKeys.add(apiKey); years.add(year); delay(5)
             if (networkFailure) throw java.io.IOException("URL with secret must never reach diagnostics")
             val responseError = if (apiKey in rejectedKeys) "Invalid API key!" else error
             return OmdbSearchResponse(emptyList(), "0", if (responseError == null) "True" else "False", responseError)

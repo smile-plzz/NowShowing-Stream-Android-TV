@@ -30,9 +30,7 @@ class PlaybackCoordinatorTest {
             autoFallback = true
         )
 
-        assertTrue("Auto fallback must resolve to a valid native source", result is ResolutionResult.Success)
-        val success = result as ResolutionResult.Success
-        assertTrue(success.playableSource.source.isNativeCompatible)
+        assertTrue("No registered demo fallback is allowed", result is ResolutionResult.IncompatibleSource)
     }
 
     @Test
@@ -112,9 +110,8 @@ class PlaybackCoordinatorTest {
 
     @Test
     fun testResolveFallbackSource() {
-        val current = SourceRegistry.NATIVE_SOURCES.first()
+        val current = SourceRegistry.SOURCES.first()
         val fallback = coordinator.resolveFallbackSource(current)
-        assertNotNull(fallback)
-        assertTrue(fallback!!.isNativeCompatible)
+        assertNull(fallback)
     }
 }

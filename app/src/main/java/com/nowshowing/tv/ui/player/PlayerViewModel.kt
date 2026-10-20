@@ -33,7 +33,7 @@ data class PlayerUiState(
     val type: String = "movie",
     val season: Int = 1,
     val episode: Int = 1,
-    val currentSource: VideoSource = SourceRegistry.NATIVE_SOURCES.first(),
+    val currentSource: VideoSource = SourceRegistry.UNSUPPORTED_WEB_SOURCES.first(),
     val playableSource: PlayableSource? = null,
     val webEmbedUrl: String? = null,
     val isLoading: Boolean = true,
@@ -77,10 +77,9 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         nextJob?.cancel()
         session++
         completedSession = null
-        if (type == "diagnostic") {
-            val source = SourceRegistry.NATIVE_SOURCES.firstOrNull { it.id == imdbId } ?: return
-            _uiState.value = PlayerUiState(imdbId = imdbId, title = source.name, type = type, currentSource = source)
-            resolveAndLoad(source)
+        if (type !in listOf("movie", "series") || !imdbId.matches(Regex("tt[0-9]+"))) {
+            _uiState.value = PlayerUiState(isLoading = false, isPlaying = false,
+                errorMessage = "This playback route is no longer available. Return to a movie or series.")
             return
         }
         initializeJob = viewModelScope.launch {
@@ -216,11 +215,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun selectSource(source: VideoSource) {
-        if (_uiState.value.type == "diagnostic") {
-            _uiState.value = _uiState.value.copy(currentSource = source, title = source.name, isLoading = true, errorMessage = null, showSourceSelector = false)
-            resolveAndLoad(source)
-            return
-        }
+        if (source !in SourceRegistry.UNSUPPORTED_WEB_SOURCES || !_uiState.value.imdbId.matches(Regex("tt[0-9]+"))) return
         SourceRegistry.setPreferredSource(getApplication(), source.name)
         SourceRegistry.setSourceForTitle(getApplication(), _uiState.value.imdbId, source)
         _uiState.value = _uiState.value.copy(
@@ -239,6 +234,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun retry() {
+        if (!_uiState.value.imdbId.matches(Regex("tt[0-9]+"))) return
         _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
         resolveAndLoad(_uiState.value.currentSource, _uiState.value.currentPositionMs)
     }
@@ -384,6 +380,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun retryPlayback() {
+        if (!_uiState.value.imdbId.matches(Regex("tt[0-9]+"))) return
         _uiState.value = _uiState.value.copy(
             isNetworkError = false,
             retryCount = _uiState.value.retryCount + 1,
