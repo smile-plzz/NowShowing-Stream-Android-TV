@@ -52,10 +52,11 @@ python3 -m unittest discover -s scripts -p 'test_*.py'
 Kotlin, Compose, ViewModels/StateFlow, Retrofit/OkHttp, Coil, SQLiteOpenHelper, WebView and Media3. JVM tests include Robolectric storage/repository/filter recovery tests. CI packages both APKs, checksums, public certificate information and exact build commit. PR builds use development signing and do not publish releases.
 
 ## Documentation
+- [Next development handoff](docs/FINAL-PRODUCT-REFINEMENT-HANDOFF.md) — latest owner feedback and final refinement plan; implementation remains on hold until explicitly authorized.
 - [Architecture](docs/ARCHITECTURE.md) · [Web playback](docs/WEB_PLAYBACK.md)
 - [Remote controls](docs/REMOTE_NAVIGATION.md) · [Troubleshooting](docs/TROUBLESHOOTING.md)
 - [Known limitations](docs/KNOWN_LIMITATIONS.md) · [Privacy and blocking](docs/PRIVACY_AND_BLOCKING.md)
-- [Candidate release notes](docs/releases/v1.6.0-rc.1.md) · [Signing](docs/RELEASE_SIGNING.md)
+- [Candidate release notes](docs/releases/v1.6.0-rc.2.md) · [Signing](docs/RELEASE_SIGNING.md)
 - [Release checklist](docs/RELEASE_CHECKLIST.md) · [Real-TV acceptance](docs/TV_ACCEPTANCE.md)
 
 Historical design documents are retained for context and are not the current implementation specification.

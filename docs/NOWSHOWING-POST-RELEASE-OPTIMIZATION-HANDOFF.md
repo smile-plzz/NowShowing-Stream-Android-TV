@@ -1,4 +1,4 @@
-> Implementation authorized by Ismail on 19 October 2026. This handoff remains the historical planning baseline; current candidate behavior and open device gates are documented in [v1.6.0-rc.1](releases/v1.6.0-rc.1.md) and [App health](APP_HEALTH.md).
+> Historical optimization baseline. For the latest owner feedback and next development scope, read [Final product refinement handoff](FINAL-PRODUCT-REFINEMENT-HANDOFF.md). The prior implementation authorization below applies to the completed October 19 work; it does not authorize the new enhancement milestone.
 
 # NowShowing TV - Post-release optimization handoff
 
