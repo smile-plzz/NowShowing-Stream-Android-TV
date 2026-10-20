@@ -1,6 +1,6 @@
 # 1.6.0-rc.3 / 16002 — refinement candidate source
 
-Not built or published yet. Android compilation, unit tests and real-TV checks remain pending.
+Not published. Build/test evidence and candidate artifacts are tracked in [PR #9](https://github.com/smile-plzz/NowShowing-Stream-Android-TV/pull/9). Real-TV checks remain pending.
 
 - Clear mood phrases, six more specific choices and exact-year/All Years selection.
 - Replaces mood-word title searches with fresh cached metadata and bounded authored IMDb-ID seeds.

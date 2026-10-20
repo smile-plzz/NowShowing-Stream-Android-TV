@@ -2,7 +2,7 @@
 
 ## Current candidate status
 
-The refinement source targets 1.6.0-rc.3 / 16002. No APK or signing evidence has been produced for it yet. Durable signing and compatibility with the installed TV certificate remain unresolved. Use the actual candidate build-info and certificate assets before installation.
+The refinement source targets 1.6.0-rc.3 / 16002. Consult the latest successful PR #9 workflow artifacts for candidate APK/signing evidence; no stable publication is certified here. Durable signing and compatibility with the installed TV certificate remain unresolved. Use the actual candidate build-info and certificate assets before installation.
 
 ## Historical v1.5.1 status
 v1.5.1 is a sideload release. Its build-info.json reports the actual signing mode; development signing forces GitHub prerelease status even though the app version is 1.5.1. Permanent-signing availability has not been verified for this pass; PR builds deliberately ignore signing secrets. The workflow automatically marks development-signed publications as prereleases.

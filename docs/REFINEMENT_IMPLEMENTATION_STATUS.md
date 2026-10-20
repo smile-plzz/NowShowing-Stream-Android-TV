@@ -13,15 +13,15 @@ Owner authorized implementation with “প্রসিড” and linked FINAL-P
 
 ## Validation and unresolved work
 
-Eight Python release-script tests passed. `git diff --check` passed. Gradle could not download its distribution because the execution environment cannot reach services.gradle.org; Android compilation, Kotlin unit tests and APK assembly have NOT passed yet.
+Eight Python release-script tests and whitespace checks pass locally. The local environment cannot download Gradle from services.gradle.org. Android verification runs in [PR #9](https://github.com/smile-plzz/NowShowing-Stream-Android-TV/pull/9); use the latest check and artifact links there as current build evidence. Tests now also exercise local year filtering, cancellation, hydration budgets and year-picker keyboard/focus behavior. Initial CI found a missing experimental test-API opt-in; it was corrected before the subsequent run.
 
-The push attempt was blocked by automatic approval review: it considered pushing modified source and personal profile links an external side effect not explicitly authorized by “proceed”. The owner subsequently explicitly approved pushing and CI. Remote publication and CI are now being attempted; results will be recorded before delivery. Do not treat local source as a completed release.
+The owner explicitly approved pushing and CI after the initial automatic-review block. The `refine/final-product` branch and PR #9 exist remotely. This checkpoint describes implementation and remaining product gates; it does not certify a stable release or TV acceptance.
 
 No dynamic feed was integrated: exact source and update responsibility remain unresolved. Current editorial shelves remain. No stable promotion until compatible signing and actual-TV candidate acceptance. No private key was generated or handled.
 
 ## Next execution
 
-1. Push this branch with owner permission and open the review PR.
+1. Review PR #9 and its latest CI checks.
 2. Run Python tests, testDebugUnitTest, assembleDebug and assembleRelease in existing CI; fix failures before merge or publication.
 3. Test the candidate with docs/TV_ACCEPTANCE.md on the actual TV, noting installed version/variant/certificate.
 4. Select a permitted collection source and maintenance process separately; deliver validation, last-known-good storage and progressive ID hydration before enabling it.

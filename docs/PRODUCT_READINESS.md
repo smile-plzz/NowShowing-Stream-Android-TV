@@ -14,7 +14,7 @@ NowShowing TV is a standalone, remote-first Android TV discovery and provider-vi
 
 ## Refinement implementation status
 
-The local 1.6.0-rc.3 / 16002 source adds 35 clear mood phrases, exact-year selection, bounded cached/seeded candidate lookup, conservative plot/genre heuristics and creator social links. It has not passed Android compilation or real-TV acceptance yet. Remote collection sourcing is still unresolved and no dynamic feed is enabled.
+The local 1.6.0-rc.3 / 16002 source adds 35 clear mood phrases, exact-year selection, bounded cached/seeded candidate lookup, conservative plot/genre heuristics and creator social links. Build/test evidence is tracked in [PR #9](https://github.com/smile-plzz/NowShowing-Stream-Android-TV/pull/9); real-TV acceptance is pending. Remote collection sourcing is still unresolved and no dynamic feed is enabled.
 
 ## Previously published candidate scope
 1.6.0-rc.2 carries forward the rc.1 performance and diagnostics work, adds system-keyboard search and local library organization, and retains the existing playback architecture. It makes no database schema change.
