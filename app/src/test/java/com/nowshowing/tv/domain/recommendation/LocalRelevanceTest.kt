@@ -30,6 +30,25 @@ class LocalRelevanceTest {
             assertEquals(name, 0, LocalRelevance.moodScore(title("tt0000001", rule.genres.joinToString(), "Ordinary life."), rule))
         }
     }
+    @Test fun comfortDoesNotRecommendHorrorComedy() {
+        val horrorComedy = title("tt0000003", "Comedy, Horror", "Friends encounter supernatural revenge.")
+        listOf("Happy", "Relaxed", "Anxious", "Playful", "Giddy").forEach {
+            assertEquals(it, 0, LocalRelevance.moodScore(horrorComedy, MoodRecommendationEngine.MOOD_MAP.getValue(it)))
+        }
+    }
+    @Test fun specificMoodsRecognizeDistinctStories() {
+        val examples = mapOf(
+            "heartbreak" to "After a breakup, two lovers struggle with separation.",
+            "complicated_love" to "An affair threatens a marriage.",
+            "friendship" to "Two friends discover a lasting bond.",
+            "paranoia" to "A conspiracy reveals a web of surveillance.",
+            "redemption" to "A former criminal earns a second chance.",
+            "underdog" to "A struggling boxer competes against the odds.")
+        examples.forEach { (name, plot) ->
+            val rule = MoodRecommendationEngine.MOOD_MAP.getValue(name)
+            assertTrue(name, LocalRelevance.moodScore(title("tt0000001", rule.genres.joinToString(), plot), rule) > 0)
+        }
+    }
     @Test fun themeOutweighsGenericGenreAndCastCannotQualify() {
         val source = title("tt0000001", "Mystery, Thriller", "A detective investigates a murder.")
         val good = title("tt0000002", "Mystery, Thriller", "An investigation reveals a killer.")

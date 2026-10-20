@@ -9,7 +9,9 @@ data class MoodItem(
 
 data class MoodRule(
     val genres: List<String>,
-    val keywords: List<String>
+    val keywords: List<String>,
+    val requirePlotEvidence: Boolean = true,
+    val excludedGenres: Set<String> = emptySet()
 )
 
 data class RankedMovie(

@@ -12,13 +12,12 @@ object LocalRelevance {
         ?.value?.take(4)?.toIntOrNull()
     private fun contains(text: String, phrase: String) = " ${normalize(text)} ".contains(" ${normalize(phrase)} ")
     fun moodScore(detail: OmdbTitleDetail, rule: MoodRule): Int {
-        val overlap = genres(detail).intersect(rule.genres.map(::normalize).toSet()).size
+        val actualGenres = genres(detail)
+        if (actualGenres.any { it in rule.excludedGenres.map(::normalize) }) return 0
+        val overlap = actualGenres.intersect(rule.genres.map(::normalize).toSet()).size
         if (overlap == 0) return 0
         val evidence = rule.keywords.count { contains(detail.plot.orEmpty(), it) }
-        // Specific moods need plot evidence; broad comfort/comedy/fantasy requests can use defining genres.
-        val defining = genres(detail).intersect(setOf("comedy", "animation", "family", "horror", "romance", "adventure", "fantasy", "documentary"))
-        val primary = rule.genres.firstOrNull()?.let(::normalize)
-        if (evidence == 0 && (primary !in defining || rule.keywords.any { it in setOf("breakup", "affair", "friendship", "conspiracy", "redemption", "underdog") })) return 0
+        if (evidence == 0 && rule.requirePlotEvidence) return 0
         return evidence * 8 + overlap
     }
     private val themes = listOf(
