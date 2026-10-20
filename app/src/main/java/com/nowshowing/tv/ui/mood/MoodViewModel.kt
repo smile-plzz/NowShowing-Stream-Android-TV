@@ -22,9 +22,10 @@ data class MoodUiState(
     val recommendations: List<RankedMovie> = emptyList()
 )
 
-class MoodViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val repository = MediaRepository(application)
+class MoodViewModel @JvmOverloads constructor(
+    application: Application,
+    private val repository: MediaRepository = MediaRepository(application)
+) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow(MoodUiState())
     val uiState: StateFlow<MoodUiState> = _uiState.asStateFlow()
 
