@@ -2,9 +2,9 @@
 
 A standalone movie and series discovery app for Android TV / Google TV, by Ismail Hossain.
 
-**Development candidate: 1.6.0-rc.2 · Android version code 16001**
+**Sideload prerelease: 1.6.0-rc.2 · Android version code 16001**
 
-Last published release remains 1.5.1 until a candidate is accepted. See [App health and TV measurements](docs/APP_HEALTH.md).
+Version 1.6.0-rc.2 is the current sideload candidate. Stable upgrade acceptance remains pending. See [App health and TV measurements](docs/APP_HEALTH.md).
 
 [Published APK releases](https://github.com/smile-plzz/NowShowing-Stream-Android-TV/releases) · [Build runs and candidate artifacts](https://github.com/smile-plzz/NowShowing-Stream-Android-TV/actions/workflows/build-apk.yml) · [Installation](docs/INSTALLATION.md)
 

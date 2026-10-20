@@ -1,3 +1,7 @@
+# 1.6.0-rc.2 — TV search and library refinement
+
+Editable title input with Android keyboard/IME Search support alongside the D-pad keyboard; scrollable search controls; result counts and visible recovery; local watchlist type filters and recent/title/release-year sorting. Debug builds install separately as NowShowing Preview, with their own storage. Includes all rc.1 performance/diagnostics changes. CI checks both package identities, signatures and release-bundle integrity. See docs/releases/v1.6.0-rc.2.md. Stable signing continuity and real-TV acceptance remain pending.
+
 # 1.6.0-rc.1 (candidate)
 
 Progressive cached-first collections, refresh/sort corrections, local photo diagnostics and opt-in window-frame recording, demo media removal, expanded About, OMDb year search and loaded collection filters. See docs/releases/v1.6.0-rc.1.md. Real-TV acceptance remains pending.
