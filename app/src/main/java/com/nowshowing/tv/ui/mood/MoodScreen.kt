@@ -38,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.window.Dialog
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
@@ -282,20 +283,24 @@ internal fun YearPicker(selected: Int?, onDismiss: () -> Unit, onApply: (Int?) -
     val index = years.indexOf(selected).coerceAtLeast(0)
     val list = rememberLazyListState(initialFirstVisibleItemIndex = index)
     val focus = remember { FocusRequester() }
+    var initialFocusRequested by remember { mutableStateOf(false) }
     Dialog(onDismissRequest = onDismiss) {
         Column(Modifier.width(270.dp).background(SurfaceDark, RoundedCornerShape(16.dp)).padding(20.dp)) {
             Text("Release year", color = TextPrimary, fontSize = 20.sp)
             Text("OK selects · Back cancels", color = TextMuted, fontSize = 12.sp)
             androidx.compose.foundation.lazy.LazyColumn(state = list, modifier = Modifier.height(260.dp)) {
                 items(years.size) { row ->
-                    Box(if (row == index) Modifier.focusRequester(focus) else Modifier) {
-                        com.nowshowing.tv.ui.player.TvPlayerActionButton(years[row]?.toString() ?: "All Years", null) {
-                            onApply(years[row])
+                    val rowModifier = if (row == index) Modifier.focusRequester(focus).onGloballyPositioned {
+                        if (!initialFocusRequested) {
+                            initialFocusRequested = true
+                            focus.requestFocus()
                         }
-                    }
+                    } else Modifier
+                    com.nowshowing.tv.ui.player.TvPlayerActionButton(
+                        years[row]?.toString() ?: "All Years", null, modifier = rowModifier
+                    ) { onApply(years[row]) }
                 }
             }
         }
     }
-    LaunchedEffect(Unit) { focus.requestFocus() }
 }
