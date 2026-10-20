@@ -16,27 +16,51 @@ import com.nowshowing.tv.data.repository.MetadataHealth
 
 data class MoodUiState(
     val selectedMood: MoodItem? = null,
+    val selectedYear: Int? = null,
     val isLoading: Boolean = false,
-    val statusMessage: String = "Select how you're feeling to find precise genre-verified movies.",
+    val statusMessage: String = "Choose a mood to explore this collection.",
     val recommendations: List<RankedMovie> = emptyList()
 )
 
-class MoodViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val repository = MediaRepository(application)
+class MoodViewModel @JvmOverloads constructor(
+    application: Application,
+    private val repository: MediaRepository = MediaRepository(application)
+) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow(MoodUiState())
     val uiState: StateFlow<MoodUiState> = _uiState.asStateFlow()
 
+    private var allResults: List<RankedMovie> = emptyList()
+    private val snapshots = mutableMapOf<String, List<RankedMovie>>()
+    private var requestId = 0L
     private var recommendationJob: Job? = null
-    fun retry() { MetadataHealth.retry(); _uiState.value.selectedMood?.let(::selectMood) }
+    fun selectYear(year: Int?) {
+        publishResults(_uiState.value.copy(selectedYear = year))
+    }
+    private fun publishResults(state: MoodUiState = _uiState.value) {
+        val results = allResults.filter { state.selectedYear == null ||
+            com.nowshowing.tv.domain.recommendation.LocalRelevance.startYear(it.year) == state.selectedYear }
+        _uiState.value = state.copy(recommendations = results,
+            statusMessage = if (results.isEmpty()) "No matches in the current collection. Try All Years or another mood."
+                else "${state.selectedMood?.label.orEmpty()} · Local collection matches")
+    }
+    fun retry() { MetadataHealth.retry(); _uiState.value.selectedMood?.let { snapshots.remove(it.name); selectMood(it) } }
 
     fun selectMood(mood: MoodItem) {
+        val identity = ++requestId
         recommendationJob?.cancel()
+        snapshots[mood.name]?.let {
+            allResults = it
+            publishResults(_uiState.value.copy(selectedMood = mood, isLoading = false))
+            return
+        }
         recommendationJob = viewModelScope.launch {
+            val sameMood = _uiState.value.selectedMood?.name == mood.name
+            if (!sameMood) allResults = emptyList()
             _uiState.value = _uiState.value.copy(
+                recommendations = if (sameMood) _uiState.value.recommendations else emptyList(),
                 selectedMood = mood,
                 isLoading = true,
-                statusMessage = "Finding precise matches for ${mood.name.lowercase()} (${mood.label.lowercase()})…"
+                statusMessage = "Finding collection matches for ${mood.label}…"
             )
 
             val results = MoodRecommendationEngine.fetchMoodRecommendations(
@@ -44,15 +68,10 @@ class MoodViewModel(application: Application) : AndroidViewModel(application) {
                 mood = mood.name
             )
 
-            _uiState.value = _uiState.value.copy(
-                isLoading = false,
-                statusMessage = if (results.isNotEmpty()) {
-                    "Showing matches for: ${mood.name} — ${mood.description}"
-                } else {
-                    MetadataHealth.failure.value?.message ?: "No matches found for ${mood.name.lowercase()} right now. Try another mood."
-                },
-                recommendations = results
-            )
+            if (identity != requestId) return@launch
+            snapshots[mood.name] = results
+            allResults = results
+            publishResults(_uiState.value.copy(isLoading = false))
         }
     }
 

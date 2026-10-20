@@ -275,14 +275,36 @@ class MediaRepository(
         }
     }
 
-    suspend fun relatedTitles(detail: OmdbTitleDetail): List<OmdbTitleDetail> = withContext(Dispatchers.IO) {
-        val genres = detail.genre.orEmpty().split(",").map { it.trim() }.filter { it.isNotBlank() && it != "N/A" }.toSet()
+    suspend fun cachedCandidates(): List<OmdbTitleDetail> = withContext(Dispatchers.IO) {
         db.cachedDetailPayloads().mapNotNull {
             runCatching { gson.fromJson(it, OmdbTitleDetail::class.java) }.getOrNull()
-        }.distinctBy { it.imdbID }.filter {
-            it.imdbID != detail.imdbID && it.type == detail.type &&
-                it.genre.orEmpty().split(",").any { genre -> genre.trim() in genres }
-        }.take(6)
+        }.filter { it.response == "True" && it.imdbID.matches(Regex("tt[0-9]{7,}")) }
+            .distinctBy { it.imdbID }.take(100)
+    }
+
+    suspend fun moodCandidates(mood: String): List<OmdbTitleDetail> {
+        val cached = cachedCandidates()
+        // Small authored seed pool, hydrated sequentially through the existing global request gate.
+        val ids = when (mood) {
+            "heartbreak", "complicated_love" -> listOf("tt0338013", "tt1120985", "tt0112471", "tt7653254")
+            "friendship" -> listOf("tt0111161", "tt0088763", "tt0109830", "tt0106677")
+            "paranoia" -> listOf("tt0119116", "tt0120382", "tt0167404", "tt0209144")
+            "redemption" -> listOf("tt0111161", "tt0120689")
+            "underdog" -> listOf("tt0075148", "tt0405159", "tt1210166", "tt0109830")
+            "Happy", "Goofy", "Playful", "Giddy", "Anxious", "Relaxed" -> listOf("tt0382932", "tt2096673", "tt0266543", "tt0126029")
+            "Scared", "Eerie", "Tense" -> listOf("tt0081505", "tt1457767", "tt5052448", "tt6644200")
+            "Romantic", "Sad", "Adult" -> listOf("tt0338013", "tt3783958", "tt0120338", "tt0112471")
+            else -> listOf("tt0133093", "tt1375666", "tt0111161", "tt0209144")
+        }
+        val known = cached.map { it.imdbID }.toSet()
+        val additions = ids.filterNot { it in known }.mapNotNull { getDetails(it) }
+        return (cached + additions).distinctBy { it.imdbID }
+    }
+
+    suspend fun relatedTitles(detail: OmdbTitleDetail): List<OmdbTitleDetail> = withContext(Dispatchers.Default) {
+        cachedCandidates().map { it to com.nowshowing.tv.domain.recommendation.LocalRelevance.relatedScore(detail, it) }
+            .filter { it.second > 0 }.sortedWith(compareByDescending<Pair<OmdbTitleDetail, Int>> { it.second }
+                .thenBy { it.first.imdbID }).take(6).map { it.first }
     }
 
     suspend fun clearMetadataCache() = withContext(Dispatchers.IO) {

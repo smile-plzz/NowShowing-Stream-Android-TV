@@ -5,7 +5,9 @@ Owner: Ismail Hossain · [GitHub](https://github.com/smile-plzz)
 Repository: [NowShowing-Stream-Android-TV](https://github.com/smile-plzz/NowShowing-Stream-Android-TV)  
 Reviewed application baseline: `6513131280b55eb9ad1ec90809d9882b6f71fa6b` on `main`  
 Published candidate: **1.6.0-rc.2 / 16001**  
-Status: **Planning complete for the agreed scope; implementation is not authorized yet.**
+Status: **Owner authorized implementation on 20 October 2026 with “প্রসিড”. Refinement source is in PR #9; current Android validation is tracked by its CI checks. Stable publication remains gated.**
+
+See [implementation checkpoint](REFINEMENT_IMPLEMENTATION_STATUS.md) for the actual delivery state. The original start restriction below is historical and was satisfied by the latest owner message. Dynamic-feed and signing gates remain unresolved.
 
 ## 1. Read this first
 

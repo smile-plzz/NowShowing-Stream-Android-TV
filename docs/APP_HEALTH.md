@@ -2,7 +2,7 @@
 
 Open **Settings → App health**. Live heap/system-memory readings update every two seconds while this section is visible, stop on background/navigation, and pause while a frozen report is open. Heap is app Java memory, not total device RAM.
 
-**Record browsing performance** attaches Android `Window.OnFrameMetricsAvailableListener` only after an explicit action. Navigate through Home, Movies, TV, Watchlist, Search and Details; stop manually or wait for the 60-second limit. Backgrounding also stops recording. Settings/player frames are excluded. Routes, title identifiers and input events are not retained. Recording is capped at 12,000 samples, then the listener and timeout are removed.
+**Record browsing performance** attaches Android `Window.OnFrameMetricsAvailableListener` only after an explicit action. Navigate through Home, Movies, TV, Watchlist, Search, Mood and Details; stop manually or wait for the 60-second limit. Backgrounding also stops recording. Settings/player frames are excluded. Routes, title identifiers and input events are not retained. Recording is capped at 12,000 samples, then the listener and timeout are removed.
 
 The recording uses `FrameMetrics.TOTAL_DURATION`, nearest-rank median/p95/p99 and a slow-frame count above one refresh interval at recording start. Missing metric callbacks are reported separately; they are **not** dropped display frames. Display refresh changes are not tracked. Zero samples means unmeasured, not healthy. Input latency, video FPS, CPU/GPU load and codec health remain unavailable. Instrumentation overhead has not yet been compared on the owner's TV.
 

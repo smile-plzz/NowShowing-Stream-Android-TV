@@ -63,3 +63,7 @@ Historical design documents are retained for context and are not the current imp
 
 ## Side-by-side TV testing
 The `-debug.apk` download installs as **NowShowing Preview** (`com.nowshowing.tv.preview`), with separate local storage. Use this candidate to test alongside the existing NowShowing TV installation. Preview starts with its own empty watchlist/history/settings and does not migrate the installed app's data. The `-release.apk` retains `com.nowshowing.tv` and requires a matching certificate for an in-place upgrade. Preview is a debug test build; its performance is not evidence of minified release performance.
+
+## Refinement in progress
+
+The local refinement source targets **1.6.0-rc.3 / 16002**; it is not a published download. See [implementation status](docs/REFINEMENT_IMPLEMENTATION_STATUS.md) and [candidate notes](docs/RELEASE_NOTES_1.6.0-rc.3.md). The existing published candidate remains the installation baseline until a verified replacement is available.

@@ -8,9 +8,13 @@ import org.junit.Test
 class MoodRecommendationEngineTest {
 
     @Test
-    fun testAll29MoodsPresent() {
-        assertEquals("Must contain 29 moods matching web app", 29, MoodRecommendationEngine.MOODS.size)
-        assertEquals("Must contain mappings for all 29 moods", 29, MoodRecommendationEngine.MOOD_MAP.size)
+    fun stableKeysAndDisplayPhrasesAreUnique() {
+        val moods = MoodRecommendationEngine.MOODS
+        assertEquals(moods.size, moods.map { it.name }.distinct().size)
+        assertEquals(moods.size, moods.map { it.label }.distinct().size)
+        assertEquals(moods.map { it.name }.toSet(), MoodRecommendationEngine.MOOD_MAP.keys)
+        assertEquals("Happy", MoodRecommendationEngine.guessMoodFromText("Need a Laugh"))
+        assertEquals("Anxious", MoodRecommendationEngine.guessMoodFromText("I feel anxious"))
     }
 
     @Test

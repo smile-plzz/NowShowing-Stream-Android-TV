@@ -199,8 +199,10 @@ fun SettingsScreen(viewModel: SettingsViewModel, onNavigate: (String) -> Unit) {
                         if (reportMessage.isNotBlank()) item(key = "report_feedback") { Feedback(reportMessage) }
                     }
                     SettingsSection.ABOUT -> {
-                        item(key = "about") { InfoCard("NowShowing TV", "Created by Ismail Hossain\nA standalone movie and series discovery app for Android TV.\nVersion ${BuildConfig.VERSION_NAME} · Code ${BuildConfig.VERSION_CODE}\nVariant ${BuildConfig.BUILD_TYPE}\nCommit ${BuildConfig.BUILD_COMMIT}") }
+                        item(key = "about") { InfoCard("NowShowing TV", "Created by Ismail Hossain\nDhaka-based technology professional working across Shopify SaaS, QA, product support and practical software development. An independent project for comfortable everyday viewing on Android TV.\nVersion ${BuildConfig.VERSION_NAME} · Code ${BuildConfig.VERSION_CODE}\nVariant ${BuildConfig.BUILD_TYPE}\nCommit ${BuildConfig.BUILD_COMMIT}") }
                         listOf(
+                            "LinkedIn" to "https://www.linkedin.com/in/md-ismail-hossain-2938541b1/",
+                            "Facebook" to "https://www.facebook.com/optimisticyetpessimist/",
                             "GitHub profile" to "https://github.com/smile-plzz",
                             "Source code" to "https://github.com/smile-plzz/NowShowing-Stream-Android-TV",
                             "Releases & downloads" to "https://github.com/smile-plzz/NowShowing-Stream-Android-TV/releases",

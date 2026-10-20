@@ -33,6 +33,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.window.Dialog
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -61,6 +70,21 @@ fun MoodScreen(
     onTitleClick: (String, String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var showYears by remember { mutableStateOf(false) }
+    var restoreYearFocus by remember { mutableStateOf(false) }
+    val yearFocus = remember { FocusRequester() }
+    val gridState = rememberLazyGridState()
+    if (showYears) {
+        YearPicker(uiState.selectedYear, onDismiss = { restoreYearFocus = true; showYears = false }, onApply = {
+            viewModel.selectYear(it); restoreYearFocus = true; showYears = false
+        })
+    }
+    LaunchedEffect(showYears) {
+        if (!showYears && restoreYearFocus) {
+            yearFocus.requestFocus(); restoreYearFocus = false
+        }
+    }
+
 
     Column(
         modifier = Modifier
@@ -80,7 +104,7 @@ fun MoodScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                Column(Modifier.weight(1f)) {
                     Text(
                         text = "How are you feeling?",
                         color = TextPrimary,
@@ -97,6 +121,10 @@ fun MoodScreen(
                 }
 
                 // Surprise Me Pill Button
+                Box(Modifier.focusRequester(yearFocus)) {
+                    com.nowshowing.tv.ui.player.TvPlayerActionButton("Year: ${uiState.selectedYear ?: "All Years"}", null) { showYears = true }
+                }
+                Spacer(Modifier.width(12.dp))
                 SurpriseMeButton(onClick = { viewModel.surpriseMe() })
             }
 
@@ -120,7 +148,7 @@ fun MoodScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Results Grid
-            if (uiState.isLoading) {
+            if (uiState.isLoading && uiState.recommendations.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -143,6 +171,7 @@ fun MoodScreen(
                 }
             } else {
                 LazyVerticalGrid(
+                    state = gridState,
                     columns = GridCells.Adaptive(minSize = 145.dp),
                     contentPadding = PaddingValues(bottom = 32.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -155,8 +184,9 @@ fun MoodScreen(
                             posterUrl = movie.poster,
                             year = movie.year,
                             rating = if (movie.rating > 0f) movie.rating.toString() else "",
-                            badge = if (movie.matchScore > 1) "${movie.matchScore}x Match" else null,
-                            onClick = { onTitleClick(movie.imdbID, movie.type) }
+                            badge = null,
+                            onClick = { onTitleClick(movie.imdbID, movie.type) },
+                            focusKey = movie.imdbID
                         )
                     }
                 }
@@ -206,7 +236,7 @@ private fun MoodPill(
         Text(text = mood.emoji, fontSize = 16.sp)
         Spacer(modifier = Modifier.width(8.dp))
         Text(
-            text = mood.name,
+            text = mood.label,
             color = textColor,
             fontSize = 13.sp,
             fontWeight = if (isSelected || isFocused) FontWeight.Bold else FontWeight.Medium
@@ -244,5 +274,33 @@ private fun SurpriseMeButton(onClick: () -> Unit) {
             fontWeight = FontWeight.Bold,
             fontSize = 13.sp
         )
+    }
+}
+
+@Composable
+internal fun YearPicker(selected: Int?, onDismiss: () -> Unit, onApply: (Int?) -> Unit) {
+    val years = remember { listOf<Int?>(null) + (java.time.Year.now().value downTo 1888).toList() }
+    val index = years.indexOf(selected).coerceAtLeast(0)
+    val list = rememberLazyListState(initialFirstVisibleItemIndex = index)
+    val focus = remember { FocusRequester() }
+    var initialFocusRequested by remember { mutableStateOf(false) }
+    Dialog(onDismissRequest = onDismiss) {
+        Column(Modifier.width(270.dp).background(SurfaceDark, RoundedCornerShape(16.dp)).padding(20.dp)) {
+            Text("Release year", color = TextPrimary, fontSize = 20.sp)
+            Text("OK selects · Back cancels", color = TextMuted, fontSize = 12.sp)
+            androidx.compose.foundation.lazy.LazyColumn(state = list, modifier = Modifier.height(260.dp)) {
+                items(years.size) { row ->
+                    val rowModifier = if (row == index) Modifier.focusRequester(focus).onGloballyPositioned {
+                        if (!initialFocusRequested) {
+                            initialFocusRequested = true
+                            focus.requestFocus()
+                        }
+                    } else Modifier
+                    com.nowshowing.tv.ui.player.TvPlayerActionButton(
+                        years[row]?.toString() ?: "All Years", null, modifier = rowModifier
+                    ) { onApply(years[row]) }
+                }
+            }
+        }
     }
 }

@@ -344,7 +344,7 @@ class NowShowingDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_
     }
 
     fun cachedDetailPayloads(): List<String> = readableDatabase.rawQuery(
-        "SELECT payload FROM $TABLE_CACHE WHERE cache_key LIKE 'details_%' AND expires_at > ? ORDER BY expires_at DESC LIMIT 100",
+        "SELECT payload FROM $TABLE_CACHE WHERE cache_key LIKE 'details_%' AND expires_at > ? ORDER BY expires_at DESC, cache_key LIMIT 500",
         arrayOf(System.currentTimeMillis().toString())
     ).use { cursor -> buildList { while (cursor.moveToNext()) add(cursor.getString(0)) } }
 

@@ -13,3 +13,7 @@
 - PR builds use development signing. Permanent-signing secrets and same-certificate upgrades are not proven by source inspection or CI success. Certificate mismatch prevents in-place upgrades; do not uninstall without understanding data loss.
 - Memory/image/network bounds are implemented; no real-TV before/after profiler measurements are available. Device-wide slowness may remain. The previously successful owner playback test predates this candidate.
 - Google Play publication, Fire TV certification, Tizen and webOS are outside this release.
+
+## Refinement source (1.6.0-rc.3, not yet built)
+
+Mood discovery uses fresh cached metadata plus at most four authored IMDb-ID lookups per uncached mood selection (sequential, through the existing two-slot global limiter). Local year changes and repeated mood selections within the session do not hydrate new candidates. Missing details may use the repository's existing stale recovery path. Results are deterministic heuristics over available genre/plot text, not full-catalog recommendations. Specific moods can have no matches. More Like This uses fresh cached details only, no new requests, and requires shared authored theme evidence. It may be absent on a cold installation. Remote collections remain disabled pending a selected permitted source and maintenance process. No automatically refreshed new-release feed is included.
