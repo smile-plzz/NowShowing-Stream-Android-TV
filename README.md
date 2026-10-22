@@ -19,7 +19,7 @@ Download the APK from the versioned GitHub Release. Releases include both APK va
 
 ## Browsing and discovery
 
-Home/Browse show fresh cached cards first and publish incremental results with two global network slots. Refresh retains populated grids. Browse sorts and genre/start-year filters apply only to the loaded curated collection, not a complete catalog. Search supports title words, type and optional release year with Load more. Live popularity/new-release rankings and plot-keyword discovery are deferred; curated seeds are not live rankings.
+Home/Browse show fresh cached cards first and publish incremental results with two global network slots. Refresh retains populated grids. Cloud JSON selects featured, movie, series, genre and mood candidates. Browse sorts and genre/start-year filters apply only to the loaded curated collection, not a complete catalog. Search supports title words, type and optional release year with Load more. Live popularity/new-release rankings and plot-keyword discovery are deferred; curated seeds are not live rankings.
 
 ## Daily TV use
 - System-keyboard title entry alongside the D-pad keyboard; scrollable search controls and result counts.
@@ -30,7 +30,7 @@ Home/Browse show fresh cached cards first and publish incremental results with t
 - Next episode is prominent in series controls. Season boundaries use known episode metadata; missing lists offer recovery rather than inventing episode numbers.
 - Autoplay defaults on and persists in Settings. Current web providers have no verified completion integration, so **web episodes still require manual Next episode**. No native demo streams are exposed.
 - Recently opened remembers episode/source. Manual Watched is a title-level label and survives reopening; it does not measure playback.
-- Related titles reuse cached candidates sharing genres, with no recommendation backend or extra metadata requests.
+- Related titles rank shared themes and genres using cached candidates plus up to eight cloud-catalog candidates. Metadata requests use the existing cache and request limits.
 - About has owner/source/releases/issues links. App health has opt-in browsing recording, frozen numbered photo pages, live memory and one reopenable/deletable local report; scoped cache recovery remains in Metadata.
 
 ## Metadata and privacy
