@@ -70,16 +70,17 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         loadJob = viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, message = null) }
             refreshHistory()
+            try {
             // Each shelf publishes independently. Network concurrency is bounded in the repository.
             coroutineScope {
                 launch {
-                    repository.lookupTitlesProgressively(MediaRepository.TRENDING_SEED) { titles ->
-                        _uiState.update { it.copy(trending = titles.ifEmpty { it.trending }, heroTitle = it.heroTitle ?: titles.firstOrNull()) }
+                    repository.lookupTitlesProgressively(repository.catalogSeeds("featured", MediaRepository.TRENDING_SEED)) { titles ->
+                        _uiState.update { it.copy(trending = titles.ifEmpty { it.trending }, heroTitle = titles.firstOrNull() ?: it.heroTitle) }
                     }
                 }.join()
                 MediaRepository.GENRE_ROWS.take(3).forEach { seed ->
                     launch {
-                        repository.lookupTitlesProgressively(seed.seed) { titles ->
+                        repository.lookupTitlesProgressively(repository.catalogSeeds(seed.id, seed.seed)) { titles ->
                         _uiState.update { s ->
                             s.copy(genreRows = s.genreRows.map { if (it.seed.id == seed.id) GenreRowState(seed, titles.ifEmpty { it.items }) else it })
                         }
@@ -87,15 +88,21 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                     }.join()
                 }
                 launch {
-                    repository.lookupTitlesProgressively(MediaRepository.POPULAR_MOVIES.take(8), "movie") { titles ->
+                    repository.lookupTitlesProgressively(repository.catalogSeeds("movies", MediaRepository.POPULAR_MOVIES).take(8), "movie") { titles ->
                         _uiState.update { it.copy(popularMovies = titles.ifEmpty { it.popularMovies }) }
                     }
                 }.join()
                 launch {
-                    repository.lookupTitlesProgressively(MediaRepository.POPULAR_TV.take(8), "series") { titles ->
+                    repository.lookupTitlesProgressively(repository.catalogSeeds("series", MediaRepository.POPULAR_TV).take(8), "series") { titles ->
                         _uiState.update { it.copy(popularTv = titles.ifEmpty { it.popularTv }) }
                     }
                 }
+            }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled
+            } catch (e: Exception) {
+                com.nowshowing.tv.diagnostics.CrashDiagnostics.record(getApplication(), "Home loading failed", e)
+                _uiState.update { it.copy(isLoading = false, message = "Could not load titles. Please retry.") }
+                return@launch
             }
             _uiState.update {
                 val hasTitles = it.trending.isNotEmpty() || it.genreRows.any { row -> row.items.isNotEmpty() } ||

@@ -39,7 +39,7 @@ class DailyUseRegressionTest {
         app = RuntimeEnvironment.getApplication()
         app.getSharedPreferences("metadata", 0).edit().clear().commit()
         db = NowShowingDatabase(app)
-        repository = MediaRepository(app, api, db)
+        repository = MediaRepository(app, api, db) { emptyMap() }
         repository.clearMetadataCache()
     }
 

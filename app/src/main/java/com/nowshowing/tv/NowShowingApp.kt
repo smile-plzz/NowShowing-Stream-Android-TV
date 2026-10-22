@@ -15,9 +15,14 @@ class NowShowingApp : Application(), ImageLoaderFactory {
 
     override fun onCreate() {
         super.onCreate()
+        com.nowshowing.tv.diagnostics.CrashDiagnostics.install(this)
         // Initialize baseline privacy shields asynchronously
         CoroutineScope(Dispatchers.IO).launch {
-            com.nowshowing.tv.data.db.NowShowingDatabase.getInstance(this@NowShowingApp).pruneMetadata()
+            try {
+                com.nowshowing.tv.data.db.NowShowingDatabase.getInstance(this@NowShowingApp).pruneMetadata()
+            } catch (e: Exception) {
+                com.nowshowing.tv.diagnostics.CrashDiagnostics.record(this@NowShowingApp, "Metadata maintenance failed", e)
+            }
             FilterListManager.initialize(this@NowShowingApp)
         }
     }

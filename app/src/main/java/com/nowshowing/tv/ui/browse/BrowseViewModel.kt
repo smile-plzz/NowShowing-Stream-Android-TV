@@ -49,16 +49,22 @@ class BrowseViewModel @JvmOverloads constructor(
         _uiState.value = _uiState.value.copy(kind = kind, title = if (kind == "tv") "Curated TV Shows" else "Curated Movies",
             isLoading = true, items = sortTitles(rawItems, _uiState.value.sortMode), message = null)
         browseJob = viewModelScope.launch {
-            val titles = if (kind == "tv") MediaRepository.POPULAR_TV else MediaRepository.POPULAR_MOVIES
+            try {
+            val titles = if (kind == "tv") repository.catalogSeeds("series", MediaRepository.POPULAR_TV) else repository.catalogSeeds("movies", MediaRepository.POPULAR_MOVIES)
             val type = if (kind == "tv") "series" else "movie"
             val retained = rawItems
             val result = repository.lookupTitlesProgressively(titles, type) { partial ->
                 rawItems = partial + retained.filterNot { old -> partial.any { it.imdbID == old.imdbID } }
                 applySort()
             }
-            if (result.isNotEmpty()) rawItems = result + retained.filterNot { old -> result.any { it.imdbID == old.imdbID } }
+            if (result.isNotEmpty()) rawItems = result
             _uiState.value = _uiState.value.copy(isLoading = false, message = MetadataHealth.failure.value?.message)
             applySort()
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled
+            } catch (e: Exception) {
+                com.nowshowing.tv.diagnostics.CrashDiagnostics.record(getApplication(), "Browse loading failed", e)
+                _uiState.value = _uiState.value.copy(isLoading = false, message = "Could not load titles. Please retry.")
+            }
         }
     }
     fun setSortMode(mode: SortMode) { _uiState.value = _uiState.value.copy(sortMode = mode); applySort() }

@@ -28,6 +28,7 @@ fun diagnosticReport(context: Context): String = buildString {
     }.getOrNull()
     appendLine("Installed certificate SHA-256: ${fingerprint ?: "Unavailable"}")
     appendLine("Signing continuity: compare certificate with the previous installed APK; permanence is not inferred.")
+    appendLine("Last crash/recovery event: ${com.nowshowing.tv.diagnostics.CrashDiagnostics.last(context)}")
     appendLine("Metadata: ${MetadataHealth.failure.value?.message ?: "No failure recorded; not a connectivity test"}")
     appendLine("Expired cached metadata used this session: ${MetadataHealth.usedStaleCache}")
     appendLine("Metadata payload bytes: ${NowShowingDatabase.getInstance(context).metadataBytes()}")

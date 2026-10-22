@@ -11,6 +11,16 @@ class LocalRelevanceTest {
         Gson().fromJson(Gson().toJson(mapOf("imdbID" to id, "Genre" to genre, "Plot" to plot,
             "Type" to type, "Title" to "Fixture", "Year" to "2024", "Response" to "True")), OmdbTitleDetail::class.java)
 
+    @Test fun editorialEvidenceWorksWithoutMarketingWordsButHonorsExclusions() {
+        val rule = MoodRecommendationEngine.MOOD_MAP.getValue("Inspired")
+        val movie = title("tt0454921", "Biography, Drama", "A father struggles to support his child.")
+        assertEquals(0, LocalRelevance.moodScore(movie, rule))
+        assertTrue(LocalRelevance.moodScore(movie, rule, curated = true) > 0)
+        val horror = title("tt0000001", "Comedy, Horror", "A gentle story.")
+        assertEquals(0, LocalRelevance.moodScore(horror, MoodRecommendationEngine.MOOD_MAP.getValue("Anxious"), true))
+        val drama = title("tt0000002", "Drama", "A courtroom argument.")
+        assertEquals(0, LocalRelevance.moodScore(drama, MoodRecommendationEngine.MOOD_MAP.getValue("Romantic")))
+    }
     @Test fun exactYearHandlesSeriesAndRejectsMalformedValues() {
         assertEquals(2024, LocalRelevance.startYear("2024"))
         assertEquals(2011, LocalRelevance.startYear("2011–2019"))

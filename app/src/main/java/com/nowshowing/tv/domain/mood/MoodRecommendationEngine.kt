@@ -60,7 +60,7 @@ object MoodRecommendationEngine {
         "Inspired" to MoodRule(listOf("Biography", "Drama", "Musical", "Fantasy", "Sci-Fi", "Documentary"), listOf("motivational", "uplifting", "triumphant", "visionary", "aspirational")),
         "Nostalgic" to MoodRule(listOf("Romance", "Family", "History"), listOf("retro", "vintage", "memory lane", "throwback", "sentimental", "coming of age", "classic")),
         "Curious" to MoodRule(listOf("Mystery", "Documentary", "Sci-Fi", "Thriller"), listOf("investigative", "enigmatic", "mind bending", "clue", "sleuth", "psychological")),
-        "Romantic" to MoodRule(listOf("Romance", "Comedy", "Musical", "Drama"), listOf("love story", "meet cute", "tender", "passionate", "swoon", "period romance"), requirePlotEvidence = false),
+        "Romantic" to MoodRule(listOf("Romance"), listOf("love story", "meet cute", "tender", "passionate", "swoon", "period romance"), requirePlotEvidence = false),
         "Adventurous" to MoodRule(listOf("Adventure", "Action", "Fantasy", "Sci-Fi"), listOf("journey", "quest", "uncharted", "bold", "sweeping", "epic"), requirePlotEvidence = false),
         "Thoughtful" to MoodRule(listOf("Drama", "Biography", "History"), listOf("introspective", "contemplative", "layered", "intellectual", "philosophical", "indie", "psychological")),
         "Anxious" to MoodRule(listOf("Comedy", "Animation", "Documentary", "Family"), listOf("comfort", "gentle", "uplifting", "wholesome", "calming", "feel good", "nature"), requirePlotEvidence = false, excludedGenres = setOf("Horror", "Thriller", "Crime", "War")),
@@ -99,7 +99,7 @@ object MoodRecommendationEngine {
         val lower = text.lowercase()
         MOODS.firstOrNull { it.label.equals(text.trim(), ignoreCase = true) || it.name.equals(text.trim(), ignoreCase = true) }?.let { return it.name }
         for ((mood, keywords) in KEYWORD_MOOD_MAP) {
-            if (keywords.any { lower.contains(it) }) return mood
+            if (keywords.any { Regex("(?<![a-z])" + Regex.escape(it) + "(?![a-z])").containsMatchIn(lower) }) return mood
         }
         return "Happy"
     }
@@ -110,10 +110,11 @@ object MoodRecommendationEngine {
         type: String? = null
     ): List<RankedMovie> {
         val rule = MOOD_MAP[mood] ?: return emptyList()
+        val curated = repository.curatedMoodIds(mood).toSet()
         val candidates = repository.moodCandidates(mood)
         return withContext(Dispatchers.Default) { candidates.filter { type == null || it.type == type }
             .mapNotNull { detail ->
-                val score = com.nowshowing.tv.domain.recommendation.LocalRelevance.moodScore(detail, rule)
+                val score = com.nowshowing.tv.domain.recommendation.LocalRelevance.moodScore(detail, rule, detail.imdbID in curated)
                 if (score == 0) null else RankedMovie(detail.imdbID, detail.title,
                     detail.poster?.takeUnless { it == "N/A" }.orEmpty(), detail.year,
                     detail.type ?: "movie", score, detail.imdbRating?.toFloatOrNull() ?: 0f)

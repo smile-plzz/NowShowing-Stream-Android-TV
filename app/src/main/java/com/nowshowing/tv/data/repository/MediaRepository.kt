@@ -10,6 +10,7 @@ import com.nowshowing.tv.data.db.WatchlistItem
 import com.nowshowing.tv.data.model.OmdbSearchResponse
 import com.nowshowing.tv.data.model.OmdbSeasonResponse
 import com.nowshowing.tv.data.model.OmdbTitleDetail
+import com.nowshowing.tv.data.model.isUsable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -31,9 +32,15 @@ data class GenreRowSeed(
 class MediaRepository(
     private val context: Context,
     private val api: com.nowshowing.tv.data.api.OmdbApiService = ApiClient.service,
-    private val db: NowShowingDatabase = NowShowingDatabase.getInstance(context)
+    private val db: NowShowingDatabase = NowShowingDatabase.getInstance(context),
+    private val catalog: suspend (Context) -> Map<String, List<String>> = CloudCatalog::sections
 ) {
     private val gson = Gson()
+    suspend fun catalogSeeds(section: String, fallback: List<String>): List<String> =
+        catalog(context)[section] ?: fallback
+    suspend fun curatedMoodIds(mood: String): List<String> = catalogSeeds("mood_$mood",
+        com.nowshowing.tv.domain.mood.MoodSeeds.ids[mood].orEmpty()).take(24)
+
 
     companion object {
         private val memoryCache = MetadataCache<OmdbTitleDetail>()
@@ -167,7 +174,7 @@ class MediaRepository(
                 db.getCachedPayload(key)?.let { json ->
                     try {
                         val detail = gson.fromJson(json, OmdbTitleDetail::class.java)
-                        if (detail != null && detail.response != "False") {
+                        if (detail != null && detail.isUsable()) {
                             MetadataMetrics.diskHits.incrementAndGet()
                             // Disk expiry stays authoritative; do not extend it in the memory tier.
                             return@withContext detail
@@ -176,7 +183,7 @@ class MediaRepository(
                 }
                 try {
                     val detail = request(fetch) { if (it.response == "False") it.error ?: "Service error" else null }
-                    if (detail.response == "False") return@withContext null
+                    if (!detail.isUsable()) return@withContext null
                     db.setCachedPayload(key, gson.toJson(detail))
                     memoryCache.put(key, detail)
                     if (detail.imdbID.isNotBlank()) {
@@ -190,7 +197,7 @@ class MediaRepository(
                 } catch (failure: MetadataUnavailable) {
                     if (failure.failure == MetadataFailure.NO_RESULTS) return@withContext null
                     db.getCachedPayload(key, allowStale = true)?.let { json ->
-                        runCatching { gson.fromJson(json, OmdbTitleDetail::class.java) }.getOrNull()?.let {
+                        runCatching { gson.fromJson(json, OmdbTitleDetail::class.java) }.getOrNull()?.takeIf { it.isUsable() }?.let {
                             MetadataMetrics.staleHits.incrementAndGet(); MetadataHealth.stale(); return@withContext it
                         }
                     }
@@ -204,6 +211,7 @@ class MediaRepository(
     }
 
     suspend fun getDetailsByTitle(title: String, type: String? = null): OmdbTitleDetail? {
+        if (title.matches(Regex("tt[0-9]{7,10}"))) return getDetails(title)?.takeIf { type == null || type == "all" || it.type == type }
         val normalizedType = type?.takeUnless { it.isBlank() || it == "all" }
         // Keep v1 disk-cache keys so upgrading does not discard warm metadata.
         val key = "title_${title.trim()}_${normalizedType ?: ""}"
@@ -229,11 +237,11 @@ class MediaRepository(
         val resolved = linkedMapOf<String, OmdbTitleDetail>()
         withContext(Dispatchers.IO) {
             seeds.forEach { title ->
-                val key = "title_${title.trim()}_${type?.takeUnless { it.isBlank() || it == "all" }.orEmpty()}"
+                val key = if (title.matches(Regex("tt[0-9]{7,10}"))) "details_$title" else "title_${title.trim()}_${type?.takeUnless { it.isBlank() || it == "all" }.orEmpty()}"
                 val detail = memoryCache.get(key) ?: db.getCachedPayload(key)?.let {
                     runCatching { gson.fromJson(it, OmdbTitleDetail::class.java) }.getOrNull()
                 }
-                if (detail != null && detail.response != "False") resolved[title] = detail
+                if (detail != null && detail.isUsable() && (type == null || type == "all" || detail.type == type)) resolved[title] = detail
             }
         }
         fun snapshot() = seeds.mapNotNull { resolved[it] }.distinctBy { it.imdbID }
@@ -278,31 +286,23 @@ class MediaRepository(
     suspend fun cachedCandidates(): List<OmdbTitleDetail> = withContext(Dispatchers.IO) {
         db.cachedDetailPayloads().mapNotNull {
             runCatching { gson.fromJson(it, OmdbTitleDetail::class.java) }.getOrNull()
-        }.filter { it.response == "True" && it.imdbID.matches(Regex("tt[0-9]{7,}")) }
+        }.filter { it.isUsable() }
             .distinctBy { it.imdbID }.take(100)
     }
 
     suspend fun moodCandidates(mood: String): List<OmdbTitleDetail> {
         val cached = cachedCandidates()
         // Small authored seed pool, hydrated sequentially through the existing global request gate.
-        val ids = when (mood) {
-            "heartbreak", "complicated_love" -> listOf("tt0338013", "tt1120985", "tt0112471", "tt7653254")
-            "friendship" -> listOf("tt0111161", "tt0088763", "tt0109830", "tt0106677")
-            "paranoia" -> listOf("tt0119116", "tt0120382", "tt0167404", "tt0209144")
-            "redemption" -> listOf("tt0111161", "tt0120689")
-            "underdog" -> listOf("tt0075148", "tt0405159", "tt1210166", "tt0109830")
-            "Happy", "Goofy", "Playful", "Giddy", "Anxious", "Relaxed" -> listOf("tt0382932", "tt2096673", "tt0266543", "tt0126029")
-            "Scared", "Eerie", "Tense" -> listOf("tt0081505", "tt1457767", "tt5052448", "tt6644200")
-            "Romantic", "Sad", "Adult" -> listOf("tt0338013", "tt3783958", "tt0120338", "tt0112471")
-            else -> listOf("tt0133093", "tt1375666", "tt0111161", "tt0209144")
-        }
+        val ids = curatedMoodIds(mood)
         val known = cached.map { it.imdbID }.toSet()
         val additions = ids.filterNot { it in known }.mapNotNull { getDetails(it) }
         return (cached + additions).distinctBy { it.imdbID }
     }
 
     suspend fun relatedTitles(detail: OmdbTitleDetail): List<OmdbTitleDetail> = withContext(Dispatchers.Default) {
-        cachedCandidates().map { it to com.nowshowing.tv.domain.recommendation.LocalRelevance.relatedScore(detail, it) }
+        val seeds = catalogSeeds(if (detail.type == "series") "series" else "movies", emptyList()).take(8)
+        val hydrated = lookupTitles(seeds, detail.type)
+        (cachedCandidates() + hydrated).distinctBy { it.imdbID }.map { it to com.nowshowing.tv.domain.recommendation.LocalRelevance.relatedScore(detail, it) }
             .filter { it.second > 0 }.sortedWith(compareByDescending<Pair<OmdbTitleDetail, Int>> { it.second }
                 .thenBy { it.first.imdbID }).take(6).map { it.first }
     }

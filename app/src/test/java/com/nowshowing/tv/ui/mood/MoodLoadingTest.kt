@@ -33,7 +33,7 @@ class MoodLoadingTest {
         val app = RuntimeEnvironment.getApplication()
         app.getSharedPreferences("metadata", 0).edit().clear().commit()
         db = NowShowingDatabase(app)
-        val repository = MediaRepository(app, api, db)
+        val repository = MediaRepository(app, api, db) { emptyMap() }
         repository.clearMetadataCache()
         vm = MoodViewModel(app, repository)
     }

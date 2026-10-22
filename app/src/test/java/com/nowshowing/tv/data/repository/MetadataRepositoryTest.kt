@@ -23,7 +23,7 @@ class MetadataRepositoryTest {
         context.getSharedPreferences("metadata", 0).edit().clear().commit()
         context.deleteDatabase(NowShowingDatabase.DATABASE_NAME)
         db = NowShowingDatabase(context)
-        repository = MediaRepository(context, api, db)
+        repository = MediaRepository(context, api, db) { emptyMap() }
     }
     @After fun teardown() { db.close(); MetadataHealth.retry() }
     @Test fun quotaFailureSuppressesLaterNetworkCalls() = runBlocking {
@@ -114,11 +114,11 @@ class MetadataRepositoryTest {
     @Test fun warmProgressiveCollectionPublishesWithoutNetworkAndKeepsSeedOrder() = runBlocking {
         val first = "Progressive unique first"
         val second = "Progressive unique second"
-        db.setCachedPayload("title_${first}_movie", """{"Title":"First","Year":"2024","imdbID":"tt901001","Response":"True"}""")
-        db.setCachedPayload("title_${second}_movie", """{"Title":"Second","Year":"2023","imdbID":"tt901002","Response":"True"}""")
+        db.setCachedPayload("title_${first}_movie", """{"Title":"First","Year":"2024","imdbID":"tt0901001","Type":"movie","Response":"True"}""")
+        db.setCachedPayload("title_${second}_movie", """{"Title":"Second","Year":"2023","imdbID":"tt0901002","Type":"movie","Response":"True"}""")
         val snapshots = mutableListOf<List<String>>()
         val result = repository.lookupTitlesProgressively(listOf(first, second, first), "movie") { list -> snapshots.add(list.map { it.imdbID }) }
-        assertEquals(listOf("tt901001", "tt901002"), result.map { it.imdbID })
+        assertEquals(listOf("tt0901001", "tt0901002"), result.map { it.imdbID })
         assertEquals(listOf(result.map { it.imdbID }), snapshots)
         assertEquals(0, api.calls)
     }
