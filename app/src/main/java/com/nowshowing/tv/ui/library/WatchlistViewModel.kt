@@ -24,7 +24,8 @@ class WatchlistViewModel(application: Application) : AndroidViewModel(applicatio
     private var loadJob: kotlinx.coroutines.Job? = null
 
     fun loadWatchlist() {
-        if (loadJob?.isActive == true) return
+        // A refresh after a removal must supersede an older in-flight snapshot.
+        loadJob?.cancel()
         loadJob = viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = _uiState.value.items.isEmpty())
             val list = repository.getWatchlist()
@@ -39,3 +40,4 @@ class WatchlistViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 }
+

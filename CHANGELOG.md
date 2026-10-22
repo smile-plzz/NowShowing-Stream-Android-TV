@@ -1,5 +1,14 @@
 # 1.6.0-rc.2 — TV search and library refinement
 
+## 1.6.0-rc.4 (16003) — Daily-use reliability
+
+- Retry a failed search page without discarding earlier pages; show loading immediately and clear obsolete filter/error state.
+- Show season loading and an explicit Retry episodes action; normalize episode lists and retain only valid remembered selections.
+- Clear prior player/episode state on title changes and cancel old episode requests.
+- Prevent overlapping watchlist toggles and refresh stale watchlist snapshots after removal.
+- Use IMDb IDs for search/watchlist return focus.
+- Add seven regression tests for request state, pagination recovery, season recovery and player title changes. Candidate TV acceptance is still required.
+
 Editable title input with Android keyboard/IME Search support alongside the D-pad keyboard; scrollable search controls; result counts and visible recovery; local watchlist type filters and recent/title/release-year sorting. Debug builds install separately as NowShowing Preview, with their own storage. Includes all rc.1 performance/diagnostics changes. CI checks both package identities, signatures and release-bundle integrity. See docs/releases/v1.6.0-rc.2.md. Stable signing continuity and real-TV acceptance remain pending.
 
 # 1.6.0-rc.1 (candidate)
@@ -187,3 +196,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 1.6.0-rc.3 (unreleased source)
 
 Mood phrases and six specific choices; local exact-year picker; bounded IMDb-ID seed/cached recommendation candidates; conservative theme-aware More Like This; creator social links. Android verification and TV acceptance pending. Dynamic collection sourcing remains unresolved.
+

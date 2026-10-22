@@ -377,6 +377,20 @@ fun DetailsScreen(
                             }
                         }
 
+                        if (uiState.episodesLoading || uiState.episodeError != null) {
+                            item(key = "episodes_status") {
+                                Column(Modifier.fillMaxWidth().padding(horizontal = 48.dp, vertical = 8.dp)) {
+                                    Text(if (uiState.episodesLoading) "Loading season ${uiState.selectedSeason} episodes..."
+                                        else uiState.episodeError.orEmpty(), color = TextMuted, fontSize = 14.sp)
+                                    if (!uiState.episodesLoading) {
+                                        com.nowshowing.tv.ui.player.TvPlayerActionButton("Retry episodes", null) {
+                                            viewModel.retryEpisodes()
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         // Episodes Row
                         if (uiState.episodes.isNotEmpty()) {
                             item(key = "episodes_row") {
@@ -659,3 +673,4 @@ private fun EpisodeCard(
         )
     }
 }
+

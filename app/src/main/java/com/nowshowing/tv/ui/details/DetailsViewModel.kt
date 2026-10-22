@@ -23,16 +23,19 @@ data class DetailsUiState(
     val totalSeasons: Int = 1,
     val selectedSeason: Int = 1,
     val episodes: List<OmdbEpisode> = emptyList(),
+    val episodesLoading: Boolean = false,
+    val episodeError: String? = null,
     val selectedEpisode: Int = 1,
     val selectedSource: VideoSource = SourceRegistry.SOURCES.first(),
     val recommendations: List<OmdbTitleDetail> = emptyList()
 )
 
-class DetailsViewModel(application: Application) : AndroidViewModel(application) {
+class DetailsViewModel(application: Application, private val repository: MediaRepository) : AndroidViewModel(application) {
+    constructor(application: Application) : this(application, MediaRepository(application))
 
     private var loadJob: Job? = null
     private var seasonJob: Job? = null
-    private val repository = MediaRepository(application)
+    private var watchlistJob: Job? = null
     private val _uiState = MutableStateFlow(DetailsUiState())
     val uiState: StateFlow<DetailsUiState> = _uiState.asStateFlow()
 
@@ -47,22 +50,19 @@ class DetailsViewModel(application: Application) : AndroidViewModel(application)
         }
         loadJob?.cancel()
         seasonJob?.cancel()
-        loadJob = viewModelScope.launch {
-            val prefSource = SourceRegistry.getSourceForTitle(getApplication(), imdbId)
-            val inWatchlist = repository.isInWatchlist(imdbId)
-
-            _uiState.value = DetailsUiState(
+        _uiState.value = DetailsUiState(
                 imdbId = imdbId,
                 type = type,
                 isLoading = true,
-                isInWatchlist = inWatchlist,
-                selectedSource = prefSource
+                selectedSource = SourceRegistry.getSourceForTitle(getApplication(), imdbId)
             )
-
+        loadJob = viewModelScope.launch {
+            val inWatchlist = repository.isInWatchlist(imdbId)
+            _uiState.value = _uiState.value.copy(isInWatchlist = inWatchlist)
             val detail = repository.getDetails(imdbId)
             if (detail != null) {
                 val isSeries = detail.type == "series" || type == "series"
-                val numSeasons = detail.totalSeasons?.toIntOrNull() ?: 1
+                val numSeasons = detail.totalSeasons?.toIntOrNull()?.coerceAtLeast(1) ?: 1
 
                 _uiState.value = _uiState.value.copy(
                     detail = detail,
@@ -70,12 +70,10 @@ class DetailsViewModel(application: Application) : AndroidViewModel(application)
                     totalSeasons = numSeasons
                 )
 
-                _uiState.value = _uiState.value.copy(isLoading = false)
-
                 // If series, load remembered episode when available
                 val lastOpened = repository.getRecentlyOpened().firstOrNull { it.imdbID == imdbId }
                 val savedSeason = lastOpened?.season?.coerceIn(1, numSeasons.coerceAtLeast(1)) ?: 1
-                _uiState.value = _uiState.value.copy(selectedSeason = savedSeason, selectedEpisode = lastOpened?.episode ?: 1)
+                _uiState.value = _uiState.value.copy(selectedSeason = savedSeason, selectedEpisode = lastOpened?.episode?.coerceAtLeast(1) ?: 1, isLoading = false)
                 // If series, load season 1 episodes
                 if (isSeries) {
                     loadSeasonEpisodes(imdbId, savedSeason)
@@ -92,28 +90,44 @@ class DetailsViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun selectSeason(season: Int) {
+        if (_uiState.value.type != "series" || season !in 1.._uiState.value.totalSeasons) return
         _uiState.value = _uiState.value.copy(selectedSeason = season, selectedEpisode = 1, episodes = emptyList())
         loadSeasonEpisodes(_uiState.value.imdbId, season)
     }
 
     fun selectEpisode(episode: Int) {
+        if (episode < 1) return
         _uiState.value = _uiState.value.copy(selectedEpisode = episode)
+    }
+
+    fun retryEpisodes() {
+        com.nowshowing.tv.data.repository.MetadataHealth.retry()
+        loadSeasonEpisodes(_uiState.value.imdbId, _uiState.value.selectedSeason)
     }
 
     private fun loadSeasonEpisodes(imdbId: String, season: Int) {
         seasonJob?.cancel()
+        _uiState.value = _uiState.value.copy(episodesLoading = true, episodeError = null)
         seasonJob = viewModelScope.launch {
             val seasonData = repository.getSeason(imdbId, season)
-            val eps = seasonData?.episodes ?: emptyList()
-            _uiState.value = _uiState.value.copy(episodes = eps)
+            if (_uiState.value.imdbId != imdbId || _uiState.value.selectedSeason != season) return@launch
+            val eps = seasonData?.episodes.orEmpty().filter { (it.episode.toIntOrNull() ?: 0) > 0 }
+                .distinctBy { it.episode.toInt() }.sortedBy { it.episode.toInt() }
+            val selected = _uiState.value.selectedEpisode
+            _uiState.value = _uiState.value.copy(
+                episodes = eps, episodesLoading = false,
+                selectedEpisode = if (eps.isEmpty() || eps.any { it.episode.toInt() == selected }) selected else eps.first().episode.toInt(),
+                episodeError = if (eps.isEmpty()) "Episode list unavailable for season $season. Retry to load it." else null
+            )
         }
     }
 
     fun toggleWatchlist() {
         val detail = _uiState.value.detail ?: return
-        viewModelScope.launch {
+        if (watchlistJob?.isActive == true) return
+        watchlistJob = viewModelScope.launch {
             val isNowInList = repository.toggleWatchlist(detail)
-            _uiState.value = _uiState.value.copy(isInWatchlist = isNowInList)
+            if (_uiState.value.imdbId == detail.imdbID) _uiState.value = _uiState.value.copy(isInWatchlist = isNowInList)
         }
     }
 
@@ -123,3 +137,4 @@ class DetailsViewModel(application: Application) : AndroidViewModel(application)
         SourceRegistry.setSourceForTitle(getApplication(), _uiState.value.imdbId, source)
     }
 }
+

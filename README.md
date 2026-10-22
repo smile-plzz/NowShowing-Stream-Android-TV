@@ -52,7 +52,7 @@ python3 -m unittest discover -s scripts -p 'test_*.py'
 Kotlin, Compose, ViewModels/StateFlow, Retrofit/OkHttp, Coil, SQLiteOpenHelper, WebView and Media3. JVM tests include Robolectric storage/repository/filter recovery tests. CI packages both APKs, checksums, public certificate information and exact build commit. PR builds use development signing and do not publish releases.
 
 ## Documentation
-- [Next development handoff](docs/FINAL-PRODUCT-REFINEMENT-HANDOFF.md) — latest owner feedback and final refinement plan; implementation remains on hold until explicitly authorized.
+- [Next development handoff](docs/FINAL-PRODUCT-REFINEMENT-HANDOFF.md) — owner feedback and the original refinement plan; implementation was subsequently authorized and merged.
 - [Architecture](docs/ARCHITECTURE.md) · [Web playback](docs/WEB_PLAYBACK.md)
 - [Remote controls](docs/REMOTE_NAVIGATION.md) · [Troubleshooting](docs/TROUBLESHOOTING.md)
 - [Known limitations](docs/KNOWN_LIMITATIONS.md) · [Privacy and blocking](docs/PRIVACY_AND_BLOCKING.md)
@@ -66,4 +66,5 @@ The `-debug.apk` download installs as **NowShowing Preview** (`com.nowshowing.tv
 
 ## Refinement in progress
 
-The local refinement source targets **1.6.0-rc.3 / 16002**; it is not a published download. See [implementation status](docs/REFINEMENT_IMPLEMENTATION_STATUS.md) and [candidate notes](docs/RELEASE_NOTES_1.6.0-rc.3.md). The existing published candidate remains the installation baseline until a verified replacement is available.
+The current source targets **1.6.0-rc.4 / 16003**. See [daily-use assessment and candidate checks](docs/DAILY_USE_ASSESSMENT.md). The versioned release and CI pages above are authoritative for downloadable artifacts. See [implementation status](docs/REFINEMENT_IMPLEMENTATION_STATUS.md) and [candidate notes](docs/RELEASE_NOTES_1.6.0-rc.3.md). The existing published candidate remains the installation baseline until a verified replacement is available.
+

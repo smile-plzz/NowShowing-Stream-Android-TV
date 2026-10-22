@@ -209,6 +209,7 @@ fun SearchScreen(
                     ) {
                         items(uiState.results, key = { it.imdbID }) { movie ->
                             TvFocusableCard(
+                                focusKey = "search:${movie.imdbID}",
                                 title = movie.title,
                                 posterUrl = if (movie.poster != "N/A") movie.poster else "",
                                 year = movie.year,
@@ -434,3 +435,4 @@ private fun RecentSearchChip(
         )
     }
 }
+
