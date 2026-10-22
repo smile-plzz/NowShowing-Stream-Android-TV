@@ -23,7 +23,7 @@ class MetadataRepositoryTest {
         context.getSharedPreferences("metadata", 0).edit().clear().commit()
         context.deleteDatabase(NowShowingDatabase.DATABASE_NAME)
         db = NowShowingDatabase(context)
-        repository = MediaRepository(context, api, db)
+        repository = MediaRepository(context, api, db) { emptyMap() }
     }
     @After fun teardown() { db.close(); MetadataHealth.retry() }
     @Test fun quotaFailureSuppressesLaterNetworkCalls() = runBlocking {
@@ -140,3 +140,5 @@ class MetadataRepositoryTest {
         override suspend fun getSeason(apiKey: String, imdbId: String, season: Int): OmdbSeasonResponse = error("unused")
     }
 }
+
+

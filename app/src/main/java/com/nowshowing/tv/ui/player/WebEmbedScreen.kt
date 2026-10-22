@@ -56,6 +56,7 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
     }
     var failure by remember(state.webEmbedUrl) { mutableStateOf<String?>(null) }
     var loading by remember(state.webEmbedUrl) { mutableStateOf(true) }
+    var rendererGone by remember(state.webEmbedUrl) { mutableStateOf(false) }
     var attempt by remember { mutableIntStateOf(0) }
     var host by remember { mutableStateOf<EmbedHost?>(null) }
     val currentOnBack by rememberUpdatedState(onBack)
@@ -79,8 +80,8 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
     DisposableEffect(lifecycle, host) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
-                Lifecycle.Event.ON_PAUSE -> host?.web?.onPause()
-                Lifecycle.Event.ON_RESUME -> host?.web?.onResume()
+                Lifecycle.Event.ON_PAUSE -> host?.pausePlayer()
+                Lifecycle.Event.ON_RESUME -> host?.resumePlayer()
                 else -> Unit
             }
         }
@@ -90,7 +91,7 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
     LaunchedEffect(menu, section, host, state.webEmbedUrl) {
         withFrameNanos { }
         if (menu) {
-            if (section == "controls" && state.type == "series") nextFocus.requestFocus() else menuFocus.requestFocus()
+            if (section == "controls" && state.type == "series") runCatching { nextFocus.requestFocus() } else runCatching { menuFocus.requestFocus() }
         } else host?.focusPlayer()
     }
     BackHandler {
@@ -106,7 +107,7 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
     }
 
     Box(Modifier.fillMaxSize().background(BgDark)) {
-        if (ready && state.webEmbedUrl != null) {
+        if (ready && state.webEmbedUrl != null && !rendererGone) {
             key(state.webEmbedUrl, attempt) {
                 AndroidView(
                     factory = { ctx ->
@@ -186,6 +187,18 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
                                         menu = true
                                     }
                                 }
+                                override fun onRenderProcessGone(v: WebView, detail: RenderProcessGoneDetail): Boolean {
+                                    // The dead WebView cannot be reused. Dispose once, then wait for explicit Retry.
+                                    release(rendererTerminated = true)
+                                    if (host === this@apply) host = null
+                                    rendererGone = true
+                                    loading = false
+                                    failure = "The video renderer stopped. Retry this source or choose another source."
+                                    menu = true
+                                    com.nowshowing.tv.diagnostics.CrashDiagnostics.record(ctx,
+                                        if (detail.didCrash()) "WebView renderer crashed" else "WebView renderer reclaimed by system")
+                                    return true
+                                }
                                 // Default SSL handling cancels certificate errors; never bypass it.
                             }
                             web.loadUrl(rootUrl)
@@ -194,11 +207,7 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
                     },
                     modifier = Modifier.fillMaxSize(),
                     onRelease = { released ->
-                        released.exitFullscreen()
-                        released.web.onPause()
-                        released.web.stopLoading()
-                        released.removeAllViews()
-                        released.web.destroy()
+                        released.release()
                         if (host === released) host = null
                     }
                 )
@@ -206,14 +215,14 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
         }
 
         if (!menu && showHint) {
-            Text("Arrows move pointer · OK clicks · Back opens controls and help", color = TextPrimary,
+            Text("Arrows move pointer � OK clicks � Back opens controls and help", color = TextPrimary,
                 fontSize = 16.sp, modifier = Modifier.align(Alignment.BottomCenter).background(BgDark).padding(16.dp))
         }
         if (loading && !menu) {
             Row(Modifier.align(Alignment.TopEnd).background(BgDark).padding(20.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 CircularProgressIndicator(Modifier.size(24.dp), color = AccentCyan)
-                Text("Opening ${state.currentSource.name} · Back for controls", color = TextPrimary, fontSize = 16.sp)
+                Text("Opening ${state.currentSource.name} � Back for controls", color = TextPrimary, fontSize = 16.sp)
             }
         }
         if (menu) {
@@ -223,11 +232,11 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
             ) {
                 Text(state.title, color = TextPrimary, fontSize = 24.sp, maxLines = 2)
                 if (state.type == "series") {
-                    Text("Season ${state.season} · Episode ${state.episode}", color = TextSecondary, fontSize = 16.sp)
+                    Text("Season ${state.season} � Episode ${state.episode}", color = TextSecondary, fontSize = 16.sp)
                     if (state.episodeTitle.isNotBlank()) Text(state.episodeTitle, color = TextPrimary, fontSize = 16.sp)
                 }
                 Text(state.currentSource.name, color = AccentCyan, fontSize = 14.sp)
-                if (loading) Text("Opening provider page…", color = TextMuted, fontSize = 14.sp)
+                if (loading) Text("Opening provider page.", color = TextMuted, fontSize = 14.sp)
                 TvPlayerActionButton(
                     "Return to video", null, true,
                     Modifier.focusRequester(menuFocus)
@@ -236,7 +245,7 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
                     host?.focusPlayer()
                 }
                 if (section == "controls" && state.type == "series") {
-                    TvPlayerActionButton(if (state.advancingEpisode) "Loading next episode…" else "Next episode", null, true,
+                    TvPlayerActionButton(if (state.advancingEpisode) "Loading next episode." else "Next episode", null, true,
                         Modifier.focusRequester(nextFocus)) { viewModel.playNextEpisode() }
                 }
                 LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -249,7 +258,7 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
                         }
                         if (!seenHelp) {
                             item {
-                                Text("Arrows move the pointer · OK clicks · Hold an arrow to move faster. Back exits fullscreen, then opens these controls.",
+                                Text("Arrows move the pointer � OK clicks � Hold an arrow to move faster. Back exits fullscreen, then opens these controls.",
                                     color = TextSecondary, fontSize = 15.sp)
                                 TvPlayerActionButton("Got it", null) {
                                     seenHelp = true
@@ -265,6 +274,7 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
                         }
                         item { TvPlayerActionButton("Retry this source", null) {
                             failure = null
+                            rendererGone = false
                             loading = true
                             attempt++
                         } }
@@ -278,7 +288,7 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
                                 item { Text("A checkmark shows your chosen source. Availability depends on the provider.", color = TextSecondary, fontSize = 15.sp) }
                                 items(SourceRegistry.UNSUPPORTED_WEB_SOURCES, key = { it.id }) { source ->
                                     TvPlayerActionButton(
-                                        (if (source.id == state.currentSource.id) "✓ " else "") + source.name,
+                                        (if (source.id == state.currentSource.id) "� " else "") + source.name,
                                         null, isAccent = source.id == state.currentSource.id
                                     ) { viewModel.selectSource(source) }
                                 }
@@ -295,7 +305,7 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
                                     }
                                 }
                                 if (state.episodesLoading) {
-                                    item { Text("Loading episodes…", color = TextSecondary, fontSize = 15.sp) }
+                                    item { Text("Loading episodes.", color = TextSecondary, fontSize = 15.sp) }
                                 } else if (state.episodeList.isEmpty()) {
                                     item {
                                         Text("Episode details are unavailable. You can retry or use the next episode control.",
@@ -307,7 +317,7 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
                                     val number = episode.episode.toIntOrNull() ?: 1
                                     val current = state.season == state.episodeListSeason && state.episode == number
                                     TvPlayerActionButton(
-                                        (if (current) "✓ " else "") + "Episode $number · ${episode.title}",
+                                        (if (current) "� " else "") + "Episode $number � ${episode.title}",
                                         null, isAccent = current
                                     ) { viewModel.playEpisode(state.episodeListSeason, number) }
                                 }
@@ -316,7 +326,7 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
                             "help" -> {
                                 item { Text("Using your remote", color = TextPrimary, fontSize = 20.sp) }
                                 item { Text(
-                                    "Arrows: move the pointer.\nOK: click the provider’s buttons.\nHold an arrow: move faster.\nBack: leave fullscreen first, open controls next, then return to the title.\nMenu: open app controls.\n\nPlayback, seeking, and subtitles inside the video are controlled by the provider. If a page stays blank, use Retry this source or Change source.",
+                                    "Arrows: move the pointer.\nOK: click the provider's buttons.\nHold an arrow: move faster.\nBack: leave fullscreen first, open controls next, then return to the title.\nMenu: open app controls.\n\nPlayback, seeking, and subtitles inside the video are controlled by the provider. If a page stays blank, use Retry this source or Change source.",
                                     color = TextSecondary, fontSize = 16.sp
                                 ) }
                             }
@@ -340,7 +350,24 @@ internal class EmbedHost(context: Context, private val openMenu: () -> Unit) : F
         isFocusable = true
         isFocusableInTouchMode = true
     }
-    fun focusPlayer() { requestFocus(); web.showPointer() }
+    private var released = false
+    fun release(rendererTerminated: Boolean = false) {
+        if (released) return
+        released = true
+        // Renderer callbacks must not be invoked after termination.
+        fullscreen?.let { removeView(it) }
+        fullscreen = null
+        val callback = fullscreenCallback
+        fullscreenCallback = null
+        if (!rendererTerminated) callback?.onCustomViewHidden()
+        web.onPointerChanged = {}
+        if (!rendererTerminated) { web.onPause(); web.stopLoading() }
+        removeAllViews()
+        web.destroy()
+    }
+    fun pausePlayer() { if (!released) web.onPause() }
+    fun resumePlayer() { if (!released) web.onResume() }
+    fun focusPlayer() { if (!released) { requestFocus(); web.showPointer() } }
     fun showFullscreen(view: View, callback: WebChromeClient.CustomViewCallback) {
         if (fullscreen != null) { callback.onCustomViewHidden(); return }
         fullscreen = view
@@ -361,6 +388,7 @@ internal class EmbedHost(context: Context, private val openMenu: () -> Unit) : F
         if (fullscreen != null) web.drawPointer(canvas, false)
     }
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (released) return false
         if (event.keyCode == KeyEvent.KEYCODE_BACK || event.keyCode == KeyEvent.KEYCODE_MENU) {
             if (event.action == KeyEvent.ACTION_UP) {
                 if (event.keyCode == KeyEvent.KEYCODE_MENU || !exitFullscreen()) openMenu()
@@ -439,3 +467,5 @@ internal class PointerWebView(context: Context) : WebView(context) {
         super.onDetachedFromWindow()
     }
 }
+
+

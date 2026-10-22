@@ -1,0 +1,192 @@
+{
+  "version": 1,
+  "sections": {
+    "featured": [
+      "tt15239678",
+      "tt15398776",
+      "tt0816692",
+      "tt0903747"
+    ],
+    "movies": [
+      "tt1375666",
+      "tt0133093",
+      "tt0816692",
+      "tt0382932",
+      "tt0111161",
+      "tt3783958",
+      "tt1392190",
+      "tt2543164"
+    ],
+    "series": [
+      "tt0903747",
+      "tt4574334",
+      "tt10986410",
+      "tt11280740"
+    ],
+    "action": [
+      "tt1392190",
+      "tt2911666",
+      "tt1745960"
+    ],
+    "scifi": [
+      "tt0816692",
+      "tt0133093",
+      "tt2543164"
+    ],
+    "drama": [
+      "tt0111161",
+      "tt2582802",
+      "tt7653254"
+    ],
+    "mood_Happy": [
+      "tt0382932",
+      "tt2277860",
+      "tt0126029"
+    ],
+    "mood_Sad": [
+      "tt0095327",
+      "tt0120338",
+      "tt0338013"
+    ],
+    "mood_Excited": [
+      "tt1392190",
+      "tt1745960",
+      "tt2911666"
+    ],
+    "mood_Relaxed": [
+      "tt0096283",
+      "tt2883512",
+      "tt2277860"
+    ],
+    "mood_Angry": [
+      "tt2911666",
+      "tt0172495"
+    ],
+    "mood_Scared": [
+      "tt1457767",
+      "tt0081505",
+      "tt6644200"
+    ],
+    "mood_Inspired": [
+      "tt0454921",
+      "tt1210166",
+      "tt0111161"
+    ],
+    "mood_Nostalgic": [
+      "tt0088763",
+      "tt0083866",
+      "tt0096283"
+    ],
+    "mood_Curious": [
+      "tt2543164",
+      "tt0209144"
+    ],
+    "mood_Romantic": [
+      "tt0112471",
+      "tt3783958",
+      "tt0120338"
+    ],
+    "mood_Adventurous": [
+      "tt0120737",
+      "tt0082971"
+    ],
+    "mood_Thoughtful": [
+      "tt0470752",
+      "tt1798709"
+    ],
+    "mood_Anxious": [
+      "tt0096283",
+      "tt2277860",
+      "tt0382932"
+    ],
+    "mood_Hopeful": [
+      "tt0454921",
+      "tt0111161"
+    ],
+    "mood_Playful": [
+      "tt0126029",
+      "tt1490017"
+    ],
+    "mood_Adult": [
+      "tt7653254",
+      "tt0110912"
+    ],
+    "mood_Wired": [
+      "tt1392190",
+      "tt0133093"
+    ],
+    "mood_Vengeful": [
+      "tt2911666",
+      "tt0266697"
+    ],
+    "mood_Goofy": [
+      "tt0109686",
+      "tt0126029"
+    ],
+    "mood_Eerie": [
+      "tt0081505",
+      "tt4263482"
+    ],
+    "mood_Empowered": [
+      "tt4846340",
+      "tt0454921"
+    ],
+    "mood_Jaded": [
+      "tt0114369",
+      "tt0091042"
+    ],
+    "mood_Awestruck": [
+      "tt0816692",
+      "tt0499549"
+    ],
+    "mood_Challenged": [
+      "tt0209144",
+      "tt1375666"
+    ],
+    "mood_Giddy": [
+      "tt1490017",
+      "tt0126029"
+    ],
+    "mood_Focused": [
+      "tt2582802",
+      "tt1285016"
+    ],
+    "mood_Escapist": [
+      "tt0120737",
+      "tt0499549"
+    ],
+    "mood_Intrigued": [
+      "tt8946378",
+      "tt0209144"
+    ],
+    "mood_Tense": [
+      "tt1454468",
+      "tt0114369"
+    ],
+    "mood_heartbreak": [
+      "tt0338013",
+      "tt1120985"
+    ],
+    "mood_complicated_love": [
+      "tt7653254",
+      "tt0112471"
+    ],
+    "mood_friendship": [
+      "tt0106677",
+      "tt0111161"
+    ],
+    "mood_paranoia": [
+      "tt0119116",
+      "tt0120382"
+    ],
+    "mood_redemption": [
+      "tt0111161",
+      "tt0120689"
+    ],
+    "mood_underdog": [
+      "tt0075148",
+      "tt1210166"
+    ]
+  }
+}
+

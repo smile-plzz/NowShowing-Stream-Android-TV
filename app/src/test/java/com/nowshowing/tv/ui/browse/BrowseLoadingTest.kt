@@ -32,7 +32,7 @@ class BrowseLoadingTest {
         val context = RuntimeEnvironment.getApplication()
         context.getSharedPreferences("metadata", 0).edit().clear().commit()
         db = NowShowingDatabase(context)
-        repository = MediaRepository(context, api, db)
+        repository = MediaRepository(context, api, db) { emptyMap() }
         repository.clearMetadataCache()
         vm = BrowseViewModel(context, repository)
     }
@@ -81,3 +81,5 @@ class BrowseLoadingTest {
         override suspend fun getSeason(apiKey: String, imdbId: String, season: Int): OmdbSeasonResponse = error("unused")
     }
 }
+
+

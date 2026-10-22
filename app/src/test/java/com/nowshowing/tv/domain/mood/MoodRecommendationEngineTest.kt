@@ -7,6 +7,12 @@ import org.junit.Test
 
 class MoodRecommendationEngineTest {
 
+    @Test fun everyMoodHasCuratedCandidatesAndTextUsesWholeWords() {
+        assertEquals(MoodRecommendationEngine.MOOD_MAP.keys, MoodSeeds.ids.keys)
+        MoodSeeds.ids.values.forEach { ids -> assertTrue(ids.isNotEmpty()) }
+        assertEquals("Relaxed", MoodRecommendationEngine.guessMoodFromText("I am tired of madness"))
+    }
+
     @Test
     fun stableKeysAndDisplayPhrasesAreUnique() {
         val moods = MoodRecommendationEngine.MOODS
@@ -36,3 +42,5 @@ class MoodRecommendationEngineTest {
         assertEquals("Happy", MoodRecommendationEngine.guessMoodFromText("Some completely random statement"))
     }
 }
+
+

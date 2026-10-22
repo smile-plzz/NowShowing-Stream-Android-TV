@@ -41,7 +41,7 @@ class MoodViewModel @JvmOverloads constructor(
             com.nowshowing.tv.domain.recommendation.LocalRelevance.startYear(it.year) == state.selectedYear }
         _uiState.value = state.copy(recommendations = results,
             statusMessage = if (results.isEmpty()) "No matches in the current collection. Try All Years or another mood."
-                else "${state.selectedMood?.label.orEmpty()} · Local collection matches")
+                else "${state.selectedMood?.label.orEmpty()} � Curated and metadata matches")
     }
     fun retry() { MetadataHealth.retry(); _uiState.value.selectedMood?.let { snapshots.remove(it.name); selectMood(it) } }
 
@@ -60,9 +60,10 @@ class MoodViewModel @JvmOverloads constructor(
                 recommendations = if (sameMood) _uiState.value.recommendations else emptyList(),
                 selectedMood = mood,
                 isLoading = true,
-                statusMessage = "Finding collection matches for ${mood.label}…"
+                statusMessage = "Finding collection matches for ${mood.label}."
             )
 
+            try {
             val results = MoodRecommendationEngine.fetchMoodRecommendations(
                 repository = repository,
                 mood = mood.name
@@ -72,6 +73,11 @@ class MoodViewModel @JvmOverloads constructor(
             snapshots[mood.name] = results
             allResults = results
             publishResults(_uiState.value.copy(isLoading = false))
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled
+            } catch (_: Exception) {
+                if (identity == requestId) _uiState.value = _uiState.value.copy(isLoading = false,
+                    statusMessage = "Could not load mood matches. Please retry.")
+            }
         }
     }
 
@@ -87,3 +93,5 @@ class MoodViewModel @JvmOverloads constructor(
         selectMood(found)
     }
 }
+
+

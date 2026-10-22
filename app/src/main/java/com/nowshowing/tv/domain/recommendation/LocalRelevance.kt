@@ -8,17 +8,17 @@ object LocalRelevance {
     private fun normalize(value: String) = value.lowercase().replace(Regex("[^a-z0-9]+"), " ").trim()
     private fun genres(detail: OmdbTitleDetail) = detail.genre.orEmpty().split(",")
         .map(::normalize).filter { it.isNotBlank() && it != "n a" }.toSet()
-    fun startYear(value: String): Int? = Regex("^\\d{4}(?:[–—-](?:\\d{4})?)?$").matchEntire(value.trim())
+    fun startYear(value: String): Int? = Regex("^\\d{4}(?:[---](?:\\d{4})?)?$").matchEntire(value.trim())
         ?.value?.take(4)?.toIntOrNull()
     private fun contains(text: String, phrase: String) = " ${normalize(text)} ".contains(" ${normalize(phrase)} ")
-    fun moodScore(detail: OmdbTitleDetail, rule: MoodRule): Int {
+    fun moodScore(detail: OmdbTitleDetail, rule: MoodRule, curated: Boolean = false): Int {
         val actualGenres = genres(detail)
         if (actualGenres.any { it in rule.excludedGenres.map(::normalize) }) return 0
         val overlap = actualGenres.intersect(rule.genres.map(::normalize).toSet()).size
         if (overlap == 0) return 0
         val evidence = rule.keywords.count { contains(detail.plot.orEmpty(), it) }
-        if (evidence == 0 && rule.requirePlotEvidence) return 0
-        return evidence * 8 + overlap
+        if (evidence == 0 && rule.requirePlotEvidence && !curated) return 0
+        return (if (curated) 40 else 0) + evidence * 8 + overlap
     }
     private val themes = listOf(
         listOf("revenge", "vengeance", "payback"), listOf("murder", "killer", "detective", "investigation"),
@@ -37,3 +37,5 @@ object LocalRelevance {
         return shared * 10 + overlap * 2 + if (director != null && director == candidate.director) 1 else 0
     }
 }
+
+

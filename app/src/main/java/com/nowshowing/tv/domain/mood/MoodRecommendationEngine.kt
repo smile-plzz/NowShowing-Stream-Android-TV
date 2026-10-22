@@ -7,41 +7,41 @@ import kotlinx.coroutines.withContext
 object MoodRecommendationEngine {
 
     val MOODS = listOf(
-        MoodItem("Happy", "😊", "Need a Laugh", "Light-hearted fun and feel-good stories."),
-        MoodItem("Sad", "😢", "Let Me Cry", "Films that let you feel it all, deeply."),
-        MoodItem("Excited", "🤩", "Bring the Adrenaline", "High-energy films that get your pulse going."),
-        MoodItem("Relaxed", "😌", "Help Me Unwind", "Gentle, easy films for winding down."),
-        MoodItem("Angry", "😤", "Fuel My Rage", "Intense stories that channel the rage."),
-        MoodItem("Scared", "😱", "Scare Me Tonight", "Horror and thrillers for the brave."),
-        MoodItem("Inspired", "✨", "Get Me Motivated", "Films that spark something inside you."),
-        MoodItem("Nostalgic", "🕰️", "Take Me Back", "Classic stories from eras gone by."),
-        MoodItem("Curious", "🔍", "Feed My Curiosity", "Mysteries, puzzles and strange worlds."),
-        MoodItem("Romantic", "💕", "Make Me Swoon", "Stories of connection, longing, and love."),
-        MoodItem("Adventurous", "🌍", "Take Me Somewhere", "Epic journeys and far-flung worlds."),
-        MoodItem("Thoughtful", "🤔", "Question My World", "Films that leave you pondering life."),
-        MoodItem("Anxious", "😰", "Calm My Nerves", "Comforting, gentle picks to ease the feeling."),
-        MoodItem("Hopeful", "🌅", "Give Me Hope", "Stories that restore your faith in everything."),
-        MoodItem("Playful", "🎮", "Keep It Playful", "Fun, silly, and wonderfully light."),
-        MoodItem("Adult", "🎭", "Keep It Grown", "Complex, grown-up cinema for serious viewing."),
-        MoodItem("Wired", "⚡", "Keep Me Wired", "Fast-paced, kinetic, caffeine cinema."),
-        MoodItem("Vengeful", "🗡️", "Make Them Pay", "Cold, calculated payback stories."),
-        MoodItem("Goofy", "🤪", "Make It Ridiculous", "Absurd comedy that makes no apologies."),
-        MoodItem("Eerie", "👁️", "Something Feels Wrong", "Slow-burn dread and atmospheric horror."),
-        MoodItem("Empowered", "💪", "Make Me Fearless", "Characters who rise, overcome, and win."),
-        MoodItem("Jaded", "😒", "Keep It Cynical", "Cynical, sharp, and darkly funny films."),
-        MoodItem("Awestruck", "🤯", "Blow My Mind", "Visuals and ideas that defy imagination."),
-        MoodItem("Challenged", "🧩", "Make Me Think", "Films that demand your full attention."),
-        MoodItem("Giddy", "🥳", "Lift My Spirits", "Pure celebration and contagious happiness."),
-        MoodItem("Focused", "🎯", "Keep Me Hooked", "Tight, precise, no-fluff storytelling."),
-        MoodItem("Escapist", "🚀", "Get Me Away", "Worlds so good you forget this one."),
-        MoodItem("Intrigued", "🕵️", "Keep Me Guessing", "Slow reveals and layered mysteries."),
-        MoodItem("Tense", "😬", "Keep Me Tense", "Nerve-shredding, palm-sweating cinema."),
-        MoodItem("heartbreak", "💔", "Break My Heart", "Relationship loss and heartbreak."),
-        MoodItem("complicated_love", "💞", "Love Gets Complicated", "Messy relationships and conflicting commitments."),
-        MoodItem("friendship", "🤝", "Friendship Hits Different", "Friendship, belonging and found family."),
-        MoodItem("paranoia", "👀", "Trust Absolutely Nobody", "Conspiracies, distrust and hidden motives."),
-        MoodItem("redemption", "🌤", "One Last Chance", "Rebuilding a life and earning a second chance."),
-        MoodItem("underdog", "🏆", "Root For Underdogs", "Outsiders overcoming the odds.")
+        MoodItem("Happy", "??", "Need a Laugh", "Light-hearted fun and feel-good stories."),
+        MoodItem("Sad", "??", "Let Me Cry", "Films that let you feel it all, deeply."),
+        MoodItem("Excited", "??", "Bring the Adrenaline", "High-energy films that get your pulse going."),
+        MoodItem("Relaxed", "??", "Help Me Unwind", "Gentle, easy films for winding down."),
+        MoodItem("Angry", "??", "Fuel My Rage", "Intense stories that channel the rage."),
+        MoodItem("Scared", "??", "Scare Me Tonight", "Horror and thrillers for the brave."),
+        MoodItem("Inspired", "?", "Get Me Motivated", "Films that spark something inside you."),
+        MoodItem("Nostalgic", "???", "Take Me Back", "Classic stories from eras gone by."),
+        MoodItem("Curious", "??", "Feed My Curiosity", "Mysteries, puzzles and strange worlds."),
+        MoodItem("Romantic", "??", "Make Me Swoon", "Stories of connection, longing, and love."),
+        MoodItem("Adventurous", "??", "Take Me Somewhere", "Epic journeys and far-flung worlds."),
+        MoodItem("Thoughtful", "??", "Question My World", "Films that leave you pondering life."),
+        MoodItem("Anxious", "??", "Calm My Nerves", "Comforting, gentle picks to ease the feeling."),
+        MoodItem("Hopeful", "??", "Give Me Hope", "Stories that restore your faith in everything."),
+        MoodItem("Playful", "??", "Keep It Playful", "Fun, silly, and wonderfully light."),
+        MoodItem("Adult", "??", "Keep It Grown", "Complex, grown-up cinema for serious viewing."),
+        MoodItem("Wired", "?", "Keep Me Wired", "Fast-paced, kinetic, caffeine cinema."),
+        MoodItem("Vengeful", "???", "Make Them Pay", "Cold, calculated payback stories."),
+        MoodItem("Goofy", "??", "Make It Ridiculous", "Absurd comedy that makes no apologies."),
+        MoodItem("Eerie", "???", "Something Feels Wrong", "Slow-burn dread and atmospheric horror."),
+        MoodItem("Empowered", "??", "Make Me Fearless", "Characters who rise, overcome, and win."),
+        MoodItem("Jaded", "??", "Keep It Cynical", "Cynical, sharp, and darkly funny films."),
+        MoodItem("Awestruck", "??", "Blow My Mind", "Visuals and ideas that defy imagination."),
+        MoodItem("Challenged", "??", "Make Me Think", "Films that demand your full attention."),
+        MoodItem("Giddy", "??", "Lift My Spirits", "Pure celebration and contagious happiness."),
+        MoodItem("Focused", "??", "Keep Me Hooked", "Tight, precise, no-fluff storytelling."),
+        MoodItem("Escapist", "??", "Get Me Away", "Worlds so good you forget this one."),
+        MoodItem("Intrigued", "???", "Keep Me Guessing", "Slow reveals and layered mysteries."),
+        MoodItem("Tense", "??", "Keep Me Tense", "Nerve-shredding, palm-sweating cinema."),
+        MoodItem("heartbreak", "??", "Break My Heart", "Relationship loss and heartbreak."),
+        MoodItem("complicated_love", "??", "Love Gets Complicated", "Messy relationships and conflicting commitments."),
+        MoodItem("friendship", "??", "Friendship Hits Different", "Friendship, belonging and found family."),
+        MoodItem("paranoia", "??", "Trust Absolutely Nobody", "Conspiracies, distrust and hidden motives."),
+        MoodItem("redemption", "??", "One Last Chance", "Rebuilding a life and earning a second chance."),
+        MoodItem("underdog", "??", "Root For Underdogs", "Outsiders overcoming the odds.")
     )
 
     val MOOD_MAP = mapOf(
@@ -60,7 +60,7 @@ object MoodRecommendationEngine {
         "Inspired" to MoodRule(listOf("Biography", "Drama", "Musical", "Fantasy", "Sci-Fi", "Documentary"), listOf("motivational", "uplifting", "triumphant", "visionary", "aspirational")),
         "Nostalgic" to MoodRule(listOf("Romance", "Family", "History"), listOf("retro", "vintage", "memory lane", "throwback", "sentimental", "coming of age", "classic")),
         "Curious" to MoodRule(listOf("Mystery", "Documentary", "Sci-Fi", "Thriller"), listOf("investigative", "enigmatic", "mind bending", "clue", "sleuth", "psychological")),
-        "Romantic" to MoodRule(listOf("Romance", "Comedy", "Musical", "Drama"), listOf("love story", "meet cute", "tender", "passionate", "swoon", "period romance"), requirePlotEvidence = false),
+        "Romantic" to MoodRule(listOf("Romance"), listOf("love story", "meet cute", "tender", "passionate", "swoon", "period romance"), requirePlotEvidence = false),
         "Adventurous" to MoodRule(listOf("Adventure", "Action", "Fantasy", "Sci-Fi"), listOf("journey", "quest", "uncharted", "bold", "sweeping", "epic"), requirePlotEvidence = false),
         "Thoughtful" to MoodRule(listOf("Drama", "Biography", "History"), listOf("introspective", "contemplative", "layered", "intellectual", "philosophical", "indie", "psychological")),
         "Anxious" to MoodRule(listOf("Comedy", "Animation", "Documentary", "Family"), listOf("comfort", "gentle", "uplifting", "wholesome", "calming", "feel good", "nature"), requirePlotEvidence = false, excludedGenres = setOf("Horror", "Thriller", "Crime", "War")),
@@ -99,7 +99,7 @@ object MoodRecommendationEngine {
         val lower = text.lowercase()
         MOODS.firstOrNull { it.label.equals(text.trim(), ignoreCase = true) || it.name.equals(text.trim(), ignoreCase = true) }?.let { return it.name }
         for ((mood, keywords) in KEYWORD_MOOD_MAP) {
-            if (keywords.any { lower.contains(it) }) return mood
+            if (keywords.any { Regex("(?<![a-z])" + Regex.escape(it) + "(?![a-z])").containsMatchIn(lower) }) return mood
         }
         return "Happy"
     }
@@ -110,10 +110,11 @@ object MoodRecommendationEngine {
         type: String? = null
     ): List<RankedMovie> {
         val rule = MOOD_MAP[mood] ?: return emptyList()
+        val curated = repository.curatedMoodIds(mood).toSet()
         val candidates = repository.moodCandidates(mood)
         return withContext(Dispatchers.Default) { candidates.filter { type == null || it.type == type }
             .mapNotNull { detail ->
-                val score = com.nowshowing.tv.domain.recommendation.LocalRelevance.moodScore(detail, rule)
+                val score = com.nowshowing.tv.domain.recommendation.LocalRelevance.moodScore(detail, rule, detail.imdbID in curated)
                 if (score == 0) null else RankedMovie(detail.imdbID, detail.title,
                     detail.poster?.takeUnless { it == "N/A" }.orEmpty(), detail.year,
                     detail.type ?: "movie", score, detail.imdbRating?.toFloatOrNull() ?: 0f)
@@ -122,3 +123,5 @@ object MoodRecommendationEngine {
         }
     }
 }
+
+

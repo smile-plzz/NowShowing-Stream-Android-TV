@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
 
 enum class SortMode(val label: String) {
-    FEATURED("Featured"), TITLE("Title A–Z"), NEWEST("Start year ↓"), TOP_RATED("Rating ↓")
+    FEATURED("Featured"), TITLE("Title A-Z"), NEWEST("Start year "), TOP_RATED("Rating ")
 }
 
 /** Series ranges use their first year; unknown dates sort last. */
@@ -49,7 +49,8 @@ class BrowseViewModel @JvmOverloads constructor(
         _uiState.value = _uiState.value.copy(kind = kind, title = if (kind == "tv") "Curated TV Shows" else "Curated Movies",
             isLoading = true, items = sortTitles(rawItems, _uiState.value.sortMode), message = null)
         browseJob = viewModelScope.launch {
-            val titles = if (kind == "tv") MediaRepository.POPULAR_TV else MediaRepository.POPULAR_MOVIES
+            try {
+            val titles = if (kind == "tv") repository.catalogSeeds("series", MediaRepository.POPULAR_TV) else repository.catalogSeeds("movies", MediaRepository.POPULAR_MOVIES)
             val type = if (kind == "tv") "series" else "movie"
             val retained = rawItems
             val result = repository.lookupTitlesProgressively(titles, type) { partial ->
@@ -59,6 +60,11 @@ class BrowseViewModel @JvmOverloads constructor(
             if (result.isNotEmpty()) rawItems = result + retained.filterNot { old -> result.any { it.imdbID == old.imdbID } }
             _uiState.value = _uiState.value.copy(isLoading = false, message = MetadataHealth.failure.value?.message)
             applySort()
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled
+            } catch (e: Exception) {
+                com.nowshowing.tv.diagnostics.CrashDiagnostics.record(getApplication(), "Browse loading failed", e)
+                _uiState.value = _uiState.value.copy(isLoading = false, message = "Could not load titles. Please retry.")
+            }
         }
     }
     fun setSortMode(mode: SortMode) { _uiState.value = _uiState.value.copy(sortMode = mode); applySort() }
@@ -73,3 +79,5 @@ class BrowseViewModel @JvmOverloads constructor(
             genres = rawItems.flatMap { genres(it) }.distinct().sorted(), years = rawItems.map { startYear(it.year) }.filter { it > 0 }.distinct().sortedDescending())
     }
 }
+
+
