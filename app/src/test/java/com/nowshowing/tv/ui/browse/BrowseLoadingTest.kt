@@ -74,7 +74,7 @@ class BrowseLoadingTest {
             started.complete(Unit)
             if (block) gate.await()
             if (failAfterTwo && call > 2) throw MetadataUnavailable(MetadataFailure.QUOTA)
-            return Gson().fromJson("""{"Title":"$title","Year":"2024","imdbID":"tt${title.hashCode().toLong() and 0xffffffffL}","Type":"$type","Response":"True"}""", OmdbTitleDetail::class.java)
+            return Gson().fromJson("""{"Title":"$title","Year":"2024","imdbID":"tt${(title.hashCode().toLong() and 0xffffffffL).toString().padStart(10, '0')}","Type":"$type","Response":"True"}""", OmdbTitleDetail::class.java)
         }
         override suspend fun searchTitles(apiKey: String, query: String, page: Int, type: String?, year: Int?): OmdbSearchResponse = error("unused")
         override suspend fun getDetails(apiKey: String, imdbId: String, plot: String): OmdbTitleDetail = error("unused")
