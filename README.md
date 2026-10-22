@@ -2,11 +2,11 @@
 
 A standalone movie and series discovery app for Android TV / Google TV, by Ismail Hossain.
 
-**Release candidate: 1.6.0-rc.4 � Android version code 16003**
+**Release candidate: 1.6.0-rc.5 · Android version code 16004**
 
-Version 1.6.0-rc.4 adds daily-use recovery fixes. Download availability and successful build status are listed on the release and Actions pages below. Stable upgrade acceptance remains pending. See [App health and TV measurements](docs/APP_HEALTH.md).
+Version 1.6.0-rc.5 adds renderer recovery, curated mood recommendations and a cloud JSON catalog. Download availability and successful build status are listed on the release and Actions pages below. Stable upgrade acceptance remains pending. See [App health and TV measurements](docs/APP_HEALTH.md).
 
-[Published APK releases](https://github.com/smile-plzz/NowShowing-Stream-Android-TV/releases) � [Build runs and candidate artifacts](https://github.com/smile-plzz/NowShowing-Stream-Android-TV/actions/workflows/build-apk.yml) � [Installation](docs/INSTALLATION.md)
+[Published APK releases](https://github.com/smile-plzz/NowShowing-Stream-Android-TV/releases) · [Build runs and candidate artifacts](https://github.com/smile-plzz/NowShowing-Stream-Android-TV/actions/workflows/build-apk.yml) · [Installation](docs/INSTALLATION.md)
 
 Download the APK from the versioned GitHub Release. Releases include both APK variants, checksums, public certificate details and exact build information. Development-signed downloads are explicitly marked as prereleases; they are usable sideload builds, not a claim of permanent signing.
 
@@ -52,12 +52,12 @@ python3 -m unittest discover -s scripts -p 'test_*.py'
 Kotlin, Compose, ViewModels/StateFlow, Retrofit/OkHttp, Coil, SQLiteOpenHelper, WebView and Media3. JVM tests include Robolectric storage/repository/filter recovery tests. CI packages both APKs, checksums, public certificate information and exact build commit. PR builds use development signing and do not publish releases.
 
 ## Documentation
-- [Next development handoff](docs/FINAL-PRODUCT-REFINEMENT-HANDOFF.md) - owner feedback and the original refinement plan; implementation was subsequently authorized and merged.
-- [Architecture](docs/ARCHITECTURE.md) � [Web playback](docs/WEB_PLAYBACK.md)
-- [Remote controls](docs/REMOTE_NAVIGATION.md) � [Troubleshooting](docs/TROUBLESHOOTING.md)
-- [Known limitations](docs/KNOWN_LIMITATIONS.md) � [Privacy and blocking](docs/PRIVACY_AND_BLOCKING.md)
-- [Candidate release notes](docs/releases/v1.6.0-rc.4.md) � [Signing](docs/RELEASE_SIGNING.md)
-- [Release checklist](docs/RELEASE_CHECKLIST.md) � [Real-TV acceptance](docs/TV_ACCEPTANCE.md)
+- [Next development handoff](docs/FINAL-PRODUCT-REFINEMENT-HANDOFF.md) — owner feedback and the original refinement plan; implementation was subsequently authorized and merged.
+- [Architecture](docs/ARCHITECTURE.md) · [Web playback](docs/WEB_PLAYBACK.md)
+- [Remote controls](docs/REMOTE_NAVIGATION.md) · [Troubleshooting](docs/TROUBLESHOOTING.md)
+- [Known limitations](docs/KNOWN_LIMITATIONS.md) · [Privacy and blocking](docs/PRIVACY_AND_BLOCKING.md)
+- [Candidate release notes](docs/releases/v1.6.0-rc.5.md) · [Signing](docs/RELEASE_SIGNING.md)
+- [Release checklist](docs/RELEASE_CHECKLIST.md) · [Real-TV acceptance](docs/TV_ACCEPTANCE.md)
 
 Historical design documents are retained for context and are not the current implementation specification.
 
@@ -66,11 +66,10 @@ The `-debug.apk` download installs as **NowShowing Preview** (`com.nowshowing.tv
 
 ## Refinement and reliability
 
-The current source targets **1.6.0-rc.4 / 16003**. See [daily-use assessment and candidate checks](docs/DAILY_USE_ASSESSMENT.md). The versioned release and CI pages above are authoritative for downloadable artifacts. See [implementation status](docs/REFINEMENT_IMPLEMENTATION_STATUS.md) and [candidate notes](docs/RELEASE_NOTES_1.6.0-rc.3.md). Use only artifacts from successful builds; physical-TV acceptance remains pending.
+The current source targets **1.6.0-rc.5 / 16004**. See [daily-use assessment and candidate checks](docs/DAILY_USE_ASSESSMENT.md). The versioned release and CI pages above are authoritative for downloadable artifacts. See [implementation status](docs/REFINEMENT_IMPLEMENTATION_STATUS.md) and [candidate notes](docs/RELEASE_NOTES_1.6.0-rc.3.md). Use only artifacts from successful builds; physical-TV acceptance remains pending.
 
 
 
 ## Cloud catalog and crash recovery candidate
 
 See [cloud catalog editing](docs/CLOUD_CATALOG.md) and [crash audit](docs/CRASH_AUDIT.md). The candidate adds remote IMDb-ID collections, curated mood evidence, renderer recovery and local crash diagnostics. Physical-TV crash confirmation remains pending.
-

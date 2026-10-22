@@ -7,7 +7,7 @@ object CrashDiagnostics {
         runCatching {
             val frames = error?.stackTrace.orEmpty().filter { it.className.startsWith("com.nowshowing.tv.") }
                 .take(8).joinToString("\n") { "${it.className}.${it.methodName}:${it.lineNumber}" }
-            val text = "${System.currentTimeMillis()} � $category\n${error?.javaClass?.simpleName.orEmpty()}\n$frames"
+            val text = "${System.currentTimeMillis()} · $category\n${error?.javaClass?.simpleName.orEmpty()}\n$frames"
             context.getSharedPreferences("crash_diagnostics", 0).edit().putString("last", text.take(2000)).commit()
         }
     }
@@ -21,4 +21,3 @@ object CrashDiagnostics {
         }
     }
 }
-

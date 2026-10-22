@@ -39,7 +39,7 @@ class MediaRepository(
     suspend fun catalogSeeds(section: String, fallback: List<String>): List<String> =
         catalog(context)[section] ?: fallback
     suspend fun curatedMoodIds(mood: String): List<String> = catalogSeeds("mood_$mood",
-        com.nowshowing.tv.domain.mood.MoodSeeds.ids[mood].orEmpty())
+        com.nowshowing.tv.domain.mood.MoodSeeds.ids[mood].orEmpty()).take(24)
 
 
     companion object {
@@ -241,7 +241,7 @@ class MediaRepository(
                 val detail = memoryCache.get(key) ?: db.getCachedPayload(key)?.let {
                     runCatching { gson.fromJson(it, OmdbTitleDetail::class.java) }.getOrNull()
                 }
-                if (detail != null && detail.isUsable()) resolved[title] = detail
+                if (detail != null && detail.isUsable() && (type == null || type == "all" || detail.type == type)) resolved[title] = detail
             }
         }
         fun snapshot() = seeds.mapNotNull { resolved[it] }.distinctBy { it.imdbID }
@@ -406,5 +406,3 @@ class MediaRepository(
         db.clearSearchHistory()
     }
 }
-
-

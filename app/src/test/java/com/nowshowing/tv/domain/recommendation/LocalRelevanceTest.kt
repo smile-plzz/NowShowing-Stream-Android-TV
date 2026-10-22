@@ -23,8 +23,8 @@ class LocalRelevanceTest {
     }
     @Test fun exactYearHandlesSeriesAndRejectsMalformedValues() {
         assertEquals(2024, LocalRelevance.startYear("2024"))
-        assertEquals(2011, LocalRelevance.startYear("2011-2019"))
-        assertEquals(2022, LocalRelevance.startYear("2022-"))
+        assertEquals(2011, LocalRelevance.startYear("2011–2019"))
+        assertEquals(2022, LocalRelevance.startYear("2022–"))
         listOf("N/A", "", "2024oops", "2024-abc", "24").forEach { assertNull(LocalRelevance.startYear(it)) }
     }
     @Test fun everyMoodHasPositiveEvidenceAndRejectsUnrelatedMetadata() {
@@ -70,5 +70,3 @@ class LocalRelevanceTest {
         assertEquals(0, LocalRelevance.relatedScore(source, good.copy(plot = "A murderous person with detectivework.")))
     }
 }
-
-

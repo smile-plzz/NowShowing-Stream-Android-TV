@@ -41,7 +41,7 @@ class MoodViewModel @JvmOverloads constructor(
             com.nowshowing.tv.domain.recommendation.LocalRelevance.startYear(it.year) == state.selectedYear }
         _uiState.value = state.copy(recommendations = results,
             statusMessage = if (results.isEmpty()) "No matches in the current collection. Try All Years or another mood."
-                else "${state.selectedMood?.label.orEmpty()} � Curated and metadata matches")
+                else "${state.selectedMood?.label.orEmpty()} · Curated and metadata matches")
     }
     fun retry() { MetadataHealth.retry(); _uiState.value.selectedMood?.let { snapshots.remove(it.name); selectMood(it) } }
 
@@ -60,7 +60,7 @@ class MoodViewModel @JvmOverloads constructor(
                 recommendations = if (sameMood) _uiState.value.recommendations else emptyList(),
                 selectedMood = mood,
                 isLoading = true,
-                statusMessage = "Finding collection matches for ${mood.label}."
+                statusMessage = "Finding collection matches for ${mood.label}…"
             )
 
             try {
@@ -93,5 +93,3 @@ class MoodViewModel @JvmOverloads constructor(
         selectMood(found)
     }
 }
-
-

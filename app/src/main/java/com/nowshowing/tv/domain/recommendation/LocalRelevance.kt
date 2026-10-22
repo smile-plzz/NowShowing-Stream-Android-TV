@@ -8,7 +8,7 @@ object LocalRelevance {
     private fun normalize(value: String) = value.lowercase().replace(Regex("[^a-z0-9]+"), " ").trim()
     private fun genres(detail: OmdbTitleDetail) = detail.genre.orEmpty().split(",")
         .map(::normalize).filter { it.isNotBlank() && it != "n a" }.toSet()
-    fun startYear(value: String): Int? = Regex("^\\d{4}(?:[---](?:\\d{4})?)?$").matchEntire(value.trim())
+    fun startYear(value: String): Int? = Regex("^\\d{4}(?:[–—-](?:\\d{4})?)?$").matchEntire(value.trim())
         ?.value?.take(4)?.toIntOrNull()
     private fun contains(text: String, phrase: String) = " ${normalize(text)} ".contains(" ${normalize(phrase)} ")
     fun moodScore(detail: OmdbTitleDetail, rule: MoodRule, curated: Boolean = false): Int {
@@ -37,5 +37,3 @@ object LocalRelevance {
         return shared * 10 + overlap * 2 + if (director != null && director == candidate.director) 1 else 0
     }
 }
-
-

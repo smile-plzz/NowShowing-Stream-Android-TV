@@ -5,4 +5,3 @@ package com.nowshowing.tv.data.model
 fun OmdbTitleDetail.isUsable(): Boolean = response == "True" &&
     imdbID != null && imdbID.matches(Regex("tt[0-9]{7,10}")) &&
     title != null && title.isNotBlank() && year != null && type in setOf("movie", "series", "episode")
-

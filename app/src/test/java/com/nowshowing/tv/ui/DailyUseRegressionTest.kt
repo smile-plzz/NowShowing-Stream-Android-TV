@@ -176,5 +176,3 @@ class DailyUseRegressionTest {
         override suspend fun getDetailsByTitle(apiKey: String, title: String, type: String?, plot: String): OmdbTitleDetail = error("unused")
     }
 }
-
-

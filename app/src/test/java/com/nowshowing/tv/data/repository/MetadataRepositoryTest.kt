@@ -140,5 +140,3 @@ class MetadataRepositoryTest {
         override suspend fun getSeason(apiKey: String, imdbId: String, season: Int): OmdbSeasonResponse = error("unused")
     }
 }
-
-

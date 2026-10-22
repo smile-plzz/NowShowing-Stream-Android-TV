@@ -22,4 +22,3 @@ class CloudCatalogTest {
         assertTrue(runCatching { CloudCatalog.parse(" ".repeat(131073)) }.isFailure)
     }
 }
-

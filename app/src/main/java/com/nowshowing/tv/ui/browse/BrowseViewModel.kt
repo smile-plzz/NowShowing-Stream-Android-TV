@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
 
 enum class SortMode(val label: String) {
-    FEATURED("Featured"), TITLE("Title A-Z"), NEWEST("Start year "), TOP_RATED("Rating ")
+    FEATURED("Featured"), TITLE("Title A–Z"), NEWEST("Start year ↓"), TOP_RATED("Rating ↓")
 }
 
 /** Series ranges use their first year; unknown dates sort last. */
@@ -57,7 +57,7 @@ class BrowseViewModel @JvmOverloads constructor(
                 rawItems = partial + retained.filterNot { old -> partial.any { it.imdbID == old.imdbID } }
                 applySort()
             }
-            if (result.isNotEmpty()) rawItems = result + retained.filterNot { old -> result.any { it.imdbID == old.imdbID } }
+            if (result.isNotEmpty()) rawItems = result
             _uiState.value = _uiState.value.copy(isLoading = false, message = MetadataHealth.failure.value?.message)
             applySort()
             } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled
@@ -79,5 +79,3 @@ class BrowseViewModel @JvmOverloads constructor(
             genres = rawItems.flatMap { genres(it) }.distinct().sorted(), years = rawItems.map { startYear(it.year) }.filter { it > 0 }.distinct().sortedDescending())
     }
 }
-
-

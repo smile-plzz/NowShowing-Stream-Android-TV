@@ -45,5 +45,3 @@ class NowShowingApp : Application(), ImageLoaderFactory {
             .build()
     }
 }
-
-

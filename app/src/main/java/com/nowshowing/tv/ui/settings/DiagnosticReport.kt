@@ -39,5 +39,3 @@ fun diagnosticReport(context: Context): String = buildString {
     MetadataHealth.recentErrors().forEach { appendLine(it) }
     appendLine("Provider page loading does not verify video playback. Web completion events are not supported.")
 }
-
-

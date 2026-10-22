@@ -23,7 +23,7 @@ object CloudCatalog {
     fun parse(json: String): Map<String, List<String>> {
         require(json.toByteArray(Charsets.UTF_8).size <= MAX_BYTES)
         val root = JsonParser.parseString(json).asJsonObject
-        require(root.get("version")?.asInt == 1) { "Unsupported catalog version" }
+        require(root.get("version")?.toString() == "1") { "Unsupported catalog version" }
         val sections = root.getAsJsonObject("sections")
         require(sections.size() in 1..64)
         return sections.entrySet().associate { (name, value) ->
@@ -62,4 +62,3 @@ object CloudCatalog {
         }
     }
 }
-

@@ -1,4 +1,4 @@
-# Crash and recommendation audit - 22 October 2026
+# Crash and recommendation audit — 22 October 2026
 
 Baseline: 045cdfd2ef9f6ec5475a1b6af1f3286be5865586.
 
@@ -18,7 +18,6 @@ Most rules required adjective-like plot phrases (e.g. motivational) absent from 
 
 No device crash trace was supplied and no physical TV is attached. The exact observed crash cause remains unconfirmed. A bounded local last-event record now captures exception class/app stack frames or renderer termination category; exception messages/URLs/keys/history are omitted. It appears in Settings diagnostics and photo reports. It does not capture all native crashes, ANRs or OS process kills, and it does not upload anything.
 
-After a recurrence, reopen Settings  App health, freeze a report and photograph the last-event/environment pages. Note which screen/action preceded the close and the installed build.
+After a recurrence, reopen Settings → App health, freeze a report and photograph the last-event/environment pages. Note which screen/action preceded the close and the installed build.
 
 Automated build/test results are reported by the pull request's GitHub Actions run. Real-TV renderer recovery, navigation and memory acceptance remain required.
-

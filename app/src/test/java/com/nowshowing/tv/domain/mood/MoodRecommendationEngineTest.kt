@@ -42,5 +42,3 @@ class MoodRecommendationEngineTest {
         assertEquals("Happy", MoodRecommendationEngine.guessMoodFromText("Some completely random statement"))
     }
 }
-
-

@@ -15,4 +15,3 @@ class MetadataValidationTest {
         assertTrue(Gson().fromJson("""{"Response":"True","imdbID":"tt1375666","Title":"Inception","Year":"2010","Type":"movie"}""", OmdbTitleDetail::class.java).isUsable())
     }
 }
-

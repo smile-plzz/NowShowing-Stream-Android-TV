@@ -75,7 +75,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             coroutineScope {
                 launch {
                     repository.lookupTitlesProgressively(repository.catalogSeeds("featured", MediaRepository.TRENDING_SEED)) { titles ->
-                        _uiState.update { it.copy(trending = titles.ifEmpty { it.trending }, heroTitle = it.heroTitle ?: titles.firstOrNull()) }
+                        _uiState.update { it.copy(trending = titles.ifEmpty { it.trending }, heroTitle = titles.firstOrNull() ?: it.heroTitle) }
                     }
                 }.join()
                 MediaRepository.GENRE_ROWS.take(3).forEach { seed ->
@@ -114,5 +114,3 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 }
-
-
