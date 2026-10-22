@@ -33,7 +33,7 @@ class DailyUseRegressionTest {
     private val api = FakeApi()
     private val models = ViewModelStore()
 
-    @Before fun setup() = runBlocking {
+    @Before fun setup() = runBlocking<Unit> {
         Dispatchers.setMain(Dispatchers.Unconfined)
         MetadataHealth.retry()
         app = RuntimeEnvironment.getApplication()
@@ -55,7 +55,7 @@ class DailyUseRegressionTest {
         Dispatchers.resetMain()
     }
 
-    @Test fun failedLoadMoreRetriesSamePageWithoutDiscardingResults() = runBlocking {
+    @Test fun failedLoadMoreRetriesSamePageWithoutDiscardingResults() = runBlocking<Unit> {
         val vm = track(SearchViewModel(app, repository))
         vm.executeSearch("Test")
         withTimeout(5000) { vm.uiState.first { !it.isLoading && it.results.isNotEmpty() } }
@@ -81,7 +81,7 @@ class DailyUseRegressionTest {
         assertEquals("", vm.uiState.value.resultQuery)
     }
 
-    @Test fun changingTypeWithBlankDraftClearsOldResultsAndErrors() = runBlocking {
+    @Test fun changingTypeWithBlankDraftClearsOldResultsAndErrors() = runBlocking<Unit> {
         val vm = track(SearchViewModel(app, repository))
         vm.executeSearch("Test")
         withTimeout(5000) { vm.uiState.first { !it.isLoading && it.results.isNotEmpty() } }
@@ -92,7 +92,7 @@ class DailyUseRegressionTest {
         assertFalse(vm.uiState.value.isLoading)
     }
 
-    @Test fun backspaceClearsObsoleteSearchError() = runBlocking {
+    @Test fun backspaceClearsObsoleteSearchError() = runBlocking<Unit> {
         val vm = track(SearchViewModel(app, repository))
         api.failPageTwo = true
         vm.executeSearch("Test")
@@ -104,7 +104,7 @@ class DailyUseRegressionTest {
         assertEquals("Tes", vm.uiState.value.query)
     }
 
-    @Test fun episodeFailureOffersRetryAndRestoresList() = runBlocking {
+    @Test fun episodeFailureOffersRetryAndRestoresList() = runBlocking<Unit> {
         val vm = track(DetailsViewModel(app, repository))
         api.failSeason = true
         vm.loadDetails("tt0000010", "series")
@@ -118,7 +118,7 @@ class DailyUseRegressionTest {
         assertEquals(2, state.selectedEpisode)
     }
 
-    @Test fun changingSeasonClearsOldEpisodesAndShowsLoadingImmediately() = runBlocking {
+    @Test fun changingSeasonClearsOldEpisodesAndShowsLoadingImmediately() = runBlocking<Unit> {
         val vm = track(DetailsViewModel(app, repository))
         vm.loadDetails("tt0000010", "series")
         withTimeout(5000) { vm.uiState.first { it.episodes.isNotEmpty() } }
@@ -132,7 +132,7 @@ class DailyUseRegressionTest {
         withTimeout(5000) { vm.uiState.first { !it.episodesLoading } }
     }
 
-    @Test fun switchingFromSeriesToMovieClearsEpisodeStateImmediately() = runBlocking {
+    @Test fun switchingFromSeriesToMovieClearsEpisodeStateImmediately() = runBlocking<Unit> {
         val vm = track(PlayerViewModel(app, repository))
         vm.initialize("tt0000010", 1, 2, "series")
         withTimeout(5000) { vm.uiState.first { it.episodeList.isNotEmpty() } }
