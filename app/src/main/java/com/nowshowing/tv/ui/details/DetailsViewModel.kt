@@ -80,7 +80,8 @@ class DetailsViewModel(application: Application, private val repository: MediaRe
                 }
 
                 // Reuse genre-matched cached candidates; no title-word search or extra network calls.
-                _uiState.value = _uiState.value.copy(recommendations = repository.relatedTitles(detail))
+                val recommendations = repository.relatedTitles(detail)
+                _uiState.value = _uiState.value.copy(recommendations = recommendations)
 
                 _uiState.value = _uiState.value.copy(isLoading = false)
             } else {

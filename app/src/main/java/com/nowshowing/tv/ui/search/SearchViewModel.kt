@@ -40,9 +40,8 @@ class SearchViewModel(application: Application, private val repository: MediaRep
 
     fun loadRecentSearches() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(
-                recentSearches = repository.getRecentSearches()
-            )
+            val recent = repository.getRecentSearches()
+            _uiState.value = _uiState.value.copy(recentSearches = recent)
         }
     }
 
