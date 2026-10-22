@@ -115,6 +115,7 @@ fun WatchlistScreen(
                 ) {
                     items(visibleItems, key = { it.imdbID }) { movie ->
                         TvFocusableCard(
+                            focusKey = "watchlist:${movie.imdbID}",
                             title = movie.title,
                             posterUrl = movie.poster,
                             year = movie.year,
@@ -127,3 +128,4 @@ fun WatchlistScreen(
         }
     }
 }
+

@@ -57,13 +57,13 @@ data class PlayerUiState(
     val episodesLoading: Boolean = false
 )
 
-class PlayerViewModel(application: Application) : AndroidViewModel(application) {
+class PlayerViewModel(application: Application, private val repository: MediaRepository) : AndroidViewModel(application) {
+    constructor(application: Application) : this(application, MediaRepository(application))
 
     private val preferences = PlaybackPreferences(application)
     private var nextJob: Job? = null
     private var session = 0L
     private var completedSession: Long? = null
-    private val repository = MediaRepository(application)
     private val coordinator = PlaybackCoordinator()
     private var historyJob: Job? = null
     private var initializeJob: Job? = null
@@ -74,6 +74,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     fun initialize(imdbId: String, season: Int, episode: Int, type: String) {
         initializeJob?.cancel()
+        episodesJob?.cancel()
         nextJob?.cancel()
         session++
         completedSession = null
@@ -82,8 +83,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                 errorMessage = "This playback route is no longer available. Return to a movie or series.")
             return
         }
-        initializeJob = viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(
+        _uiState.value = PlayerUiState(
+                playbackSession = session,
                 autoplay = preferences.autoplay,
                 imdbId = imdbId,
                 season = season,
@@ -93,7 +94,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                 errorMessage = null,
                 isIncompatibleSource = false
             )
-
+        initializeJob = viewModelScope.launch {
             val detail = repository.getDetails(imdbId)
             val lastOpened = repository.getRecentlyOpened().firstOrNull { it.imdbID == imdbId }
             val titleName = detail?.title ?: lastOpened?.title ?: "NowShowing"
@@ -247,6 +248,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             val metadata = repository.getSeason(id, season)
             val episodes = metadata?.episodes.orEmpty()
             val s = _uiState.value
+            if (s.imdbId != id || s.episodeListSeason != season || s.type != "series") return@launch
             _uiState.value = s.copy(
                 episodeList = episodes, episodesLoading = false,
                 totalSeasons = metadata?.totalSeasons?.toIntOrNull()?.coerceAtLeast(s.season) ?: s.totalSeasons,
@@ -397,3 +399,4 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         _uiState.value = _uiState.value.copy(showSeriesComplete = false)
     }
 }
+

@@ -25,11 +25,12 @@ data class SearchUiState(
     val errorMessage: String? = null
 )
 
-class SearchViewModel(application: Application) : AndroidViewModel(application) {
+class SearchViewModel(application: Application, private val repository: MediaRepository) : AndroidViewModel(application) {
+    constructor(application: Application) : this(application, MediaRepository(application))
 
     private var searchJob: Job? = null
+    private var failedPage: Int? = null
     private var resultIdentity: Triple<String, String, Int?>? = null
-    private val repository = MediaRepository(application)
     private val _uiState = MutableStateFlow(SearchUiState())
     val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
 
@@ -39,14 +40,14 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
 
     fun loadRecentSearches() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(
-                recentSearches = repository.getRecentSearches()
-            )
+            val recent = repository.getRecentSearches()
+            _uiState.value = _uiState.value.copy(recentSearches = recent)
         }
     }
 
     fun setQuery(query: String) {
         searchJob?.cancel()
+        failedPage = null
         _uiState.value = _uiState.value.copy(query = query.take(200), isLoading = false, errorMessage = null)
     }
 
@@ -55,21 +56,22 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
         setQuery(_uiState.value.query + c)
     }
 
-    fun onBackspace() {
-        searchJob?.cancel()
-        val q = _uiState.value.query
-        if (q.isNotEmpty()) {
-            _uiState.value = _uiState.value.copy(query = q.dropLast(1), isLoading = false)
-        }
-    }
+    fun onBackspace() = setQuery(_uiState.value.query.dropLast(1))
 
     fun onClear() {
         searchJob?.cancel()
-        _uiState.value = _uiState.value.copy(query = "", results = emptyList(), totalResults = 0, currentPage = 1, isLoading = false, errorMessage = null)
+        resultIdentity = null
+        failedPage = null
+        _uiState.value = _uiState.value.copy(query = "", resultQuery = "", results = emptyList(),
+            totalResults = 0, currentPage = 1, isLoading = false, errorMessage = null)
     }
 
     fun setTypeFilter(type: String) {
-        _uiState.value = _uiState.value.copy(selectedType = type)
+        if (type !in listOf("all", "movie", "series") || type == _uiState.value.selectedType) return
+        searchJob?.cancel()
+        failedPage = null
+        resultIdentity = null
+        _uiState.value = _uiState.value.copy(selectedType = type, results = emptyList(), totalResults = 0, resultQuery = "", currentPage = 1, isLoading = false, errorMessage = null)
         if (_uiState.value.query.isNotBlank()) {
             executeSearch(_uiState.value.query, reset = true)
         }
@@ -78,8 +80,9 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
     fun setYearFilter(year: Int?) {
         if (year != null && year !in 1888..2100) return
         searchJob?.cancel()
-        _uiState.value = _uiState.value.copy(year = year, results = emptyList(), totalResults = 0, currentPage = 1, isLoading = false)
+        _uiState.value = _uiState.value.copy(year = year, results = emptyList(), totalResults = 0, currentPage = 1, isLoading = false, errorMessage = null, resultQuery = "")
         resultIdentity = null
+        failedPage = null
         if (_uiState.value.query.isNotBlank()) executeSearch(reset = true)
     }
 
@@ -88,30 +91,33 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
         setYearFilter(null)
     }
 
-    fun retrySearch() { com.nowshowing.tv.data.repository.MetadataHealth.retry(); executeSearch() }
+    fun retrySearch() {
+        com.nowshowing.tv.data.repository.MetadataHealth.retry()
+        executeSearch(reset = failedPage?.let { it <= 1 } ?: true)
+    }
 
     fun executeSearch(query: String = _uiState.value.query, reset: Boolean = true) {
-        val trimmed = query.trim()
+        val trimmed = query.trim().take(200)
         val identity = Triple(trimmed, _uiState.value.selectedType, _uiState.value.year)
         val effectiveReset = reset || resultIdentity != identity
         if (trimmed.isBlank()) return
 
         if (!reset && _uiState.value.isLoading) return
         searchJob?.cancel()
-        searchJob = viewModelScope.launch {
-            repository.addRecentSearch(trimmed)
-            loadRecentSearches()
-
-            val targetPage = if (effectiveReset) 1 else _uiState.value.currentPage + 1
-            _uiState.value = _uiState.value.copy(
+        val targetPage = if (effectiveReset) 1 else _uiState.value.currentPage + 1
+        failedPage = null
+        // Publish synchronously: repeated remote clicks must see the request as busy.
+        _uiState.value = _uiState.value.copy(
                 query = trimmed,
                 isLoading = true,
                 errorMessage = null,
                 results = if (effectiveReset) emptyList() else _uiState.value.results,
                 totalResults = if (effectiveReset) 0 else _uiState.value.totalResults
             )
-
-            val filterType = when (_uiState.value.selectedType) {
+        searchJob = viewModelScope.launch {
+            repository.addRecentSearch(trimmed)
+            loadRecentSearches()
+            val filterType = when (identity.second) {
                 "movie" -> "movie"
                 "series" -> "series"
                 else -> null
@@ -132,6 +138,7 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                     totalResults = response.totalResults?.toIntOrNull() ?: updated.size
                 )
             } else {
+                failedPage = targetPage
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     results = _uiState.value.results,
@@ -143,3 +150,4 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 }
+
