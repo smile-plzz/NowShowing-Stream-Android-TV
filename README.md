@@ -2,9 +2,9 @@
 
 A standalone movie and series discovery app for Android TV / Google TV, by Ismail Hossain.
 
-**Sideload prerelease: 1.6.0-rc.2 · Android version code 16001**
+**Release candidate: 1.6.0-rc.4 · Android version code 16003**
 
-Version 1.6.0-rc.2 is the current sideload candidate. Stable upgrade acceptance remains pending. See [App health and TV measurements](docs/APP_HEALTH.md).
+Version 1.6.0-rc.4 adds daily-use recovery fixes. Download availability and successful build status are listed on the release and Actions pages below. Stable upgrade acceptance remains pending. See [App health and TV measurements](docs/APP_HEALTH.md).
 
 [Published APK releases](https://github.com/smile-plzz/NowShowing-Stream-Android-TV/releases) · [Build runs and candidate artifacts](https://github.com/smile-plzz/NowShowing-Stream-Android-TV/actions/workflows/build-apk.yml) · [Installation](docs/INSTALLATION.md)
 
@@ -56,7 +56,7 @@ Kotlin, Compose, ViewModels/StateFlow, Retrofit/OkHttp, Coil, SQLiteOpenHelper, 
 - [Architecture](docs/ARCHITECTURE.md) · [Web playback](docs/WEB_PLAYBACK.md)
 - [Remote controls](docs/REMOTE_NAVIGATION.md) · [Troubleshooting](docs/TROUBLESHOOTING.md)
 - [Known limitations](docs/KNOWN_LIMITATIONS.md) · [Privacy and blocking](docs/PRIVACY_AND_BLOCKING.md)
-- [Candidate release notes](docs/releases/v1.6.0-rc.2.md) · [Signing](docs/RELEASE_SIGNING.md)
+- [Candidate release notes](docs/releases/v1.6.0-rc.4.md) · [Signing](docs/RELEASE_SIGNING.md)
 - [Release checklist](docs/RELEASE_CHECKLIST.md) · [Real-TV acceptance](docs/TV_ACCEPTANCE.md)
 
 Historical design documents are retained for context and are not the current implementation specification.
@@ -64,7 +64,7 @@ Historical design documents are retained for context and are not the current imp
 ## Side-by-side TV testing
 The `-debug.apk` download installs as **NowShowing Preview** (`com.nowshowing.tv.preview`), with separate local storage. Use this candidate to test alongside the existing NowShowing TV installation. Preview starts with its own empty watchlist/history/settings and does not migrate the installed app's data. The `-release.apk` retains `com.nowshowing.tv` and requires a matching certificate for an in-place upgrade. Preview is a debug test build; its performance is not evidence of minified release performance.
 
-## Refinement in progress
+## Refinement and reliability
 
-The current source targets **1.6.0-rc.4 / 16003**. See [daily-use assessment and candidate checks](docs/DAILY_USE_ASSESSMENT.md). The versioned release and CI pages above are authoritative for downloadable artifacts. See [implementation status](docs/REFINEMENT_IMPLEMENTATION_STATUS.md) and [candidate notes](docs/RELEASE_NOTES_1.6.0-rc.3.md). The existing published candidate remains the installation baseline until a verified replacement is available.
+The current source targets **1.6.0-rc.4 / 16003**. See [daily-use assessment and candidate checks](docs/DAILY_USE_ASSESSMENT.md). The versioned release and CI pages above are authoritative for downloadable artifacts. See [implementation status](docs/REFINEMENT_IMPLEMENTATION_STATUS.md) and [candidate notes](docs/RELEASE_NOTES_1.6.0-rc.3.md). Use only artifacts from successful builds; physical-TV acceptance remains pending.
 
