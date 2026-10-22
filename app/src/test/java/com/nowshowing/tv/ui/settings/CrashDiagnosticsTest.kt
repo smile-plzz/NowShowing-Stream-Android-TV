@@ -13,7 +13,7 @@ import org.robolectric.annotation.Config
 @Config(sdk = [28], application = Application::class)
 class CrashDiagnosticsTest {
     @Test fun storesCategoryWithoutExceptionMessagesOrExternalFrames() {
-        val app = RuntimeEnvironment.getApplication<Application>()
+        val app = RuntimeEnvironment.getApplication()
         val error = IllegalStateException("secret-key-and-private-url")
         error.stackTrace = arrayOf(StackTraceElement("com.nowshowing.tv.Test", "load", "Test.kt", 7),
             StackTraceElement("private.library.UserName", "run", "Secret.kt", 1))

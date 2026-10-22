@@ -13,7 +13,7 @@ import org.robolectric.annotation.Config
 @Config(sdk = [28], application = Application::class)
 class CatalogSnapshotCacheTest {
     @Test fun invalidUpdateAndOfflineRestartKeepLastGoodSnapshot() = runBlocking {
-        val app = RuntimeEnvironment.getApplication<Application>()
+        val app = RuntimeEnvironment.getApplication()
         app.getSharedPreferences("cloud_catalog", 0).edit().clear().commit()
         var now = 0L
         var calls = 0
