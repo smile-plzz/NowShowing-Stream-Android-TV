@@ -31,6 +31,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.nowshowing.tv.BuildConfig
 import com.nowshowing.tv.domain.source.SourceRegistry
 import com.nowshowing.tv.privacy.*
 import com.nowshowing.tv.ui.theme.*
@@ -140,6 +141,13 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
                                 override fun onHideCustomView() { exitFullscreen() }
                                 override fun onPermissionRequest(request: PermissionRequest) { request.deny() }
                             }
+                            if (BuildConfig.DEBUG) {
+                                WebView.setWebContentsDebuggingEnabled(true)
+                            }
+                            val cleanupScript: String? = runCatching {
+                                ctx.assets.open("ad_overlay_cleanup.js")
+                                    .bufferedReader().readText()
+                            }.getOrNull()
                             web.webViewClient = object : WebViewClient() {
                                 private fun blocked() = WebResourceResponse(
                                     "text/plain", "UTF-8", ByteArrayInputStream(ByteArray(0))
@@ -170,6 +178,12 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
 
                                 override fun onPageFinished(v: WebView, url: String) {
                                     loading = false
+                                    // Inject the QR-overlay cleanup script on every page load.
+                                    // The script is idempotent (window.__nsAdCleanup guard) so
+                                    // repeated calls from SPA navigations are safe.
+                                    cleanupScript?.let { js ->
+                                        v.evaluateJavascript(js, null)
+                                    }
                                 }
 
                                 override fun onReceivedError(v: WebView, request: WebResourceRequest, error: WebResourceError) {
