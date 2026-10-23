@@ -2,14 +2,33 @@ package com.nowshowing.tv.ui.player
 
 import java.net.URI
 
-/** Main-frame navigation is confined to the selected provider; HTTPS subframes may use its hosts. */
+/**
+ * Navigation policy for provider WebViews.
+ *
+ * The provider may need cross-origin HTTPS subframes for its actual player, but
+ * known hostile/ad-redirect hosts must never become a main frame or resource.
+ */
 internal object WebEmbedPolicy {
+    private val blockedHosts = setOf(
+        "unswung.gurlleviter.cyou",
+        "gurlleviter.cyou"
+    )
+
+    fun isBlockedHost(host: String?): Boolean {
+        val normalized = host?.trim()?.trimEnd('.')?.lowercase() ?: return false
+        return blockedHosts.any { normalized == it || normalized.endsWith(".$it") }
+    }
+
     fun allowNavigation(root: String, target: String, mainFrame: Boolean, isolate: Boolean): Boolean =
         try {
             val origin = URI(root)
             val uri = URI(target)
-            uri.scheme.equals("https", true) && !uri.host.isNullOrBlank() &&
-                uri.userInfo == null && (!mainFrame || !isolate || uri.host.equals(origin.host, true))
-        } catch (_: Exception) { false }
+            uri.scheme.equals("https", true) &&
+                !uri.host.isNullOrBlank() &&
+                uri.userInfo == null &&
+                !isBlockedHost(uri.host) &&
+                (!mainFrame || !isolate || uri.host.equals(origin.host, true))
+        } catch (_: Exception) {
+            false
+        }
 }
-

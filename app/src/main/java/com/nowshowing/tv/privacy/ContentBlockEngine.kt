@@ -26,6 +26,13 @@ class ContentBlockEngine {
     private val whitelistDomains = mutableSetOf<String>()
     private val trackerDomains = mutableSetOf<String>()
 
+    // Safety override: confirmed hostile redirect/QR domain. This is intentionally
+    // independent of downloadable filter lists and user ad-block preferences.
+    private val hardBlockedDomains = setOf(
+        "unswung.gurlleviter.cyou",
+        "gurlleviter.cyou"
+    )
+
     // Bounded LRU Cache for sub-millisecond decision lookups on Android TV
     private val decisionCache: MutableMap<String, BlockDecision> = Collections.synchronizedMap(
         object : LinkedHashMap<String, BlockDecision>(500, 0.75f, true) {
@@ -122,6 +129,21 @@ class ContentBlockEngine {
         isAdBlockEnabled: Boolean = true,
         isTrackerBlockEnabled: Boolean = true
     ): BlockDecision {
+        val host = extractHost(url)
+
+        // Hard safety block is evaluated before preferences/whitelists. A confirmed
+        // hostile destination must not become reachable by disabling the ad shield.
+        val hardBlocked = hardBlockedDomains.any { host == it || host.endsWith(".$it") }
+        if (hardBlocked) {
+            val decision = BlockDecision(
+                isBlocked = true,
+                type = BlockType.AD,
+                matchedRule = "hard-blocked-host:$host"
+            )
+            decisionCache["hard:$url"] = decision
+            return decision
+        }
+
         if (!isAdBlockEnabled && !isTrackerBlockEnabled) {
             return BlockDecision(isBlocked = false)
         }
@@ -131,7 +153,6 @@ class ContentBlockEngine {
         decisionCache[cacheKey]?.let { return it }
 
         val lowerUrl = url.lowercase(Locale.ROOT)
-        val host = extractHost(url)
         val path = extractPath(url)
 
         // 1. Whitelist Check

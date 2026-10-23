@@ -59,6 +59,21 @@ class ContentBlockEngineTest {
     }
 
     @Test
+    fun testConfirmedMaliciousRedirectIsBlockedEvenWhenShieldsAreDisabled() {
+        val decision = engine.evaluate(
+            "https://unswung.gurlleviter.cyou/ri/146205?uuid=test",
+            isAdBlockEnabled = false,
+            isTrackerBlockEnabled = false
+        )
+        assertTrue("Confirmed hostile redirect must always be blocked", decision.isBlocked)
+        assertEquals(BlockType.AD, decision.type)
+        assertNotNull(decision.matchedRule)
+
+        val subdomain = engine.evaluate("https://anything.gurlleviter.cyou/qr.png")
+        assertTrue("Hostile redirect subdomains must also be blocked", subdomain.isBlocked)
+    }
+
+    @Test
     fun testWhitelistExceptionsAllowed() {
         val decision = engine.evaluate("https://vidsrc.to/embed/movie/tt1375666")
         assertFalse("Whitelisted stream source must not be blocked", decision.isBlocked)
