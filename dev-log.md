@@ -214,14 +214,37 @@ Prepared 1.5.0-rc.2 / 15002 from d5590b5. Current source contracts: docs/ARCHITE
 - **Components Implemented**:
   - d_overlay_cleanup.js: Asset-based cosmetic sweeper script using MutationObserver. Idempotently cleans up high-z-index overlays matching anti-bot and QR keywords without manipulating D-pad focus or blocking remote key events.
   - WebEmbedScreen.kt: Evaluates d_overlay_cleanup.js on page load (onPageFinished) and conditionally enables setWebContentsDebuggingEnabled(true) strictly for BuildConfig.DEBUG.
-  - ContentBlockEngine.kt: Added Monetag, in-page push, and QR delivery domains to hardBlockedDomains ensuring network interception even if shields are disabled.
+  - - `ContentBlockEngine.kt`: Added Monetag, in-page push, and QR delivery domains to hardBlockedDomains ensuring network interception even if shields are disabled.
   - WebEmbedPolicy.kt: Extended navigation policy lockedHosts to deny main-frame and sub-frame navigation to confirmed hostile ad hosts.
-  - ilters_adblock.txt: Added verified ad-network and in-page push rule anchors and path rules.
+  - - `filters_adblock.txt`: Added verified ad-network and in-page push rule anchors and path rules.
   - DiagnosticReport.kt: Resiliently wrapped database payload byte query in unCatching to prevent sandbox SQLite connection teardown exceptions from interrupting health reporting.
-  - QrOverlayCleanupTest.kt & QrCaptchaHardBlockTest.kt: Added unit tests verifying script heuristics, D-pad accessibility compliance, hard-block decisions, and provider whitelist preservation.
+  - - `QrOverlayCleanupTest.kt` & `QrCaptchaHardBlockTest.kt`: Added unit tests verifying script heuristics, D-pad accessibility compliance, hard-block decisions, and provider whitelist preservation.
 - **Verification Results**:
   - Python release scripts: **100% PASS** (8/8 tests).
-  - Unit tests (	estDebugUnitTest): **100% PASS** (all 142 tests passing across all suites).
+  - Unit tests (`testDebugUnitTest`): **100% PASS** (all 142 tests passing across all suites).
   - ssembleDebug: **BUILD SUCCESSFUL** (pp-debug.apk: 22.5 MB).
   - ssembleRelease: **BUILD SUCCESSFUL** (pp-release.apk: 10.5 MB minified/shrunk).
+- **Status**: Tested, verified, and ready for pull request.
+
+## [2026-10-24 02:45] - Phase 10: Remote Media Keys & 1-Click Next Source in Web Player
+- **Task**: Implement physical remote media key controls (play/pause, seek +/- 10s) and a 1-click "Next Source" provider cycler for the TV web player.
+- **Components Implemented**:
+  - `WebEmbedScreen.kt` (`EmbedHost`):
+    - Intercepted `KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE`, `KEYCODE_MEDIA_PLAY`, `KEYCODE_MEDIA_PAUSE`, `KEYCODE_MEDIA_FAST_FORWARD`, `KEYCODE_MEDIA_REWIND` on `ACTION_DOWN` (repeatCount == 0).
+    - Injected guarded JavaScript actions targeting `<video>` in top frames or same-origin iframes, seeking +/- 10s or toggling playback, gracefully no-opping if no video element is accessible.
+    - Added support for `KeyEvent.KEYCODE_MEDIA_NEXT` triggering `onNextSource` callback.
+    - Preserved all existing D-pad, Back, and Menu key handling.
+  - `WebEmbedScreen.kt` (UI & HUD):
+    - Added 1-click "Next source (<Name>)" action button in controls drawer and error/retry views.
+    - Added non-intrusive on-screen TV HUD pill ("Switching to <Name>…") with cyan spinner and rounded borders, auto-dismissing after 2.5s.
+    - Updated remote help section with media key guidance.
+  - `SourceRegistry.kt` & `PlayerViewModel.kt`:
+    - Hardened `SourceRegistry.getNextSource()` with null/empty checks, ID and name matching, and wrap-around.
+    - Added `PlayerViewModel.playNextSource()` advancing providers while preserving title IMDb ID, season, and episode.
+  - Unit Tests:
+    - `SourceRegistryTest.kt`: Added 4 tests validating ordered provider advance, list wrap-around, unrecognized source fallback, and URL parameter retention.
+    - `EmbedHostLifecycleTest.kt`: Added 3 tests validating media key interception, release deactivation, Next Source repeat-suppression, and JS script safety guards.
+- **Verification Results**:
+  - `testDebugUnitTest`: **100% PASS** (149 tests across 38 suites, 0 failures, 0 skipped in 1m 41s).
+  - Python release scripts: **100% PASS** (8/8 tests in 0.082s).
 - **Status**: Tested, verified, and ready for pull request.

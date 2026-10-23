@@ -1,5 +1,12 @@
 # 1.6.0-rc.2 — TV search and library refinement
 
+## Unreleased — Remote Media Keys & 1-Click Next Source
+
+- Added physical remote media key interception in web player (`KEYCODE_MEDIA_PLAY_PAUSE`, `KEYCODE_MEDIA_PLAY`, `KEYCODE_MEDIA_PAUSE`, `KEYCODE_MEDIA_FAST_FORWARD`, `KEYCODE_MEDIA_REWIND`) dispatching guarded video controls and ±10s seeking.
+- Added 1-click "Next source" action in web player controls drawer and via `KEYCODE_MEDIA_NEXT`, cycling providers in `SourceRegistry` while preserving title IMDb ID, season, and episode.
+- Added top-center TV HUD indicator ("Switching to <Source>…") with cyan accent progress badge during source transitions.
+- Added 7 unit tests in `SourceRegistryTest` and `EmbedHostLifecycleTest` verifying ordered provider advance, list wrap-around, media key interception, and video script error resilience.
+
 ## Unreleased — QR Overlay Removal & Ad Protection
 
 - Injected idempotent MutationObserver DOM sweeper (d_overlay_cleanup.js) into embed WebViews to hide and strip deceptive "Confirm you're not a robot — scan QR code" ad overlays without stealing D-pad focus.
