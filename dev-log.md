@@ -225,3 +225,24 @@ Prepared 1.5.0-rc.2 / 15002 from d5590b5. Current source contracts: docs/ARCHITE
   - ssembleDebug: **BUILD SUCCESSFUL** (pp-debug.apk: 22.5 MB).
   - ssembleRelease: **BUILD SUCCESSFUL** (pp-release.apk: 10.5 MB minified/shrunk).
 - **Status**: Tested, verified, and ready for pull request.
+
+## [2026-10-24 02:55] - Phase 11: Voice Search & Release Update Checker
+- **Task**: Implement speech recognition in Search and a GitHub Releases update checker in Settings.
+- **Components Implemented**:
+  - `SearchScreen.kt`:
+    - Added a focusable TV microphone button with `Icons.Default.Mic` adjacent to the title input.
+    - Launched `RecognizerIntent.ACTION_RECOGNIZE_SPEECH` via `rememberLauncherForActivityResult` with free-form speech prompt.
+    - Handled missing speech engines or permissions gracefully with an on-screen warning without crashing.
+    - Populated recognized speech into the search query and immediately dispatched title search.
+  - `UpdateChecker.kt` & `SettingsScreen.kt`:
+    - Created `UpdateChecker` querying `https://api.github.com/repos/smile-plzz/NowShowing-Stream-Android-TV/releases/latest`.
+    - Evaluated semver and pre-release precedence comparing remote tag against `BuildConfig.VERSION_NAME`.
+    - Handled network errors and GitHub API rate-limiting gracefully.
+    - Added "Check for updates" card in Settings -> About.
+    - Displayed an update dialog with release title, truncated release notes, and an intent link opening the release page in an external browser (no in-app APK downloads).
+  - Unit Tests:
+    - `UpdateCheckerTest.kt`: Added 10 tests validating major/minor/patch semver rules, release candidate ordering (`rc.4` > `rc.2`), stable release precedence over candidates, prefix stripping (`v`), and JSON payload parsing.
+- **Verification Results**:
+  - `testDebugUnitTest`: **100% PASS** (152 tests across 39 suites, 0 failures, 0 skipped in 1m 28s).
+  - Python release scripts: **100% PASS** (8/8 tests in 0.078s).
+- **Status**: Tested, verified, and ready for pull request.

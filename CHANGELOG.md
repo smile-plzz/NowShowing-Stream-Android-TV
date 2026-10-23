@@ -1,5 +1,11 @@
 # 1.6.0-rc.2 — TV search and library refinement
 
+## Unreleased — Voice Search & Release Update Checker
+
+- Added Voice Search in `SearchScreen.kt` using `RecognizerIntent.ACTION_RECOGNIZE_SPEECH` via `rememberLauncherForActivityResult`, with a TV-focusable microphone button and graceful fallback when speech recognition services are absent.
+- Added GitHub Releases update checker in `SettingsScreen.kt` (`UpdateChecker.kt`) querying latest release tags against `BuildConfig.VERSION_NAME` with semver comparison and release note dialog without in-app APK downloads.
+- Added unit tests in `UpdateCheckerTest.kt` verifying version comparison heuristics, release candidate progression, stable release precedence, and JSON response parsing.
+
 ## Unreleased — QR Overlay Removal & Ad Protection
 
 - Injected idempotent MutationObserver DOM sweeper (d_overlay_cleanup.js) into embed WebViews to hide and strip deceptive "Confirm you're not a robot — scan QR code" ad overlays without stealing D-pad focus.
