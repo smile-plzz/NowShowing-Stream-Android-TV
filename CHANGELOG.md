@@ -1,5 +1,12 @@
 # 1.6.0-rc.2 — TV search and library refinement
 
+## Unreleased — QR Overlay Removal & Ad Protection
+
+- Injected idempotent MutationObserver DOM sweeper (d_overlay_cleanup.js) into embed WebViews to hide and strip deceptive "Confirm you're not a robot — scan QR code" ad overlays without stealing D-pad focus.
+- Hard-blocked Monetag, PropellerAds in-page push, and affiliate redirect networks in `ContentBlockEngine` and `WebEmbedPolicy` across main frames, sub-frames, and resource requests.
+- Added verified ad-network anchors and push service worker patterns to bundled baseline adblock filters.
+- Added comprehensive unit tests for QR cleanup heuristics, D-pad focus preservation, and network blocking (QrOverlayCleanupTest, QrCaptchaHardBlockTest).
+
 ## 1.6.0-rc.4 (16003) — Daily-use reliability
 
 - Retry a failed search page without discarding earlier pages; show loading immediately and clear obsolete filter/error state.

@@ -207,3 +207,21 @@ Prepared 1.5.0-rc.2 / 15002 from d5590b5. Current source contracts: docs/ARCHITE
     - `ContentBlockEngineTest`: 7/7 passed
     - `WebEmbedPolicyTest`: 5/5 passed
 - **Status**: Local repository fully synced with `origin/main`, verified clean, and passing 100% of all unit tests.
+
+## [2026-10-24 01:10] - Phase 9: QR CAPTCHA Ad Overlay Removal & Network Isolation
+- **Task**: Eliminate the deceptive QR "Confirm you're not a robot" ad overlay appearing during playback in embed WebViews.
+- **Root Cause**: Third-party embed providers (vidsrc, autoembed, 2embed) load external monetization tags (Monetag, PropellerAds in-page push) which inject high-z-index overlays displaying fake bot-verification prompts with QR codes targeting mobile redirects.
+- **Components Implemented**:
+  - d_overlay_cleanup.js: Asset-based cosmetic sweeper script using MutationObserver. Idempotently cleans up high-z-index overlays matching anti-bot and QR keywords without manipulating D-pad focus or blocking remote key events.
+  - WebEmbedScreen.kt: Evaluates d_overlay_cleanup.js on page load (onPageFinished) and conditionally enables setWebContentsDebuggingEnabled(true) strictly for BuildConfig.DEBUG.
+  - ContentBlockEngine.kt: Added Monetag, in-page push, and QR delivery domains to hardBlockedDomains ensuring network interception even if shields are disabled.
+  - WebEmbedPolicy.kt: Extended navigation policy lockedHosts to deny main-frame and sub-frame navigation to confirmed hostile ad hosts.
+  - ilters_adblock.txt: Added verified ad-network and in-page push rule anchors and path rules.
+  - DiagnosticReport.kt: Resiliently wrapped database payload byte query in unCatching to prevent sandbox SQLite connection teardown exceptions from interrupting health reporting.
+  - QrOverlayCleanupTest.kt & QrCaptchaHardBlockTest.kt: Added unit tests verifying script heuristics, D-pad accessibility compliance, hard-block decisions, and provider whitelist preservation.
+- **Verification Results**:
+  - Python release scripts: **100% PASS** (8/8 tests).
+  - Unit tests (	estDebugUnitTest): **100% PASS** (all 142 tests passing across all suites).
+  - ssembleDebug: **BUILD SUCCESSFUL** (pp-debug.apk: 22.5 MB).
+  - ssembleRelease: **BUILD SUCCESSFUL** (pp-release.apk: 10.5 MB minified/shrunk).
+- **Status**: Tested, verified, and ready for pull request.
