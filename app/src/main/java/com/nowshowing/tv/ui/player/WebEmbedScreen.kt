@@ -13,6 +13,8 @@ import android.webkit.*
 import android.widget.FrameLayout
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.LazyColumn
@@ -63,6 +65,12 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
     val currentOnBack by rememberUpdatedState(onBack)
     val prefs = remember { ProtectionPreferences(context) }
     val stats = remember { BlockingStatistics(context) }
+    var switchingIndicator by remember { mutableStateOf<String?>(null) }
+    val nextSource = remember(state.currentSource) { SourceRegistry.getNextSource(state.currentSource) }
+    val advanceSource: () -> Unit = {
+        switchingIndicator = "Switching to ${nextSource.name}…"
+        viewModel.playNextSource()
+    }
 
     LaunchedEffect(Unit) {
         FilterListManager.initialize(context)
@@ -112,10 +120,14 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
             key(state.webEmbedUrl, attempt) {
                 AndroidView(
                     factory = { ctx ->
-                        EmbedHost(ctx) {
-                            section = "controls"
-                            menu = true
-                        }.apply {
+                        EmbedHost(
+                            context = ctx,
+                            openMenu = {
+                                section = "controls"
+                                menu = true
+                            },
+                            onNextSource = advanceSource
+                        ).apply {
                             host = this
                             val rootUrl = state.webEmbedUrl
                             val sourceName = state.currentSource.name
@@ -239,6 +251,30 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
                 Text("Opening ${state.currentSource.name} · Back for controls", color = TextPrimary, fontSize = 16.sp)
             }
         }
+        switchingIndicator?.let { indicatorText ->
+            LaunchedEffect(indicatorText) {
+                kotlinx.coroutines.delay(2500)
+                switchingIndicator = null
+            }
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .padding(top = 32.dp),
+                contentAlignment = Alignment.TopCenter
+            ) {
+                Row(
+                    modifier = Modifier
+                        .background(SurfaceDark.copy(alpha = 0.95f), shape = RoundedCornerShape(24.dp))
+                        .border(1.dp, AccentCyan.copy(alpha = 0.5f), RoundedCornerShape(24.dp))
+                        .padding(horizontal = 24.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    CircularProgressIndicator(Modifier.size(20.dp), color = AccentCyan, strokeWidth = 2.5.dp)
+                    Text(indicatorText, color = TextPrimary, fontSize = 16.sp)
+                }
+            }
+        }
         if (menu) {
             Column(
                 Modifier.fillMaxHeight().width(480.dp).background(SurfaceDark.copy(alpha = 0.98f)).padding(24.dp),
@@ -278,6 +314,13 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
                                     seenHelp = true
                                     helpPrefs.edit().putBoolean("seen", true).apply()
                                 }
+                            }
+                        }
+                        item {
+                            TvPlayerActionButton("Next source (${nextSource.name})", null) {
+                                advanceSource()
+                                menu = false
+                                host?.focusPlayer()
                             }
                         }
                         item { TvPlayerActionButton("Change source", null) { section = "sources" } }
@@ -340,7 +383,7 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
                             "help" -> {
                                 item { Text("Using your remote", color = TextPrimary, fontSize = 20.sp) }
                                 item { Text(
-                                    "Arrows: move the pointer.\nOK: click the provider’s buttons.\nHold an arrow: move faster.\nBack: leave fullscreen first, open controls next, then return to the title.\nMenu: open app controls.\n\nPlayback, seeking, and subtitles inside the video are controlled by the provider. If a page stays blank, use Retry this source or Change source.",
+                                    "Arrows: move the pointer.\nOK: click the provider’s buttons.\nHold an arrow: move faster.\nPlay/Pause: toggle playback.\nFF/RW: seek ±10 seconds.\nBack: leave fullscreen first, open controls next, then return to the title.\nMenu: open app controls.\n\nPlayback, seeking, and subtitles inside the video are controlled by the provider. If a page stays blank, use Next source, Retry this source, or Change source.",
                                     color = TextSecondary, fontSize = 16.sp
                                 ) }
                             }
@@ -354,7 +397,11 @@ internal fun WebEmbedScreen(state: PlayerUiState, viewModel: PlayerViewModel, on
 
 /** Touch events reach cross-origin iframe controls without a JavaScript-to-native bridge. */
 @SuppressLint("ViewConstructor")
-internal class EmbedHost(context: Context, private val openMenu: () -> Unit) : FrameLayout(context) {
+internal class EmbedHost(
+    context: Context,
+    private val openMenu: () -> Unit = {},
+    private val onNextSource: (() -> Unit)? = null
+) : FrameLayout(context) {
     private var fullscreen: View? = null
     private var fullscreenCallback: WebChromeClient.CustomViewCallback? = null
     val web = PointerWebView(context)
@@ -419,7 +466,82 @@ internal class EmbedHost(context: Context, private val openMenu: () -> Unit) : F
             }
             return true
         }
+        if (event.keyCode in listOf(
+                KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE,
+                KeyEvent.KEYCODE_MEDIA_PLAY,
+                KeyEvent.KEYCODE_MEDIA_PAUSE,
+                KeyEvent.KEYCODE_MEDIA_FAST_FORWARD,
+                KeyEvent.KEYCODE_MEDIA_REWIND
+            )) {
+            if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
+                handleMediaKey(event.keyCode)
+            }
+            return true
+        }
+        if (event.keyCode == KeyEvent.KEYCODE_MEDIA_NEXT) {
+            if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
+                onNextSource?.invoke()
+            }
+            return true
+        }
         return super.dispatchKeyEvent(event)
+    }
+
+    fun handleMediaKey(keyCode: Int): Boolean {
+        if (released) return false
+        val js = when (keyCode) {
+            KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> JS_MEDIA_PLAY_PAUSE
+            KeyEvent.KEYCODE_MEDIA_PLAY -> JS_MEDIA_PLAY
+            KeyEvent.KEYCODE_MEDIA_PAUSE -> JS_MEDIA_PAUSE
+            KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> JS_MEDIA_FORWARD_10S
+            KeyEvent.KEYCODE_MEDIA_REWIND -> JS_MEDIA_REWIND_10S
+            else -> return false
+        }
+        web.evaluateJavascript(js, null)
+        return true
+    }
+
+    companion object {
+        internal fun mediaKeyJs(action: String): String = """
+            (function() {
+                try {
+                    function findVideo() {
+                        var v = document.querySelector('video');
+                        if (v) return v;
+                        var frames = document.querySelectorAll('iframe');
+                        for (var i = 0; i < frames.length; i++) {
+                            try {
+                                var doc = frames[i].contentDocument || frames[i].contentWindow.document;
+                                if (doc) {
+                                    var fv = doc.querySelector('video');
+                                    if (fv) return fv;
+                                }
+                            } catch (e) {}
+                        }
+                        return null;
+                    }
+                    var video = findVideo();
+                    if (!video) return;
+                    $action
+                } catch (e) {}
+            })();
+        """.trimIndent()
+
+        internal val JS_MEDIA_PLAY_PAUSE = mediaKeyJs(
+            "if (video.paused) { var p = video.play(); if (p && typeof p.catch === 'function') p.catch(function(){}); } else { video.pause(); }"
+        )
+        internal val JS_MEDIA_PLAY = mediaKeyJs(
+            "if (video.paused) { var p = video.play(); if (p && typeof p.catch === 'function') p.catch(function(){}); }"
+        )
+        internal val JS_MEDIA_PAUSE = mediaKeyJs(
+            "if (!video.paused) { video.pause(); }"
+        )
+        internal val JS_MEDIA_FORWARD_10S = mediaKeyJs(
+            "if (typeof video.currentTime === 'number') { video.currentTime = Math.min(video.duration || Infinity, video.currentTime + 10); }"
+        )
+        internal val JS_MEDIA_REWIND_10S = mediaKeyJs(
+            "if (typeof video.currentTime === 'number') { video.currentTime = Math.max(0, video.currentTime - 10); }"
+        )
     }
 }
 
