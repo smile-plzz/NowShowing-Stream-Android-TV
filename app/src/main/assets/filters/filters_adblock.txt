@@ -96,26 +96,20 @@
 @@||vidsrc.mov^
 
 ! --- QR-CAPTCHA and In-Page Push Ad Networks (Monetag / PropellerAds style) ---
-! These hosts deliver the "Confirm you're not a robot — scan the QR code" overlay
-! observed in embed WebViews. Sourced from EasyList, AdGuard Base List, and
-! confirmed hostile-host reports. Added 2026-10-24.
+! Verified against EasyList and AdGuard Base List.
 ||monetag.com^
-||mongtag.com^
 ||propellerads.com^
 ||push.propellerads.com^
 ||cdn.propellerads.com^
 ||s.propellerads.com^
-||adspyglass.com^
-||acengine.com^
-||bestpbn.xyz^
-||traffective.com^
+||inpageads.com^
+||ad-stir.com^
+||adskeeper.co.uk^
+||liveintent.com^
+*sw.js?acvr=*
+*inpage-push*
+
+! --- Generic Web Push Services (user-configurable shield rules) ---
 ||webpushr.com^
 ||izooto.com^
 ||pushengage.com^
-||liveintent.com^
-||adskeeper.co.uk^
-||ad-stir.com^
-||inpageads.com^
-*sw.js?acvr=*
-*push-notification*
-*inpage-push*

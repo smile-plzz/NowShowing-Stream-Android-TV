@@ -26,28 +26,16 @@ class ContentBlockEngine {
     private val whitelistDomains = mutableSetOf<String>()
     private val trackerDomains = mutableSetOf<String>()
 
-    // Safety override: confirmed hostile redirect/QR domain. This is intentionally
-    // independent of downloadable filter lists and user ad-block preferences.
-    // Safety override: confirmed hostile redirect/QR-CAPTCHA domains. This is
-    // intentionally independent of downloadable filter lists and user ad-block
-    // preferences. A confirmed hostile destination must not become reachable
-    // by disabling the ad shield.
+    // Safety override: confirmed hostile redirect and verified QR-CAPTCHA delivery
+    // hosts. This is intentionally independent of downloadable filter lists and user
+    // ad-block preferences. Generic push services and broader ad networks remain in
+    // user-configurable filter lists rather than hard-blocks.
     private val hardBlockedDomains = setOf(
-        // Original confirmed hostile redirect/QR domain
+        // Confirmed hostile redirect / QR-CAPTCHA landing hosts
         "unswung.gurlleviter.cyou",
         "gurlleviter.cyou",
-        // Monetag in-page push and related QR-CAPTCHA delivery infrastructure.
-        // These hosts serve the "Confirm you're not a robot / scan the QR" overlay.
+        // Verified Monetag and in-page push delivery networks
         "monetag.com",
-        "mongtag.com",
-        "adspyglass.com",
-        "traffective.com",
-        "acengine.com",
-        "bestpbn.xyz",
-        "izooto.com",
-        "webpushr.com",
-        "pushengage.com",
-        "adskeeper.co.uk",
         "inpageads.com",
         "ad-stir.com"
     )
@@ -151,7 +139,6 @@ class ContentBlockEngine {
         val host = extractHost(url)
 
         // Hard safety block is evaluated before preferences/whitelists. A confirmed
-        // hostile destination must not become reachable by disabling the ad shield.
         val hardBlocked = hardBlockedDomains.any { host == it || host.endsWith(".$it") }
         if (hardBlocked) {
             val decision = BlockDecision(
