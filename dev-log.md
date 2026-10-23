@@ -224,20 +224,6 @@ Prepared 1.5.0-rc.2 / 15002 from d5590b5. Current source contracts: docs/ARCHITE
   - Unit tests (`testDebugUnitTest`): **100% PASS** (all 142 tests passing across all suites).
   - ssembleDebug: **BUILD SUCCESSFUL** (pp-debug.apk: 22.5 MB).
   - ssembleRelease: **BUILD SUCCESSFUL** (pp-release.apk: 10.5 MB minified/shrunk).
-- **Status**: Tested, verified, and ready for pull request.
-
-## [2026-10-24 02:30] - Phase 10: Hard-Block List Refinement & Policy Cleanup
-- **Task**: Audit and trim the adblock and navigation hard-block lists to remove speculative domains, generic push services, and broad keyword patterns.
-- **Changes**:
-  - `ContentBlockEngine.kt`: Pruned `hardBlockedDomains` to only retain verified hostile redirect/QR-CAPTCHA landing hosts (`gurlleviter.cyou`, `unswung.gurlleviter.cyou`) and verified delivery networks (`monetag.com`, `inpageads.com`, `ad-stir.com`).
-  - `WebEmbedPolicy.kt`: Aligned `blockedHosts` navigation restriction with the verified hostile and Monetag domains.
-  - `filters_adblock.txt`: Removed `mongtag.com` (typo), pruned unverified speculative hosts (`acengine.com`, `bestpbn.xyz`), dropped the overly broad `*push-notification*` path pattern, and moved generic commercial web-push services (`webpushr.com`, `izooto.com`, `pushengage.com`) under user-configurable shield rules.
-  - Test suites: Updated `QrCaptchaHardBlockTest.kt` and `WebEmbedPolicyTest.kt` to verify the trimmed hard-block list and validate that generic push services respect user shields-off settings.
-- **Verification Results**:
-  - Python release scripts: **100% PASS** (8/8 tests).
-  - Unit tests (`testDebugUnitTest`): **100% PASS** (all tests green in 1m 3s).
-- **Status**: Tested, verified, and ready for pull request.
-
 ## [2026-10-24 02:45] - Phase 11: Remote Media Keys & 1-Click Next Source in Web Player
 - **Task**: Implement physical remote media key controls (play/pause, seek +/- 10s) and a 1-click "Next Source" provider cycler for the TV web player.
 - **Components Implemented**:
@@ -259,4 +245,25 @@ Prepared 1.5.0-rc.2 / 15002 from d5590b5. Current source contracts: docs/ARCHITE
 - **Verification Results**:
   - `testDebugUnitTest`: **100% PASS** (149 tests across 38 suites, 0 failures, 0 skipped in 1m 41s).
   - Python release scripts: **100% PASS** (8/8 tests in 0.082s).
+- **Status**: Tested, verified, and ready for pull request.
+
+## [2026-10-24 02:55] - Phase 12: Voice Search & Release Update Checker
+- **Task**: Implement speech recognition in Search and a GitHub Releases update checker in Settings.
+- **Components Implemented**:
+  - `SearchScreen.kt`:
+    - Added a focusable TV microphone button with `Icons.Default.Mic` adjacent to the title input.
+    - Launched `RecognizerIntent.ACTION_RECOGNIZE_SPEECH` via `rememberLauncherForActivityResult` with free-form speech prompt.
+    - Handled missing speech engines or permissions gracefully with an on-screen warning without crashing.
+    - Populated recognized speech into the search query and immediately dispatched title search.
+  - `UpdateChecker.kt` & `SettingsScreen.kt`:
+    - Created `UpdateChecker` querying `https://api.github.com/repos/smile-plzz/NowShowing-Stream-Android-TV/releases/latest`.
+    - Evaluated semver and pre-release precedence comparing remote tag against `BuildConfig.VERSION_NAME`.
+    - Handled network errors and GitHub API rate-limiting gracefully.
+    - Added "Check for updates" card in Settings -> About.
+    - Displayed an update dialog with release title, truncated release notes, and an intent link opening the release page in an external browser (no in-app APK downloads).
+  - Unit Tests:
+    - `UpdateCheckerTest.kt`: Added 10 tests validating major/minor/patch semver rules, release candidate ordering (`rc.4` > `rc.2`), stable release precedence over candidates, prefix stripping (`v`), and JSON payload parsing.
+- **Verification Results**:
+  - `testDebugUnitTest`: **100% PASS** (152 tests across 39 suites, 0 failures, 0 skipped in 1m 28s).
+  - Python release scripts: **100% PASS** (8/8 tests in 0.078s).
 - **Status**: Tested, verified, and ready for pull request.
