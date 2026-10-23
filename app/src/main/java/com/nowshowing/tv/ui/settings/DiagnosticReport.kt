@@ -31,7 +31,7 @@ fun diagnosticReport(context: Context): String = buildString {
     appendLine("Last crash/recovery event: ${com.nowshowing.tv.diagnostics.CrashDiagnostics.last(context)}")
     appendLine("Metadata: ${MetadataHealth.failure.value?.message ?: "No failure recorded; not a connectivity test"}")
     appendLine("Expired cached metadata used this session: ${MetadataHealth.usedStaleCache}")
-    appendLine("Metadata payload bytes: ${NowShowingDatabase.getInstance(context).metadataBytes()}")
+    appendLine("Metadata payload bytes: ${runCatching { NowShowingDatabase.getInstance(context).metadataBytes() }.getOrDefault(0L)}")
     appendLine("Image disk cache bytes: ${coil.Coil.imageLoader(context).diskCache?.size ?: 0}")
     val runtime = Runtime.getRuntime()
     appendLine("App heap used/max bytes: ${runtime.totalMemory() - runtime.freeMemory()}/${runtime.maxMemory()}")

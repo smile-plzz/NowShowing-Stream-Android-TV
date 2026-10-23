@@ -28,9 +28,28 @@ class ContentBlockEngine {
 
     // Safety override: confirmed hostile redirect/QR domain. This is intentionally
     // independent of downloadable filter lists and user ad-block preferences.
+    // Safety override: confirmed hostile redirect/QR-CAPTCHA domains. This is
+    // intentionally independent of downloadable filter lists and user ad-block
+    // preferences. A confirmed hostile destination must not become reachable
+    // by disabling the ad shield.
     private val hardBlockedDomains = setOf(
+        // Original confirmed hostile redirect/QR domain
         "unswung.gurlleviter.cyou",
-        "gurlleviter.cyou"
+        "gurlleviter.cyou",
+        // Monetag in-page push and related QR-CAPTCHA delivery infrastructure.
+        // These hosts serve the "Confirm you're not a robot / scan the QR" overlay.
+        "monetag.com",
+        "mongtag.com",
+        "adspyglass.com",
+        "traffective.com",
+        "acengine.com",
+        "bestpbn.xyz",
+        "izooto.com",
+        "webpushr.com",
+        "pushengage.com",
+        "adskeeper.co.uk",
+        "inpageads.com",
+        "ad-stir.com"
     )
 
     // Bounded LRU Cache for sub-millisecond decision lookups on Android TV

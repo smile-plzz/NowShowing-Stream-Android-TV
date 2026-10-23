@@ -10,8 +10,27 @@ import java.net.URI
  */
 internal object WebEmbedPolicy {
     private val blockedHosts = setOf(
+        // Confirmed hostile QR-CAPTCHA redirect domain (previously observed)
         "unswung.gurlleviter.cyou",
-        "gurlleviter.cyou"
+        "gurlleviter.cyou",
+        // Monetag in-page push and push-notification delivery domains.
+        // These serve the "Confirm you're not a robot / scan the QR code" overlay
+        // scripts. The network-layer block in ContentBlockEngine covers request
+        // interception; this list prevents main-frame and sub-frame navigation
+        // to these hosts even when interception is bypassed.
+        "monetag.com",
+        "mongtag.com",
+        "adspyglass.com",
+        "traffective.com",
+        "acengine.com",
+        "bestpbn.xyz",
+        "izooto.com",
+        "webpushr.com",
+        "pushengage.com",
+        "adskeeper.co.uk",
+        "inpageads.com",
+        "ad-stir.com",
+        "liveintent.com"
     )
 
     fun isBlockedHost(host: String?): Boolean {
