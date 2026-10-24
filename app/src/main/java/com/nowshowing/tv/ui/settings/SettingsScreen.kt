@@ -21,6 +21,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -308,7 +309,11 @@ fun SettingsScreen(viewModel: SettingsViewModel, onNavigate: (String) -> Unit) {
 
 @Composable
 private fun InfoCard(title: String, text: String) {
-    Column(Modifier.fillMaxWidth().background(SurfaceDark, RoundedCornerShape(12.dp)).padding(20.dp),
+    Column(Modifier.fillMaxWidth()
+        .clip(RoundedCornerShape(12.dp))
+        .background(SurfaceDark)
+        .border(1.dp, CardBorder, RoundedCornerShape(12.dp))
+        .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(title, color = TextPrimary, fontSize = 19.sp, fontWeight = FontWeight.Bold)
         Text(text, color = TextSecondary, fontSize = 16.sp, lineHeight = 24.sp)
@@ -334,8 +339,28 @@ private fun SettingToggleItem(title: String, description: String, enabled: Boole
             Text(description, color = if (focused) Color.Black.copy(alpha = 0.8f) else TextSecondary, fontSize = 16.sp, lineHeight = 22.sp)
         }
         Spacer(Modifier.width(20.dp))
-        Text(if (enabled) "ON" else "OFF", color = if (focused) Color.Black else if (enabled) AccentCyan else TextMuted,
-            fontSize = 17.sp, fontWeight = FontWeight.Bold)
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(14.dp))
+                .background(
+                    if (focused) (if (enabled) Color.Black.copy(alpha = 0.2f) else Color.Black.copy(alpha = 0.1f))
+                    else (if (enabled) AccentCyan.copy(alpha = 0.22f) else SurfaceVariant)
+                )
+                .border(
+                    1.dp,
+                    if (focused) (if (enabled) Color.Black else Color.Black.copy(alpha = 0.4f))
+                    else (if (enabled) AccentCyan.copy(alpha = 0.7f) else Color.White.copy(alpha = 0.12f)),
+                    RoundedCornerShape(14.dp)
+                )
+                .padding(horizontal = 14.dp, vertical = 6.dp)
+        ) {
+            Text(
+                text = if (enabled) "ON" else "OFF",
+                color = if (focused) Color.Black else (if (enabled) AccentCyan else TextMuted),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
     }
 }
 

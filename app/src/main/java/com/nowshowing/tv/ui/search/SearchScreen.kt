@@ -9,6 +9,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import com.nowshowing.tv.ui.theme.FocusGlow
+import com.nowshowing.tv.ui.theme.CardBorder
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -28,6 +29,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -235,11 +237,42 @@ fun SearchScreen(
                     }
                 } else if (uiState.results.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(
-                            text = "Search title words; plot/theme keywords are not supported.",
-                            color = TextMuted,
-                            fontSize = 14.sp
-                        )
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                            modifier = Modifier.padding(24.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(56.dp)
+                                    .clip(RoundedCornerShape(28.dp))
+                                    .background(SurfaceDark)
+                                    .border(1.dp, CardBorder, RoundedCornerShape(28.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Search,
+                                    contentDescription = null,
+                                    tint = AccentCyan,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(14.dp))
+                            Text(
+                                text = if (uiState.query.isBlank()) "Search Movies & Series" else "No matching titles found",
+                                color = TextPrimary,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = if (uiState.query.isBlank()) "Type a title on the on-screen keyboard or press the mic button for voice search." else "Try searching with different title keywords or release years.",
+                                color = TextMuted,
+                                fontSize = 13.sp,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                modifier = Modifier.widthIn(max = 380.dp)
+                            )
+                        }
                     }
                 } else {
                     Column(Modifier.fillMaxSize()) {
