@@ -40,6 +40,7 @@ import com.nowshowing.tv.ui.common.TvSectionTab
 import com.nowshowing.tv.ui.common.TvTopBar
 import com.nowshowing.tv.ui.player.TvPlayerActionButton
 import com.nowshowing.tv.ui.theme.*
+import kotlinx.coroutines.launch
 
 private enum class SettingsSection(val label: String, val description: String) {
     PLAYBACK("Playback", "Settle in and keep watching."),
@@ -54,6 +55,11 @@ private enum class SettingsSection(val label: String, val description: String) {
 fun SettingsScreen(viewModel: SettingsViewModel, onNavigate: (String) -> Unit) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    var checkingUpdate by remember { mutableStateOf(false) }
+    var updateFeedback by remember { mutableStateOf<String?>(null) }
+    var showUpdateDialog by remember { mutableStateOf(false) }
+    var availableRelease by remember { mutableStateOf<GitHubRelease?>(null) }
     var sectionName by rememberSaveable {
         mutableStateOf(if (MetadataHealth.failure.value != null) SettingsSection.METADATA.name else SettingsSection.PLAYBACK.name)
     }
@@ -79,6 +85,48 @@ fun SettingsScreen(viewModel: SettingsViewModel, onNavigate: (String) -> Unit) {
         if (restoreReportFocus) { withFrameNanos { }; reportFocus.requestFocus(); restoreReportFocus = false }
     }
     if (showReport) photoReport?.let { HealthPhotoDialog(it) { showReport = false; restoreReportFocus = true } }
+    if (showUpdateDialog) {
+        availableRelease?.let { release ->
+            AlertDialog(
+                onDismissRequest = { showUpdateDialog = false },
+                title = { Text("Update available: ${release.tagName}") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            text = release.name ?: release.tagName,
+                            fontWeight = FontWeight.Bold,
+                            color = AccentCyan
+                        )
+                        val notes = release.body?.take(300)?.trim().orEmpty()
+                        if (notes.isNotBlank()) {
+                            Text(
+                                text = if (notes.length >= 300) "$notes…" else notes,
+                                color = TextSecondary,
+                                fontSize = 14.sp
+                            )
+                        }
+                        Text(
+                            text = "Visit the GitHub release page to view details and download the update.",
+                            color = TextMuted,
+                            fontSize = 13.sp
+                        )
+                    }
+                },
+                confirmButton = {
+                    TvPlayerActionButton("Open release page", null) {
+                        showUpdateDialog = false
+                        runCatching {
+                            val url = release.htmlUrl.ifBlank { "https://github.com/smile-plzz/NowShowing-Stream-Android-TV/releases" }
+                            context.startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url)))
+                        }
+                    }
+                },
+                dismissButton = {
+                    TvPlayerActionButton("Dismiss", null) { showUpdateDialog = false }
+                }
+            )
+        }
+    }
 
     Column(Modifier.fillMaxSize().background(BgDark)) {
         TvTopBar("settings", onNavigate)
@@ -200,6 +248,37 @@ fun SettingsScreen(viewModel: SettingsViewModel, onNavigate: (String) -> Unit) {
                     }
                     SettingsSection.ABOUT -> {
                         item(key = "about") { InfoCard("NowShowing TV", "Created by Ismail Hossain\nDhaka-based technology professional working across Shopify SaaS, QA, product support and practical software development. An independent project for comfortable everyday viewing on Android TV.\nVersion ${BuildConfig.VERSION_NAME} · Code ${BuildConfig.VERSION_CODE}\nVariant ${BuildConfig.BUILD_TYPE}\nCommit ${BuildConfig.BUILD_COMMIT}") }
+                        item(key = "update_check") {
+                            InfoCard("Application updates", "Check if a newer release of NowShowing TV is available on GitHub.")
+                            TvPlayerActionButton(
+                                if (checkingUpdate) "Checking for updates…" else "Check for updates",
+                                null,
+                                enabled = !checkingUpdate
+                            ) {
+                                checkingUpdate = true
+                                updateFeedback = null
+                                coroutineScope.launch {
+                                    when (val res = UpdateChecker.checkForUpdate(BuildConfig.VERSION_NAME)) {
+                                        is UpdateCheckResult.UpdateAvailable -> {
+                                            availableRelease = res.release
+                                            showUpdateDialog = true
+                                        }
+                                        is UpdateCheckResult.UpToDate -> {
+                                            updateFeedback = "You are running the latest version (${BuildConfig.VERSION_NAME})."
+                                            android.widget.Toast.makeText(context, updateFeedback, android.widget.Toast.LENGTH_SHORT).show()
+                                        }
+                                        is UpdateCheckResult.Error -> {
+                                            updateFeedback = res.message
+                                            android.widget.Toast.makeText(context, updateFeedback, android.widget.Toast.LENGTH_LONG).show()
+                                        }
+                                    }
+                                    checkingUpdate = false
+                                }
+                            }
+                            if (updateFeedback != null) {
+                                Feedback(updateFeedback.orEmpty())
+                            }
+                        }
                         listOf(
                             "LinkedIn" to "https://www.linkedin.com/in/md-ismail-hossain-2938541b1/",
                             "Facebook" to "https://www.facebook.com/optimisticyetpessimist/",
