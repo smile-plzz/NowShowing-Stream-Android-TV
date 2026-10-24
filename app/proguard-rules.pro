@@ -12,6 +12,7 @@
 -keep class com.nowshowing.tv.domain.source.** { *; }
 -keep class com.nowshowing.tv.playback.** { *; }
 -keep class com.nowshowing.tv.privacy.** { *; }
+-keep class com.nowshowing.tv.ui.settings.GitHubRelease { *; }
 
 # ── Room Database ────────────────────────────────────────────────────────────
 -keep class androidx.room.** { *; }

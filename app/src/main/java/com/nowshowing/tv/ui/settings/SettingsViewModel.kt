@@ -161,6 +161,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         _uiState.value = _uiState.value.copy(healthReport = null, reportReady = false, diagnosticText = "No saved report.")
     }
 
+    @OptIn(coil.annotation.ExperimentalCoilApi::class)
     fun clearCaches() {
         if (_uiState.value.isClearingCache) return
         _uiState.value = _uiState.value.copy(isClearingCache = true, maintenanceMessage = "Clearing metadata and image caches…")

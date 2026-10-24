@@ -30,7 +30,7 @@ class MoodYearPickerTest {
         compose.setContent { NowShowingTheme { YearPicker(null, { dismissed = true }, { applied = true }) } }
         compose.onNodeWithText("All Years").assertIsFocused()
         // Back is handled by the dialog window, outside the Compose owner used for key injection.
-        compose.runOnIdle { ShadowDialog.getLatestDialog().onBackPressed() }
+        @Suppress("DEPRECATION") compose.runOnIdle { ShadowDialog.getLatestDialog().onBackPressed() }
         compose.runOnIdle {
             assertTrue(dismissed)
             assertFalse(applied)
