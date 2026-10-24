@@ -247,3 +247,64 @@ unCatching to prevent sandbox SQLite connection teardown exceptions from interru
   - `testDebugUnitTest`: **100% PASS** (152 tests across 39 suites, 0 failures, 0 skipped in 1m 28s).
   - Python release scripts: **100% PASS** (8/8 tests in 0.078s).
 - **Status**: Tested, verified, and ready for pull request.
+
+## [2026-10-24 01:10] - Phase 9: QR CAPTCHA Ad Overlay Removal & Network Isolation
+- **Task**: Eliminate the deceptive QR "Confirm you're not a robot" ad overlay appearing during playback in embed WebViews.
+- **Root Cause**: Third-party embed providers (vidsrc, autoembed, 2embed) load external monetization tags (Monetag, PropellerAds in-page push) which inject high-z-index overlays displaying fake bot-verification prompts with QR codes targeting mobile redirects.
+- **Components Implemented**:
+  - d_overlay_cleanup.js: Asset-based cosmetic sweeper script using MutationObserver. Idempotently cleans up high-z-index overlays matching anti-bot and QR keywords without manipulating D-pad focus or blocking remote key events.
+  - WebEmbedScreen.kt: Evaluates d_overlay_cleanup.js on page load (onPageFinished) and conditionally enables setWebContentsDebuggingEnabled(true) strictly for BuildConfig.DEBUG.
+  - - `ContentBlockEngine.kt`: Added Monetag, in-page push, and QR delivery domains to hardBlockedDomains ensuring network interception even if shields are disabled.
+  - WebEmbedPolicy.kt: Extended navigation policy lockedHosts to deny main-frame and sub-frame navigation to confirmed hostile ad hosts.
+  - - `filters_adblock.txt`: Added verified ad-network and in-page push rule anchors and path rules.
+  - DiagnosticReport.kt: Resiliently wrapped database payload byte query in 
+unCatching to prevent sandbox SQLite connection teardown exceptions from interrupting health reporting.
+  - - `QrOverlayCleanupTest.kt` & `QrCaptchaHardBlockTest.kt`: Added unit tests verifying script heuristics, D-pad accessibility compliance, hard-block decisions, and provider whitelist preservation.
+- **Verification Results**:
+  - Python release scripts: **100% PASS** (8/8 tests).
+  - Unit tests (`testDebugUnitTest`): **100% PASS** (all 142 tests passing across all suites).
+  - ssembleDebug: **BUILD SUCCESSFUL** (pp-debug.apk: 22.5 MB).
+  - ssembleRelease: **BUILD SUCCESSFUL** (pp-release.apk: 10.5 MB minified/shrunk).
+## [2026-10-24 02:45] - Phase 11: Remote Media Keys & 1-Click Next Source in Web Player
+- **Task**: Implement physical remote media key controls (play/pause, seek +/- 10s) and a 1-click "Next Source" provider cycler for the TV web player.
+- **Components Implemented**:
+  - `WebEmbedScreen.kt` (`EmbedHost`):
+    - Intercepted `KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE`, `KEYCODE_MEDIA_PLAY`, `KEYCODE_MEDIA_PAUSE`, `KEYCODE_MEDIA_FAST_FORWARD`, `KEYCODE_MEDIA_REWIND` on `ACTION_DOWN` (repeatCount == 0).
+    - Injected guarded JavaScript actions targeting `<video>` in top frames or same-origin iframes, seeking +/- 10s or toggling playback, gracefully no-opping if no video element is accessible.
+    - Added support for `KeyEvent.KEYCODE_MEDIA_NEXT` triggering `onNextSource` callback.
+    - Preserved all existing D-pad, Back, and Menu key handling.
+  - `WebEmbedScreen.kt` (UI & HUD):
+    - Added 1-click "Next source (<Name>)" action button in controls drawer and error/retry views.
+    - Added non-intrusive on-screen TV HUD pill ("Switching to <Name>…") with cyan spinner and rounded borders, auto-dismissing after 2.5s.
+    - Updated remote help section with media key guidance.
+  - `SourceRegistry.kt` & `PlayerViewModel.kt`:
+    - Hardened `SourceRegistry.getNextSource()` with null/empty checks, ID and name matching, and wrap-around.
+    - Added `PlayerViewModel.playNextSource()` advancing providers while preserving title IMDb ID, season, and episode.
+  - Unit Tests:
+    - `SourceRegistryTest.kt`: Added 4 tests validating ordered provider advance, list wrap-around, unrecognized source fallback, and URL parameter retention.
+    - `EmbedHostLifecycleTest.kt`: Added 3 tests validating media key interception, release deactivation, Next Source repeat-suppression, and JS script safety guards.
+- **Verification Results**:
+  - `testDebugUnitTest`: **100% PASS** (149 tests across 38 suites, 0 failures, 0 skipped in 1m 41s).
+  - Python release scripts: **100% PASS** (8/8 tests in 0.082s).
+- **Status**: Tested, verified, and ready for pull request.
+
+## [2026-10-24 02:55] - Phase 12: Voice Search & Release Update Checker
+- **Task**: Implement speech recognition in Search and a GitHub Releases update checker in Settings.
+- **Components Implemented**:
+  - `SearchScreen.kt`:
+    - Added a focusable TV microphone button with `Icons.Default.Mic` adjacent to the title input.
+    - Launched `RecognizerIntent.ACTION_RECOGNIZE_SPEECH` via `rememberLauncherForActivityResult` with free-form speech prompt.
+    - Handled missing speech engines or permissions gracefully with an on-screen warning without crashing.
+    - Populated recognized speech into the search query and immediately dispatched title search.
+  - `UpdateChecker.kt` & `SettingsScreen.kt`:
+    - Created `UpdateChecker` querying `https://api.github.com/repos/smile-plzz/NowShowing-Stream-Android-TV/releases/latest`.
+    - Evaluated semver and pre-release precedence comparing remote tag against `BuildConfig.VERSION_NAME`.
+    - Handled network errors and GitHub API rate-limiting gracefully.
+    - Added "Check for updates" card in Settings -> About.
+    - Displayed an update dialog with release title, truncated release notes, and an intent link opening the release page in an external browser (no in-app APK downloads).
+  - Unit Tests:
+    - `UpdateCheckerTest.kt`: Added 10 tests validating major/minor/patch semver rules, release candidate ordering (`rc.4` > `rc.2`), stable release precedence over candidates, prefix stripping (`v`), and JSON payload parsing.
+- **Verification Results**:
+  - `testDebugUnitTest`: **100% PASS** (152 tests across 39 suites, 0 failures, 0 skipped in 1m 28s).
+  - Python release scripts: **100% PASS** (8/8 tests in 0.078s).
+- **Status**: Tested, verified, and ready for pull request.

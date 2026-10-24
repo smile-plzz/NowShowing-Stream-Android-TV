@@ -4,7 +4,7 @@ A standalone movie and series discovery app for Android TV / Google TV, by Ismai
 
 **Release candidate: 1.6.0-rc.5 · Android version code 16004**
 
-Version 1.6.0-rc.5 adds renderer recovery, curated mood recommendations and a cloud JSON catalog. Download availability and successful build status are listed on the release and Actions pages below. Stable upgrade acceptance remains pending. See [App health and TV measurements](docs/APP_HEALTH.md).
+Version 1.6.0-rc.5 adds hardware remote media key controls, 1-click Next Source cycling, speech recognition Voice Search, in-app GitHub update checking, QR CAPTCHA ad overlay elimination, pruned network filters, renderer crash recovery, and 158 verified unit tests. Download availability and successful build status are listed on the release and Actions pages below. See [App health and TV measurements](docs/APP_HEALTH.md).
 
 [Published APK releases](https://github.com/smile-plzz/NowShowing-Stream-Android-TV/releases) · [Build runs and candidate artifacts](https://github.com/smile-plzz/NowShowing-Stream-Android-TV/actions/workflows/build-apk.yml) · [Installation](docs/INSTALLATION.md)
 

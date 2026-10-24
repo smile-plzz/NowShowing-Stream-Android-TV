@@ -234,6 +234,11 @@ class PlayerViewModel(application: Application, private val repository: MediaRep
         selectSource(next)
     }
 
+    fun playNextSource() {
+        val next = SourceRegistry.getNextSource(_uiState.value.currentSource)
+        selectSource(next)
+    }
+
     fun retry() {
         if (!_uiState.value.imdbId.matches(Regex("tt[0-9]+"))) return
         _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
