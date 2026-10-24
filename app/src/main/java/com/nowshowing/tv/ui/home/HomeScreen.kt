@@ -56,6 +56,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusRequester
 import com.nowshowing.tv.ui.common.rememberReturnFocusRequester
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -423,6 +424,12 @@ fun TvActionButton(
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
 
+    val scale by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (isFocused) 1.05f else 1.0f,
+        animationSpec = androidx.compose.animation.core.tween(durationMillis = 150, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+        label = "hero_btn_scale"
+    )
+
     val bg = when {
         isFocused -> FocusBorder
         isPrimary -> AccentCyan
@@ -436,17 +443,18 @@ fun TvActionButton(
 
     Row(
         modifier = Modifier
+            .scale(scale)
             .shadow(
-                elevation = if (isFocused) 12.dp else 2.dp,
-                shape = RoundedCornerShape(8.dp),
+                elevation = if (isFocused) 14.dp else 2.dp,
+                shape = RoundedCornerShape(10.dp),
                 spotColor = if (isFocused) FocusGlow else Color.Transparent
             )
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(10.dp))
             .background(bg)
             .border(
                 width = if (isFocused) 2.dp else 0.dp,
                 color = if (isFocused) Color.White else Color.Transparent,
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(10.dp)
             )
             .focusRequester(actionFocus)
             .clickable(
@@ -454,7 +462,7 @@ fun TvActionButton(
                 indication = null,
                 onClick = { rememberAction(); onClick() }
             )
-            .padding(horizontal = 20.dp, vertical = 10.dp),
+            .padding(horizontal = 22.dp, vertical = 11.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
@@ -516,24 +524,35 @@ private fun ContinueWatchingRow(
 private fun MoodTeaserBanner(onClick: () -> Unit) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
+    val scale by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (isFocused) 1.025f else 1.0f,
+        animationSpec = androidx.compose.animation.core.tween(150, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+        label = "mood_teaser_scale"
+    )
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 48.dp, vertical = 10.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .scale(scale)
+            .shadow(
+                elevation = if (isFocused) 10.dp else 0.dp,
+                shape = RoundedCornerShape(14.dp),
+                spotColor = if (isFocused) FocusGlow else Color.Transparent
+            )
+            .clip(RoundedCornerShape(14.dp))
             .background(if (isFocused) SurfaceVariant else SurfaceDark)
             .border(
                 width = if (isFocused) 2.dp else 1.dp,
                 color = if (isFocused) FocusBorder else Color.White.copy(alpha = 0.08f),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(14.dp)
             )
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
                 onClick = onClick
             )
-            .padding(horizontal = 24.dp, vertical = 16.dp)
+            .padding(horizontal = 26.dp, vertical = 18.dp)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically

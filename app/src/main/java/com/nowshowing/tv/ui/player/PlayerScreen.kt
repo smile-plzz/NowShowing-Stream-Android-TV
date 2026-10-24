@@ -59,6 +59,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -1098,7 +1099,14 @@ internal fun TvPlayerActionButton(
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
 
+    val scale by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (isFocused && enabled) 1.04f else 1.0f,
+        animationSpec = androidx.compose.animation.core.tween(150, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+        label = "player_action_btn_scale"
+    )
+
     val bg = when {
+        !enabled -> SurfaceDark.copy(alpha = 0.5f)
         isFocused -> FocusBorder
         isAccent -> AccentCyan.copy(alpha = 0.2f)
         else -> SurfaceDark
@@ -1113,18 +1121,19 @@ internal fun TvPlayerActionButton(
 
     Row(
         modifier = modifier
+            .scale(scale)
             .heightIn(min = 48.dp)
             .shadow(
-                elevation = if (isFocused) 12.dp else 2.dp,
-                shape = RoundedCornerShape(8.dp),
-                spotColor = if (isFocused) FocusGlow else Color.Transparent
+                elevation = if (isFocused && enabled) 12.dp else 2.dp,
+                shape = RoundedCornerShape(10.dp),
+                spotColor = if (isFocused && enabled) FocusGlow else Color.Transparent
             )
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(10.dp))
             .background(bg)
             .border(
-                width = if (isFocused) 2.dp else 1.dp,
-                color = if (isFocused) Color.White else if (isAccent) AccentCyan.copy(alpha = 0.5f) else Color.White.copy(alpha = 0.12f),
-                shape = RoundedCornerShape(8.dp)
+                width = if (isFocused && enabled) 2.dp else 1.dp,
+                color = if (isFocused && enabled) Color.White else if (isAccent) AccentCyan.copy(alpha = 0.5f) else Color.White.copy(alpha = 0.12f),
+                shape = RoundedCornerShape(10.dp)
             )
             .clickable(enabled = enabled, interactionSource = interactionSource, indication = null, onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 12.dp),

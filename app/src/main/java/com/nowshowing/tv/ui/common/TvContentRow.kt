@@ -1,6 +1,11 @@
 package com.nowshowing.tv.ui.common
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import com.nowshowing.tv.ui.theme.AccentCyan
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -45,11 +50,20 @@ fun TvContentRow(
                 .padding(horizontal = 48.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .height(18.dp)
+                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(2.dp))
+                    .background(com.nowshowing.tv.ui.theme.AccentCyan)
+            )
+            Spacer(modifier = Modifier.width(10.dp))
             Text(
                 text = title,
                 color = TextPrimary,
                 fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 0.3.sp
             )
         }
 
@@ -57,7 +71,7 @@ fun TvContentRow(
 
         LazyRow(
             state = listState,
-            contentPadding = PaddingValues(horizontal = 48.dp),
+            contentPadding = PaddingValues(horizontal = 48.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.fillMaxWidth()
         ) {

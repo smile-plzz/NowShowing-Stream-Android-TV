@@ -8,6 +8,8 @@
 - **Catalog JSON Validation & Syntax Repair**: Repaired 50 unquoted IMDb IDs in `catalog/catalog.json` so all 41 curated catalog sections parse strictly with zero JSON syntax errors according to `CloudCatalog` spec.
 - **Compiler & R8 Optimization**: Migrated `SearchScreen` backspace icon to `Icons.AutoMirrored.Filled.Backspace`, added `@OptIn(coil.annotation.ExperimentalCoilApi::class)` on disk cache interactions, and preserved `GitHubRelease` deserialization DTO in `proguard-rules.pro` for shrunk release builds.
 - **Comprehensive Unit Testing**: 158 unit tests passing across 39 suites (100% green), including 17 new regression tests for media keys, source advance, update checking, and network filtering.
+- **10-Foot Focus Physics & Tactile Vibe**: Upgraded card focus scale from subtle 1.035x to confident 1.06x with 14dp ambient glow halo, 12dp rounded corners, and padded content rows preventing edge clipping. Added fluid focus scale animations across action buttons, navigation tabs, mood pills, episode cards, and on-screen keyboard keys for tactile remote responsiveness.
+- **Cinematic Top Bar & Shelves**: Refined navigation header with vertical ambient gradient scrim, branded champagne glow dot, pill-shaped tabs with focus elevation, and warm accent category indicators across browsing shelves.
 
 ## 1.6.0-rc.4 (16003) — Daily-use reliability
 

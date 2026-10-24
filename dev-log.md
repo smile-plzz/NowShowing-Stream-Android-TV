@@ -329,3 +329,39 @@ unCatching to prevent sandbox SQLite connection teardown exceptions from interru
   - Python packaging & release integrity tests: **100% PASS** (8/8 tests in 0.14s).
   - `assembleDebug` & `assembleRelease`: **BUILD SUCCESSFUL** (Debug APK: 22.7 MB `com.nowshowing.tv.preview`; Release APK: 10.5 MB `com.nowshowing.tv`, minified with R8, shrunk resources, v2 signature verified).
 - **Status**: Production release candidate validated and ready for PR merge into `main`.
+
+## [2026-10-24 16:25] - Phase 14: UI/UX Design, Vibe Aesthetics & Focus Polish
+- **Task**: Optimize and elevate the UI/UX design, visual aesthetics, and 10-foot remote responsiveness across the entire Android TV application.
+- **Components Implemented & Enhanced**:
+  - `TvFocusableCard.kt`:
+    - Increased focus scale from subtle `1.035f` to confident, punchy `1.06f` for unmistakable focus feedback on 10-foot TV displays.
+    - Enhanced focus elevation shadow to `14.dp` with ambient and spot `FocusGlow` halo.
+    - Updated card clipping and border radius to modern `12.dp` rounded corners.
+    - Styled `ShimmerBox` placeholder with matching `12.dp` clip and subtle border.
+  - `TvContentRow.kt`:
+    - Added vertical content padding (`8.dp`) to `LazyRow` ensuring scaling cards never clip their top or bottom edges against the shelf boundaries.
+    - Added signature 4dp vertical accent pill (`AccentCyan`) next to row headers for clean visual rhythm.
+  - `TvTopBar.kt` & `TvSectionTab.kt`:
+    - Refined top bar with ambient vertical gradient scrim and champagne glow dot next to the "NOWSHOWING" brand typography.
+    - Redesigned navigation tabs into tactile `20.dp` capsule pills with animated `1.05f` focus scaling and drop glow.
+  - `HomeScreen.kt`:
+    - Enhanced `HomeHeroBanner` with subtle border, depth elevation, and tactile `1.05f` focus scale on `TvActionButton`.
+    - Added animated `1.025f` scale, subtle elevation shadow, and smooth gradient background to `MoodTeaserBanner`.
+  - `MoodScreen.kt`:
+    - Added dynamic `1.06f` scale animation and focus glow to `MoodPill`.
+    - Added `1.05f` focus scale and elevation to `SurpriseMeButton`.
+  - `DetailsScreen.kt`:
+    - Added `1.05f` focus scale and elevation to `DetailActionButton` ("Play", "Watchlist", "Source").
+    - Added `1.06f` focus scale to `SeasonPill`.
+    - Added `1.05f` focus scale and `10.dp` rounded shape to `EpisodeCard`.
+  - `SearchScreen.kt`:
+    - Added `1.10f` focus scale on `KeyButton` making remote typing on the TV keyboard feel snappy and tactile.
+    - Added `1.08f` focus scale on `ActionKeyButton` and `ActionIconButton`.
+  - `PlayerScreen.kt`:
+    - Added `1.04f` focus scale and elevation to `TvPlayerActionButton`.
+- **Verification Results**:
+  - `compileDebugKotlin`: **BUILD SUCCESSFUL** with **0 compiler warnings and 0 errors**.
+  - `testDebugUnitTest`: **100% PASS** (158 tests across 39 suites in 19.2s).
+  - Python release & integrity tests: **100% PASS** (8/8 tests in 0.07s).
+  - `assembleDebug` & `assembleRelease`: **BUILD SUCCESSFUL** (Debug APK: 22.8 MB; Release APK: 10.5 MB minified/shrunk with R8, v2 signature verified).
+- **Status**: Tested, verified, and ready for pull request.

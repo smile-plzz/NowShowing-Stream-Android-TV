@@ -83,7 +83,7 @@ fun TvFocusableCard(
     val isFocused by interactionSource.collectIsFocusedAsState()
 
     val scale by animateFloatAsState(
-        targetValue = if (isFocused) 1.035f else 1.0f,
+        targetValue = if (isFocused) 1.06f else 1.0f,
         animationSpec = tween(durationMillis = 150, easing = FastOutSlowInEasing),
         label = "card_scale"
     )
@@ -99,19 +99,19 @@ fun TvFocusableCard(
                 .width(width)
                 .height(height)
                 .shadow(
-                    elevation = if (isFocused) 6.dp else 0.dp,
-                    shape = RoundedCornerShape(10.dp),
+                    elevation = if (isFocused) 14.dp else 2.dp,
+                    shape = RoundedCornerShape(12.dp),
                     ambientColor = if (isFocused) FocusGlow else Color.Black,
                     spotColor = if (isFocused) FocusGlow else Color.Black
                 )
-                .clip(RoundedCornerShape(10.dp))
+                .clip(RoundedCornerShape(12.dp))
                 .background(SurfaceDark)
                 .border(
                     BorderStroke(
                         width = if (isFocused) 2.5.dp else 1.dp,
                         color = if (isFocused) FocusBorder else CardBorder
                     ),
-                    shape = RoundedCornerShape(10.dp)
+                    shape = RoundedCornerShape(12.dp)
                 )
                 .semantics { contentDescription = listOf(title, year, badge.orEmpty()).filter { it.isNotBlank() }.joinToString(", ") }
                 .focusRequester(returnRequester)
@@ -234,5 +234,10 @@ fun TvFocusableCard(
 /** Quiet placeholders avoid an animation clock for every poster on low-powered TVs. */
 @Composable
 fun ShimmerBox(modifier: Modifier = Modifier) {
-    Box(modifier = modifier.background(SurfaceVariant))
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(SurfaceVariant)
+            .border(1.dp, CardBorder, RoundedCornerShape(12.dp))
+    )
 }

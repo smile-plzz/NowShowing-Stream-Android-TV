@@ -45,6 +45,8 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -203,6 +205,11 @@ private fun MoodPill(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
+    val scale by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (isFocused) 1.06f else 1.0f,
+        animationSpec = androidx.compose.animation.core.tween(150, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+        label = "mood_pill_scale"
+    )
 
     val bg = when {
         isFocused -> FocusBorder
@@ -218,19 +225,25 @@ private fun MoodPill(
 
     Row(
         modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
+            .scale(scale)
+            .shadow(
+                elevation = if (isFocused) 10.dp else 0.dp,
+                shape = RoundedCornerShape(12.dp),
+                spotColor = if (isFocused) com.nowshowing.tv.ui.theme.FocusGlow else Color.Transparent
+            )
+            .clip(RoundedCornerShape(12.dp))
             .background(bg)
             .border(
                 width = if (isFocused) 2.dp else if (isSelected) 1.5.dp else 1.dp,
                 color = if (isFocused) Color.White else if (isSelected) AccentCyan else Color.White.copy(alpha = 0.08f),
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(12.dp)
             )
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
                 onClick = onClick
             )
-            .padding(horizontal = 14.dp, vertical = 10.dp),
+            .padding(horizontal = 16.dp, vertical = 11.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(text = mood.emoji, fontSize = 16.sp)
@@ -248,17 +261,33 @@ private fun MoodPill(
 private fun SurpriseMeButton(onClick: () -> Unit) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
+    val scale by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (isFocused) 1.05f else 1.0f,
+        animationSpec = androidx.compose.animation.core.tween(150, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+        label = "surprise_btn_scale"
+    )
 
     Row(
         modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
+            .scale(scale)
+            .shadow(
+                elevation = if (isFocused) 10.dp else 2.dp,
+                shape = RoundedCornerShape(10.dp),
+                spotColor = if (isFocused) com.nowshowing.tv.ui.theme.FocusGlow else Color.Transparent
+            )
+            .clip(RoundedCornerShape(10.dp))
             .background(if (isFocused) FocusBorder else AccentGold)
+            .border(
+                width = if (isFocused) 2.dp else 0.dp,
+                color = if (isFocused) Color.White else Color.Transparent,
+                shape = RoundedCornerShape(10.dp)
+            )
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
                 onClick = onClick
             )
-            .padding(horizontal = 14.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 9.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(

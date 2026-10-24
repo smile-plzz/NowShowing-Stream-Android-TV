@@ -44,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusRequester
 import com.nowshowing.tv.ui.common.rememberReturnFocusRequester
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -503,6 +504,11 @@ private fun DetailActionButton(
     val (actionFocus, rememberAction) = rememberReturnFocusRequester(if (isPrimary) "details-action:play" else "details-action:$label")
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
+    val scale by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (isFocused) 1.05f else 1.0f,
+        animationSpec = androidx.compose.animation.core.tween(durationMillis = 150, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+        label = "detail_action_btn_scale"
+    )
 
     val bg = when {
         isFocused -> FocusBorder
@@ -517,21 +523,22 @@ private fun DetailActionButton(
 
     Row(
         modifier = Modifier
+            .scale(scale)
             .shadow(
                 elevation = if (isFocused) 12.dp else 2.dp,
-                shape = RoundedCornerShape(8.dp),
+                shape = RoundedCornerShape(10.dp),
                 spotColor = if (isFocused) FocusGlow else Color.Transparent
             )
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(10.dp))
             .background(bg)
             .border(
                 width = if (isFocused) 2.dp else 0.dp,
                 color = if (isFocused) Color.White else Color.Transparent,
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(10.dp)
             )
             .focusRequester(actionFocus)
             .clickable(interactionSource = interactionSource, indication = null, onClick = { rememberAction(); onClick() })
-            .padding(horizontal = 18.dp, vertical = 9.dp),
+            .padding(horizontal = 20.dp, vertical = 11.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(imageVector = icon, contentDescription = label, tint = contentColor, modifier = Modifier.size(16.dp))
@@ -596,18 +603,29 @@ private fun SeasonPill(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
+    val scale by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (isFocused) 1.06f else 1.0f,
+        animationSpec = androidx.compose.animation.core.tween(150, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+        label = "season_pill_scale"
+    )
 
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
+            .scale(scale)
+            .shadow(
+                elevation = if (isFocused) 8.dp else 0.dp,
+                shape = RoundedCornerShape(10.dp),
+                spotColor = if (isFocused) FocusGlow else Color.Transparent
+            )
+            .clip(RoundedCornerShape(10.dp))
             .background(if (isFocused) FocusBorder else if (isSelected) SurfaceVariant else SurfaceDark)
             .border(
                 width = if (isFocused) 2.dp else if (isSelected) 1.5.dp else 1.dp,
                 color = if (isFocused) Color.White else if (isSelected) AccentCyan else Color.White.copy(alpha = 0.08f),
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(10.dp)
             )
             .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 18.dp, vertical = 9.dp)
     ) {
         Text(
             text = "Season $season",
@@ -628,19 +646,31 @@ private fun EpisodeCard(
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
 
+    val scale by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (isFocused) 1.05f else 1.0f,
+        animationSpec = androidx.compose.animation.core.tween(150, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+        label = "episode_card_scale"
+    )
+
     Column(
         modifier = Modifier
-            .width(180.dp)
-            .clip(RoundedCornerShape(8.dp))
+            .width(190.dp)
+            .scale(scale)
+            .shadow(
+                elevation = if (isFocused) 10.dp else 0.dp,
+                shape = RoundedCornerShape(10.dp),
+                spotColor = if (isFocused) FocusGlow else Color.Transparent
+            )
+            .clip(RoundedCornerShape(10.dp))
             .background(if (isFocused) FocusBorder else SurfaceDark)
             .border(
                 width = if (isFocused) 2.dp else if (isSelected) 1.dp else 0.dp,
                 color = if (isFocused) Color.White else if (isSelected) AccentCyan else Color.Transparent,
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(10.dp)
             )
             .focusRequester(episodeFocus)
             .clickable(interactionSource = interactionSource, indication = null, onClick = { rememberEpisode(); onClick() })
-            .padding(12.dp)
+            .padding(14.dp)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
