@@ -308,3 +308,24 @@ unCatching to prevent sandbox SQLite connection teardown exceptions from interru
   - `testDebugUnitTest`: **100% PASS** (152 tests across 39 suites, 0 failures, 0 skipped in 1m 28s).
   - Python release scripts: **100% PASS** (8/8 tests in 0.078s).
 - **Status**: Tested, verified, and ready for pull request.
+
+## [2026-10-24 15:40] - Phase 13: Final Build Stabilization, Syntax Repair & Release Optimization
+- **Task**: Address `/goal`: analyze, stabilize, optimize, and ship the final production build after comprehensive codebase review.
+- **Components Implemented & Stabilized**:
+  - `catalog/catalog.json`:
+    - Detected and repaired 50 unquoted IMDb movie IDs in mood categories added during recent owner commits.
+    - Verified against `CloudCatalog` parser constraints: strictly passes all 41 categories, ID regex `tt[0-9]{7,10}`, section limits, and valid JSON.
+  - `SearchScreen.kt`:
+    - Replaced deprecated `Icons.Filled.Backspace` with `Icons.AutoMirrored.Filled.Backspace` for Compose 1.7+ compliance and proper RTL mirror support.
+  - `DiagnosticReport.kt` & `SettingsViewModel.kt`:
+    - Added `@OptIn(coil.annotation.ExperimentalCoilApi::class)` for Coil `diskCache?.size` and `diskCache?.clear()` calls.
+  - `app/proguard-rules.pro`:
+    - Added `-keep class com.nowshowing.tv.ui.settings.GitHubRelease { *; }` to preserve Gson deserialization fields across R8 release minification.
+  - `MoodYearPickerTest.kt`:
+    - Added `@Suppress("DEPRECATION")` on Robolectric shadow dialog `onBackPressed()` test invocation.
+- **Verification Results**:
+  - `compileDebugKotlin`: **BUILD SUCCESSFUL** with **0 compiler warnings and 0 errors**.
+  - `testDebugUnitTest`: **100% PASS** (158 tests across 39 test suites in 44.1s, 0 failures, 0 ignored).
+  - Python packaging & release integrity tests: **100% PASS** (8/8 tests in 0.14s).
+  - `assembleDebug` & `assembleRelease`: **BUILD SUCCESSFUL** (Debug APK: 22.7 MB `com.nowshowing.tv.preview`; Release APK: 10.5 MB `com.nowshowing.tv`, minified with R8, shrunk resources, v2 signature verified).
+- **Status**: Production release candidate validated and ready for PR merge into `main`.

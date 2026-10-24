@@ -10,6 +10,7 @@ import com.nowshowing.tv.data.repository.MetadataHealth
 import java.security.MessageDigest
 
 /** No viewing history, provider URLs, keys, serial numbers, or account identifiers. Call on IO. */
+@OptIn(coil.annotation.ExperimentalCoilApi::class)
 @Suppress("DEPRECATION")
 fun diagnosticReport(context: Context): String = buildString {
     appendLine("NowShowing TV ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")

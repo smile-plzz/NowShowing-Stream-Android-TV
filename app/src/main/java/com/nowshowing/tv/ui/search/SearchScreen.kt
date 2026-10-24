@@ -33,7 +33,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Backspace
+import androidx.compose.material.icons.automirrored.filled.Backspace
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Mic
@@ -348,7 +348,7 @@ private fun TvOnScreenKeyboard(
             modifier = Modifier.fillMaxWidth().padding(top = 2.dp)
         ) {
             ActionKeyButton(text = "SPACE", onClick = onSpace, modifier = Modifier.weight(1.5f))
-            ActionIconButton(icon = Icons.Default.Backspace, contentDesc = "Backspace", onClick = onBackspace, modifier = Modifier.weight(1f))
+            ActionIconButton(icon = Icons.AutoMirrored.Filled.Backspace, contentDesc = "Backspace", onClick = onBackspace, modifier = Modifier.weight(1f))
             ActionIconButton(icon = Icons.Default.Clear, contentDesc = "Clear", onClick = onClear, modifier = Modifier.weight(1f))
             ActionIconButton(icon = Icons.Default.Search, contentDesc = "Search", onClick = onSearch, modifier = Modifier.weight(1.5f), isAccent = true)
         }

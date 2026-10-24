@@ -1,28 +1,13 @@
-# 1.6.0-rc.5 (16004) — TV player remote keys, voice search, update checker, and privacy shield refinement
-
-## Unreleased — Voice Search & Release Update Checker
-
-- Added Voice Search in `SearchScreen.kt` using `RecognizerIntent.ACTION_RECOGNIZE_SPEECH` via `rememberLauncherForActivityResult`, with a TV-focusable microphone button and graceful fallback when speech recognition services are absent.
-- Added GitHub Releases update checker in `SettingsScreen.kt` (`UpdateChecker.kt`) querying latest release tags against `BuildConfig.VERSION_NAME` with semver comparison and release note dialog without in-app APK downloads.
-- Added unit tests in `UpdateCheckerTest.kt` verifying version comparison heuristics, release candidate progression, stable release precedence, and JSON response parsing.
-
-## Unreleased — QR Overlay Removal & Ad Protection
-## 1.6.0-rc.5 (16004)
-## Unreleased — Remote Media Keys & 1-Click Next Source
-
-- Added physical remote media key interception in web player (`KEYCODE_MEDIA_PLAY_PAUSE`, `KEYCODE_MEDIA_PLAY`, `KEYCODE_MEDIA_PAUSE`, `KEYCODE_MEDIA_FAST_FORWARD`, `KEYCODE_MEDIA_REWIND`) dispatching guarded video controls and ±10s seeking.
-- Added 1-click "Next source" action in web player controls drawer and via `KEYCODE_MEDIA_NEXT`, cycling providers in `SourceRegistry` while preserving title IMDb ID, season, and episode.
-- Added top-center TV HUD indicator ("Switching to <Source>…") with cyan accent progress badge during source transitions.
-- Added 7 unit tests in `SourceRegistryTest` and `EmbedHostLifecycleTest` verifying ordered provider advance, list wrap-around, media key interception, and video script error resilience.
-
-## Unreleased — QR Overlay Removal & Ad Protection
+# 1.6.0-rc.5 (16004) — TV player remote keys, voice search, update checker, privacy shield refinement, and final stabilization
 
 - **Physical Remote Media Keys**: Intercept hardware media keys (`PLAY_PAUSE`, `PLAY`, `PAUSE`, `FAST_FORWARD`, `REWIND`) in web embed playback, executing guarded JS actions with ±10s seeking and safe no-ops when video elements are unmounted or inside cross-origin iframes.
 - **1-Click Next Source**: Instant provider cycler in `SourceRegistry` preserving IMDb ID, season, and episode, accessible from the web player controls drawer and via `KEYCODE_MEDIA_NEXT` on physical remotes, with top-center TV HUD notification.
 - **Voice Search**: Added a focusable TV microphone button in `SearchScreen` launching Android system speech recognition (`ACTION_RECOGNIZE_SPEECH`) with graceful fallback if speech engines are unavailable.
 - **GitHub Releases Update Checker**: Integrated `UpdateChecker` in `SettingsScreen` (About) comparing `BuildConfig.VERSION_NAME` against the latest GitHub release tag with semver evaluation and release note modal dialog.
 - **Privacy Shield & Adblock Hardening**: Injected idempotent MutationObserver DOM sweeper for deceptive QR bot-verification overlays, hard-blocked verified hostile redirect networks, pruned speculative domains, moved generic web push services to user-configurable filters, and dropped broad keyword patterns.
-- **Comprehensive Unit Testing**: 152 unit tests passing across 39 suites (100% green), including 17 new regression tests for media keys, source advance, update checking, and network filtering.
+- **Catalog JSON Validation & Syntax Repair**: Repaired 50 unquoted IMDb IDs in `catalog/catalog.json` so all 41 curated catalog sections parse strictly with zero JSON syntax errors according to `CloudCatalog` spec.
+- **Compiler & R8 Optimization**: Migrated `SearchScreen` backspace icon to `Icons.AutoMirrored.Filled.Backspace`, added `@OptIn(coil.annotation.ExperimentalCoilApi::class)` on disk cache interactions, and preserved `GitHubRelease` deserialization DTO in `proguard-rules.pro` for shrunk release builds.
+- **Comprehensive Unit Testing**: 158 unit tests passing across 39 suites (100% green), including 17 new regression tests for media keys, source advance, update checking, and network filtering.
 
 ## 1.6.0-rc.4 (16003) — Daily-use reliability
 
