@@ -217,7 +217,8 @@ Prepared 1.5.0-rc.2 / 15002 from d5590b5. Current source contracts: docs/ARCHITE
   - - `ContentBlockEngine.kt`: Added Monetag, in-page push, and QR delivery domains to hardBlockedDomains ensuring network interception even if shields are disabled.
   - WebEmbedPolicy.kt: Extended navigation policy lockedHosts to deny main-frame and sub-frame navigation to confirmed hostile ad hosts.
   - - `filters_adblock.txt`: Added verified ad-network and in-page push rule anchors and path rules.
-  - DiagnosticReport.kt: Resiliently wrapped database payload byte query in unCatching to prevent sandbox SQLite connection teardown exceptions from interrupting health reporting.
+  - DiagnosticReport.kt: Resiliently wrapped database payload byte query in 
+unCatching to prevent sandbox SQLite connection teardown exceptions from interrupting health reporting.
   - - `QrOverlayCleanupTest.kt` & `QrCaptchaHardBlockTest.kt`: Added unit tests verifying script heuristics, D-pad accessibility compliance, hard-block decisions, and provider whitelist preservation.
 - **Verification Results**:
   - Python release scripts: **100% PASS** (8/8 tests).
