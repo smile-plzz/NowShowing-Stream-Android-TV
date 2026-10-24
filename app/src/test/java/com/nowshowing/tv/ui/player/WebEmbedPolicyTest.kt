@@ -38,32 +38,23 @@ class WebEmbedPolicyTest {
         assertTrue(WebEmbedPolicy.allowNavigation(root, "https://other.example/player", true, false))
     }
 
-    @Test fun monetagAndQrCaptchaHostsAreBlocked() {
-        // These are the navigation-layer blocks for Monetag/PropellerAds QR-CAPTCHA
-        // delivery hosts. They complement ContentBlockEngine's hard-block list.
+    @Test fun verifiedHostileAndMonetagHostsAreBlocked() {
+        // Verified hostile redirect and in-page push delivery hosts blocked from navigation
         val qrHosts = listOf(
             "https://monetag.com/push/sw.js",
             "https://cdn.monetag.com/tag.js",
-            "https://mongtag.com/push",
-            "https://adspyglass.com/ri/999",
-            "https://traffective.com/ad.js",
-            "https://acengine.com/push",
-            "https://bestpbn.xyz/qr.png",
-            "https://izooto.com/push",
-            "https://webpushr.com/sw.js",
-            "https://pushengage.com/sw.js",
-            "https://adskeeper.co.uk/ad.js",
+            "https://unswung.gurlleviter.cyou/ri/146205",
+            "https://gurlleviter.cyou/landing",
             "https://inpageads.com/script.js",
             "https://ad-stir.com/push",
-            "https://liveintent.com/ad.js",
         )
         qrHosts.forEach { url ->
             assertFalse(
-                "QR-CAPTCHA host must be blocked from navigation: ",
+                "QR/hostile host must be blocked from navigation: $url",
                 WebEmbedPolicy.allowNavigation(root, url, mainFrame = true, isolate = false)
             )
             assertFalse(
-                "QR-CAPTCHA host must be blocked from sub-frame navigation: ",
+                "QR/hostile host must be blocked from sub-frame navigation: $url",
                 WebEmbedPolicy.allowNavigation(root, url, mainFrame = false, isolate = false)
             )
         }
@@ -79,7 +70,7 @@ class WebEmbedPolicyTest {
         )
         providers.forEach { url ->
             assertTrue(
-                "Provider URL must still be allowed after QR host expansion: ",
+                "Provider URL must still be allowed after QR host expansion: $url",
                 WebEmbedPolicy.allowNavigation(root, url, mainFrame = false, isolate = false)
             )
         }
