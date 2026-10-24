@@ -1,4 +1,4 @@
-# 1.6.0-rc.2 — TV search and library refinement
+# 1.6.0-rc.5 (16004) — TV player remote keys, voice search, update checker, and privacy shield refinement
 
 ## Unreleased — Remote Media Keys & 1-Click Next Source
 
@@ -9,11 +9,12 @@
 
 ## Unreleased — QR Overlay Removal & Ad Protection
 
-- Injected idempotent MutationObserver DOM sweeper (d_overlay_cleanup.js) into embed WebViews to hide and strip deceptive "Confirm you're not a robot — scan QR code" ad overlays without stealing D-pad focus.
-- Hard-blocked Monetag, PropellerAds in-page push, and affiliate redirect networks in `ContentBlockEngine` and `WebEmbedPolicy` across main frames, sub-frames, and resource requests.
-- Added verified ad-network anchors and push service worker patterns to bundled baseline adblock filters.
-- Added comprehensive unit tests for QR cleanup heuristics, D-pad focus preservation, and network blocking (QrOverlayCleanupTest, QrCaptchaHardBlockTest).
-- Trimmed hard-blocked domains in ContentBlockEngine and WebEmbedPolicy to verified hostile hosts; moved generic web push services to user-configurable shield rules and dropped overly broad keyword path patterns.
+- **Physical Remote Media Keys**: Intercept hardware media keys (`PLAY_PAUSE`, `PLAY`, `PAUSE`, `FAST_FORWARD`, `REWIND`) in web embed playback, executing guarded JS actions with ±10s seeking and safe no-ops when video elements are unmounted or inside cross-origin iframes.
+- **1-Click Next Source**: Instant provider cycler in `SourceRegistry` preserving IMDb ID, season, and episode, accessible from the web player controls drawer and via `KEYCODE_MEDIA_NEXT` on physical remotes, with top-center TV HUD notification.
+- **Voice Search**: Added a focusable TV microphone button in `SearchScreen` launching Android system speech recognition (`ACTION_RECOGNIZE_SPEECH`) with graceful fallback if speech engines are unavailable.
+- **GitHub Releases Update Checker**: Integrated `UpdateChecker` in `SettingsScreen` (About) comparing `BuildConfig.VERSION_NAME` against the latest GitHub release tag with semver evaluation and release note modal dialog.
+- **Privacy Shield & Adblock Hardening**: Injected idempotent MutationObserver DOM sweeper for deceptive QR bot-verification overlays, hard-blocked verified hostile redirect networks, pruned speculative domains, moved generic web push services to user-configurable filters, and dropped broad keyword patterns.
+- **Comprehensive Unit Testing**: 152 unit tests passing across 39 suites (100% green), including 17 new regression tests for media keys, source advance, update checking, and network filtering.
 
 ## 1.6.0-rc.4 (16003) — Daily-use reliability
 

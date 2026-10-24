@@ -36,6 +36,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Backspace
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Mic
+import android.content.Intent
+import android.speech.RecognizerIntent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -73,6 +78,35 @@ fun SearchScreen(
     val gridState = rememberLazyGridState()
     var yearDialog by remember { mutableStateOf(false) }
     var yearText by remember { mutableStateOf("") }
+    var voiceError by remember { mutableStateOf<String?>(null) }
+
+    val voiceLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            val spoken = result.data
+                ?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                ?.firstOrNull()
+            if (!spoken.isNullOrBlank()) {
+                voiceError = null
+                viewModel.setQuery(spoken)
+                viewModel.executeSearch(spoken, reset = true)
+            }
+        }
+    }
+
+    val launchVoiceSearch: () -> Unit = {
+        voiceError = null
+        try {
+            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak a movie or TV show title…")
+            }
+            voiceLauncher.launch(intent)
+        } catch (e: Exception) {
+            voiceError = "Voice search is unavailable on this device."
+        }
+    }
     if (yearDialog) androidx.compose.material3.AlertDialog(
         onDismissRequest = { yearDialog = false },
         title = { Text("Release year") },
@@ -105,14 +139,29 @@ fun SearchScreen(
                     .testTag("search-controls")
                     .verticalScroll(rememberScrollState())
             ) {
-                androidx.compose.material3.OutlinedTextField(
-                    value = uiState.query, onValueChange = viewModel::setQuery,
-                    label = { Text("Movie or series title") },
-                    placeholder = { Text("Type or use the D-pad keyboard below") },
-                    singleLine = true, modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                    keyboardActions = KeyboardActions(onSearch = { viewModel.executeSearch(reset = true) })
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    androidx.compose.material3.OutlinedTextField(
+                        value = uiState.query, onValueChange = viewModel::setQuery,
+                        label = { Text("Movie or series title") },
+                        placeholder = { Text("Type or speak title") },
+                        singleLine = true, modifier = Modifier.weight(1f),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        keyboardActions = KeyboardActions(onSearch = { viewModel.executeSearch(reset = true) })
+                    )
+                    VoiceSearchButton(onClick = launchVoiceSearch)
+                }
+                if (voiceError != null) {
+                    Text(
+                        text = voiceError.orEmpty(),
+                        color = com.nowshowing.tv.ui.theme.AccentGold,
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(top = 4.dp, bottom = 4.dp)
+                    )
+                }
                 Spacer(modifier = Modifier.height(10.dp))
 
                 // Type Filter Pills
@@ -436,3 +485,39 @@ private fun RecentSearchChip(
     }
 }
 
+
+
+@Composable
+private fun VoiceSearchButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isFocused by interactionSource.collectIsFocusedAsState()
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .size(56.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(if (isFocused) FocusBorder else SurfaceDark)
+            .border(
+                width = if (isFocused) 2.dp else 1.dp,
+                color = if (isFocused) Color.White else SurfaceVariant,
+                shape = RoundedCornerShape(8.dp)
+            )
+            .focusable(interactionSource = interactionSource)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            )
+    ) {
+        Icon(
+            imageVector = Icons.Default.Mic,
+            contentDescription = "Voice search",
+            tint = if (isFocused) Color.Black else AccentCyan,
+            modifier = Modifier.size(24.dp)
+        )
+    }
+}
