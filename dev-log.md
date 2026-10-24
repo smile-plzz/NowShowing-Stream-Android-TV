@@ -225,3 +225,14 @@ Prepared 1.5.0-rc.2 / 15002 from d5590b5. Current source contracts: docs/ARCHITE
   - ssembleDebug: **BUILD SUCCESSFUL** (pp-debug.apk: 22.5 MB).
   - ssembleRelease: **BUILD SUCCESSFUL** (pp-release.apk: 10.5 MB minified/shrunk).
 - **Status**: Tested, verified, and ready for pull request.
+## [2026-10-24 02:30] - Phase 10: Hard-Block List Refinement & Policy Cleanup
+- **Task**: Audit and trim the adblock and navigation hard-block lists to remove speculative domains, generic push services, and broad keyword patterns.
+- **Changes**:
+  - ContentBlockEngine.kt: Pruned hardBlockedDomains to only retain verified hostile redirect/QR-CAPTCHA landing hosts (gurlleviter.cyou, unswung.gurlleviter.cyou) and verified delivery networks (monetag.com, inpageads.com, d-stir.com).
+  - WebEmbedPolicy.kt: Aligned lockedHosts navigation restriction with the verified hostile and Monetag domains.
+  - ilters_adblock.txt: Removed mongtag.com (typo), pruned unverified speculative hosts (cengine.com, estpbn.xyz), dropped the overly broad *push-notification* path pattern, and moved generic commercial web-push services (webpushr.com, izooto.com, pushengage.com) under user-configurable shield rules.
+  - Test suites: Updated QrCaptchaHardBlockTest.kt and WebEmbedPolicyTest.kt to verify the trimmed hard-block list and validate that generic push services respect user shields-off settings.
+- **Verification Results**:
+  - Python release scripts: **100% PASS** (8/8 tests).
+  - Unit tests (	estDebugUnitTest): **100% PASS** (all tests green in 1m 3s).
+- **Status**: Tested, verified, and ready for pull request.

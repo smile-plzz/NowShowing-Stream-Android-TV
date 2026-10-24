@@ -5,13 +5,12 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * Verifies that Monetag/PropellerAds QR-CAPTCHA delivery infrastructure is hard-blocked
- * by ContentBlockEngine regardless of user shield preferences.
+ * Verifies that confirmed hostile redirects and verified Monetag/in-page push
+ * delivery networks are hard-blocked by ContentBlockEngine regardless of user
+ * shield preferences.
  *
- * Root cause: embed providers (vidsrc.to, autoembed, 2embed etc.) carry Monetag
- * in-page-push scripts that inject a "Confirm you're not a robot – scan the QR code"
- * overlay on top of the video player. The overlay is injected into the top document
- * and is removed by the cosmetic cleanup script; the network requests are blocked here.
+ * Generic push services (e.g. webpushr, izooto) are tested in filter list
+ * evaluation where user shield toggles are respected.
  */
 class QrCaptchaHardBlockTest {
 
@@ -26,7 +25,7 @@ class QrCaptchaHardBlockTest {
         engine.loadRules(minimalRules, emptyList())
     }
 
-    // --- Monetag hard-block tests ---
+    // --- Hard-block tests (shields off) ---
 
     @Test
     fun monetagIsBlockedWhenShieldsAreOff() {
@@ -46,35 +45,23 @@ class QrCaptchaHardBlockTest {
     }
 
     @Test
-    fun adspyglassIsHardBlocked() {
+    fun inpageAdsIsHardBlocked() {
         val result = engine.evaluate(
-            "https://adspyglass.com/push/redirect?id=12345",
+            "https://inpageads.com/script.js",
             isAdBlockEnabled = false,
             isTrackerBlockEnabled = false
         )
-        assertTrue("adspyglass.com must be hard-blocked", result.isBlocked)
+        assertTrue("inpageads.com must be hard-blocked", result.isBlocked)
     }
 
     @Test
-    fun traffectiveIsHardBlocked() {
+    fun adStirIsHardBlocked() {
         val result = engine.evaluate(
-            "https://traffective.com/ad/script.js",
+            "https://ad-stir.com/push",
             isAdBlockEnabled = false,
             isTrackerBlockEnabled = false
         )
-        assertTrue("traffective.com must be hard-blocked", result.isBlocked)
-    }
-
-    @Test
-    fun acengineIsHardBlocked() {
-        val result = engine.evaluate("https://acengine.com/api/push")
-        assertTrue("acengine.com must be hard-blocked", result.isBlocked)
-    }
-
-    @Test
-    fun bestpbnIsHardBlocked() {
-        val result = engine.evaluate("https://bestpbn.xyz/qr.png")
-        assertTrue("bestpbn.xyz must be hard-blocked", result.isBlocked)
+        assertTrue("ad-stir.com must be hard-blocked", result.isBlocked)
     }
 
     // --- Previously confirmed hostile redirect is still blocked ---
@@ -88,6 +75,21 @@ class QrCaptchaHardBlockTest {
         )
         assertTrue("gurlleviter.cyou must still be hard-blocked", result.isBlocked)
         assertNotNull(result.matchedRule)
+    }
+
+    // --- Generic push services are NOT hard-blocked (shields-off allows them) ---
+
+    @Test
+    fun genericPushServicesAreNotHardBlockedWhenShieldsOff() {
+        val genericServices = listOf(
+            "https://webpushr.com/sw.js",
+            "https://izooto.com/push",
+            "https://pushengage.com/sw.js"
+        )
+        genericServices.forEach { url ->
+            val result = engine.evaluate(url, isAdBlockEnabled = false, isTrackerBlockEnabled = false)
+            assertFalse("Generic push service must respect user shield off: $url", result.isBlocked)
+        }
     }
 
     // --- Provider whitelist hosts must not be caught by hard-block ---
