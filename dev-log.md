@@ -388,3 +388,23 @@ unCatching to prevent sandbox SQLite connection teardown exceptions from interru
   - Python release & integrity tests: **100% PASS** (8/8 tests in 0.06s).
   - `assembleDebug` & `assembleRelease`: **BUILD SUCCESSFUL** (Debug APK: 22.8 MB; Release APK: 10.5 MB minified/shrunk with R8, v2 signature verified).
 - **Status**: Tested, verified, and pushed to PR #19 for final merge.
+
+
+## [2026-10-24 17:25] - Phase 16: Search State Flow Concurrency & Test Robustness
+- **Task**: Resolve CI timeout failure on GitHub Actions runner (`DailyUseRegressionTest > backspaceClearsObsoleteSearchError`).
+- **Root Cause Analysis**:
+  - `SearchViewModel.kt` previously executed uncoordinated detached coroutines via `loadRecentSearches()` on `viewModelScope` during `executeSearch()`.
+  - State updates were performed via raw `_uiState.value = _uiState.value.copy(...)` rather than atomic CAS operations. When rapid network failures occurred, the asynchronous recent searches query finished afterwards and clobbered the error state with a stale snapshot (`isLoading = true, errorMessage = null`), causing `StateFlow.first { !it.isLoading && it.errorMessage != null }` to hang until timeout.
+  - `DailyUseRegressionTest.kt` left `StandardTestDispatcher()` active across test teardown without restoring `Unconfined`, and did not reset `FakeApi` flags (`failPageTwo`, `seasonGate`, etc.) between runs.
+- **Fixes Applied**:
+  - `SearchViewModel.kt`:
+    - Converted all state flow mutations to atomic `_uiState.update { ... }` blocks using CAS loops.
+    - Sequenced `repository.addRecentSearch()` and `repository.getRecentSearches()` directly inside `searchJob` so history updates are part of the supervised search job lifecycle.
+  - `DailyUseRegressionTest.kt`:
+    - Added `try ... finally` blocks to ensure test dispatchers are reliably restored to `Dispatchers.Unconfined`.
+    - Sanitized `FakeApi` state in both `@Before setup()` and `@After teardown()`.
+    - Increased `withTimeout` bounds from 5s to 15s to comfortably accommodate virtualized CI runners under multi-threaded Gradle test execution.
+- **Verification**:
+  - `compileDebugKotlin` & `compileReleaseKotlin`: **BUILD SUCCESSFUL** (0 warnings, 0 errors).
+  - `testDebugUnitTest`: **100% PASS** (158 tests passed in 1m 7s).
+  - Python release & integrity tests: **100% PASS** (8/8 tests in 0.06s).

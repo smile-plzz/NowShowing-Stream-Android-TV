@@ -12,6 +12,7 @@
 - **Cinematic Top Bar & Shelves**: Refined navigation header with vertical ambient gradient scrim, branded champagne glow dot, pill-shaped tabs with focus elevation, and warm accent category indicators across browsing shelves.
 - **Rich Actionable Empty States & Artwork Fallback**: Redesigned empty states in Watchlist and Search into inviting discovery gateways with 1-click focusable buttons and cinema iconography. Replaced missing poster text with a stylized movie slate emblem and clean placeholder bounds.
 - **Cast, Director & Settings Polish**: Added prominent director and starring cast tags to Title Details, upgraded Settings toggle items into tactile illuminated pill switches, and added border elevation to information cards.
+- **Search State Flow Concurrency & Test Isolation**: Hardened `SearchViewModel` with atomic `_uiState.update` CAS operations and sequential history updates to eliminate TOCTOU state clobbering, restored `Dispatchers.Unconfined` teardown hygiene across test suites, and widened CI test timeouts.
 
 ## 1.6.0-rc.4 (16003) — Daily-use reliability
 
