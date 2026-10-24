@@ -68,6 +68,7 @@ import com.nowshowing.tv.ui.theme.SurfaceDark
 import com.nowshowing.tv.ui.theme.SurfaceVariant
 import com.nowshowing.tv.ui.theme.TextMuted
 import com.nowshowing.tv.ui.theme.TextPrimary
+import com.nowshowing.tv.ui.theme.TextSecondary
 
 @Composable
 fun DetailsScreen(
@@ -277,7 +278,22 @@ fun DetailsScreen(
                                         overflow = TextOverflow.Ellipsis
                                     )
 
-                                    Spacer(modifier = Modifier.height(16.dp))
+                                    if (!detail.director.isNullOrBlank() && detail.director != "N/A") {
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(text = "Director: ", color = TextMuted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                            Text(text = detail.director, color = TextSecondary, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        }
+                                    }
+                                    if (!detail.actors.isNullOrBlank() && detail.actors != "N/A") {
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(text = "Starring: ", color = TextMuted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                            Text(text = detail.actors, color = TextSecondary, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(14.dp))
 
                                     // Primary Action Buttons Row
                                     Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {

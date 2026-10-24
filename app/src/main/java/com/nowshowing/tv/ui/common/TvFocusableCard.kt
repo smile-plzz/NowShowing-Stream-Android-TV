@@ -14,6 +14,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,6 +28,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
@@ -123,10 +125,30 @@ fun TvFocusableCard(
         ) {
             // Stable artwork bounds, with no subcomposition per lazy-grid poster.
             var artworkFailed by remember(posterUrl) { mutableStateOf(false) }
+            val isMissing = artworkFailed || posterUrl.isBlank() || posterUrl == "N/A"
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(if (artworkFailed || posterUrl.isBlank() || posterUrl == "N/A") "Artwork unavailable" else "Loading artwork…",
-                    color = TextMuted, fontSize = 14.sp)
-                if (posterUrl.isNotBlank() && posterUrl != "N/A") {
+                if (isMissing) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.padding(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Movie,
+                            contentDescription = null,
+                            tint = TextMuted.copy(alpha = 0.45f),
+                            modifier = Modifier.size(36.dp)
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "No Poster",
+                            color = TextMuted,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                } else {
+                    Text("Loading…", color = TextMuted, fontSize = 13.sp)
                     coil.compose.AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current).data(posterUrl).size(300, 450).crossfade(false).build(),
                         contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize(),
