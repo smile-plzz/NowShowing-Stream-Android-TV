@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -37,11 +38,32 @@ fun TvTopBar(currentRoute: String, onNavigate: (String) -> Unit, modifier: Modif
         val selected = destinations.indexOfFirst { it.route == currentRoute }
         if (selected >= 0) navigationState.scrollToItem(selected)
     }
-    Row(modifier.fillMaxWidth().height(80.dp).background(BgDark).padding(horizontal = 32.dp),
+    Row(modifier
+        .fillMaxWidth()
+        .height(84.dp)
+        .background(
+            androidx.compose.ui.graphics.Brush.verticalGradient(
+                colors = listOf(
+                    BgDark,
+                    BgDark.copy(alpha = 0.96f),
+                    BgDark.copy(alpha = 0.90f)
+                )
+            )
+        )
+        .padding(horizontal = 32.dp),
         verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.padding(end = 24.dp)) {
-            Text("NOWSHOWING", color = TextPrimary, fontSize = 18.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
-            Text("YOUR EVENING, SORTED", color = AccentCyan, fontSize = 10.sp, letterSpacing = 1.sp)
+        Column(Modifier.padding(end = 28.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(4.dp))
+                        .background(AccentCyan)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("NOWSHOWING", color = TextPrimary, fontSize = 18.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp)
+            }
+            Text("YOUR EVENING, SORTED", color = AccentCyan, fontSize = 10.sp, letterSpacing = 1.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = 16.dp))
         }
         LazyRow(Modifier.weight(1f).testTag("primary-navigation"), state = navigationState, horizontalArrangement = Arrangement.spacedBy(8.dp),
             contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp)) {

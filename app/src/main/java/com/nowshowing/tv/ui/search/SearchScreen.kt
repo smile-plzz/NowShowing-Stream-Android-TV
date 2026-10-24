@@ -6,6 +6,9 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
+import com.nowshowing.tv.ui.theme.FocusGlow
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -363,16 +366,27 @@ private fun KeyButton(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
+    val scale by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (isFocused) 1.10f else 1.0f,
+        animationSpec = androidx.compose.animation.core.tween(120, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+        label = "key_scale"
+    )
 
     Box(
         modifier = modifier
-            .height(34.dp)
-            .clip(RoundedCornerShape(6.dp))
+            .scale(scale)
+            .height(36.dp)
+            .shadow(
+                elevation = if (isFocused) 8.dp else 0.dp,
+                shape = RoundedCornerShape(8.dp),
+                spotColor = if (isFocused) FocusGlow else Color.Transparent
+            )
+            .clip(RoundedCornerShape(8.dp))
             .background(if (isFocused) FocusBorder else SurfaceDark)
             .border(
                 width = if (isFocused) 2.dp else 1.dp,
                 color = if (isFocused) Color.White else Color.White.copy(alpha = 0.08f),
-                shape = RoundedCornerShape(6.dp)
+                shape = RoundedCornerShape(8.dp)
             )
             .clickable(interactionSource = interactionSource, indication = null, onClick = onClick),
         contentAlignment = Alignment.Center
@@ -395,16 +409,27 @@ private fun ActionKeyButton(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
+    val scale by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (isFocused) 1.08f else 1.0f,
+        animationSpec = androidx.compose.animation.core.tween(120, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+        label = "action_key_scale"
+    )
 
     Box(
         modifier = modifier
-            .height(34.dp)
-            .clip(RoundedCornerShape(6.dp))
+            .scale(scale)
+            .height(36.dp)
+            .shadow(
+                elevation = if (isFocused) 8.dp else 0.dp,
+                shape = RoundedCornerShape(8.dp),
+                spotColor = if (isFocused) FocusGlow else Color.Transparent
+            )
+            .clip(RoundedCornerShape(8.dp))
             .background(if (isFocused) FocusBorder else SurfaceVariant)
             .border(
                 width = if (isFocused) 2.dp else 1.dp,
                 color = if (isFocused) Color.White else Color.Transparent,
-                shape = RoundedCornerShape(6.dp)
+                shape = RoundedCornerShape(8.dp)
             )
             .clickable(interactionSource = interactionSource, indication = null, onClick = onClick),
         contentAlignment = Alignment.Center
@@ -435,15 +460,27 @@ private fun ActionIconButton(
         else -> SurfaceVariant
     }
 
+    val scale by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (isFocused) 1.08f else 1.0f,
+        animationSpec = androidx.compose.animation.core.tween(120, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+        label = "action_icon_scale"
+    )
+
     Box(
         modifier = modifier
-            .height(34.dp)
-            .clip(RoundedCornerShape(6.dp))
+            .scale(scale)
+            .height(36.dp)
+            .shadow(
+                elevation = if (isFocused) 8.dp else 0.dp,
+                shape = RoundedCornerShape(8.dp),
+                spotColor = if (isFocused) FocusGlow else Color.Transparent
+            )
+            .clip(RoundedCornerShape(8.dp))
             .background(bg)
             .border(
                 width = if (isFocused) 2.dp else 0.dp,
                 color = if (isFocused) Color.White else Color.Transparent,
-                shape = RoundedCornerShape(6.dp)
+                shape = RoundedCornerShape(8.dp)
             )
             .clickable(interactionSource = interactionSource, indication = null, onClick = onClick),
         contentAlignment = Alignment.Center
