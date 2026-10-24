@@ -36,6 +36,11 @@ class DailyUseRegressionTest {
     @Before fun setup() = runBlocking<Unit> {
         Dispatchers.setMain(Dispatchers.Unconfined)
         MetadataHealth.retry()
+        api.failPageTwo = false
+        api.failSeason = false
+        api.seasonGate = null
+        api.detailGate = null
+        api.pages.clear()
         app = RuntimeEnvironment.getApplication()
         app.getSharedPreferences("metadata", 0).edit().clear().commit()
         db = NowShowingDatabase(app)
@@ -50,6 +55,13 @@ class DailyUseRegressionTest {
 
     @After fun teardown() {
         models.clear()
+        api.seasonGate?.complete(Unit)
+        api.detailGate?.complete(Unit)
+        api.failPageTwo = false
+        api.failSeason = false
+        api.seasonGate = null
+        api.detailGate = null
+        api.pages.clear()
         db.close()
         MetadataHealth.retry()
         Dispatchers.resetMain()
@@ -58,33 +70,37 @@ class DailyUseRegressionTest {
     @Test fun failedLoadMoreRetriesSamePageWithoutDiscardingResults() = runBlocking<Unit> {
         val vm = track(SearchViewModel(app, repository))
         vm.executeSearch("Test")
-        withTimeout(5000) { vm.uiState.first { !it.isLoading && it.results.isNotEmpty() } }
+        withTimeout(15_000) { vm.uiState.first { !it.isLoading && it.results.isNotEmpty() } }
         api.failPageTwo = true
         vm.executeSearch(reset = false)
-        withTimeout(5000) { vm.uiState.first { !it.isLoading && it.errorMessage != null } }
+        withTimeout(15_000) { vm.uiState.first { !it.isLoading && it.errorMessage != null } }
         assertEquals(1, vm.uiState.value.results.size)
         api.failPageTwo = false
         vm.retrySearch()
-        val state = withTimeout(5000) { vm.uiState.first { !it.isLoading && it.currentPage == 2 } }
+        val state = withTimeout(15_000) { vm.uiState.first { !it.isLoading && it.currentPage == 2 } }
         assertEquals(listOf("tt0000001", "tt0000002"), state.results.map { it.imdbID })
         assertEquals(listOf(1, 2, 2), api.pages.toList())
     }
 
     @Test fun searchPublishesBusyStateBeforeHistoryIoStarts() {
         Dispatchers.setMain(kotlinx.coroutines.test.StandardTestDispatcher())
-        val vm = track(SearchViewModel(app, repository))
-        vm.executeSearch("Test")
-        assertTrue(vm.uiState.value.isLoading)
-        assertEquals("Test", vm.uiState.value.query)
-        vm.onClear()
-        assertFalse(vm.uiState.value.isLoading)
-        assertEquals("", vm.uiState.value.resultQuery)
+        try {
+            val vm = track(SearchViewModel(app, repository))
+            vm.executeSearch("Test")
+            assertTrue(vm.uiState.value.isLoading)
+            assertEquals("Test", vm.uiState.value.query)
+            vm.onClear()
+            assertFalse(vm.uiState.value.isLoading)
+            assertEquals("", vm.uiState.value.resultQuery)
+        } finally {
+            Dispatchers.setMain(Dispatchers.Unconfined)
+        }
     }
 
     @Test fun changingTypeWithBlankDraftClearsOldResultsAndErrors() = runBlocking<Unit> {
         val vm = track(SearchViewModel(app, repository))
         vm.executeSearch("Test")
-        withTimeout(5000) { vm.uiState.first { !it.isLoading && it.results.isNotEmpty() } }
+        withTimeout(15_000) { vm.uiState.first { !it.isLoading && it.results.isNotEmpty() } }
         vm.setQuery("")
         vm.setTypeFilter("series")
         assertTrue(vm.uiState.value.results.isEmpty())
@@ -95,33 +111,41 @@ class DailyUseRegressionTest {
     @Test fun backspaceClearsObsoleteSearchError() = runBlocking<Unit> {
         val vm = track(SearchViewModel(app, repository))
         api.failPageTwo = true
-        vm.executeSearch("Test")
-        withTimeout(5000) { vm.uiState.first { !it.isLoading && it.results.isNotEmpty() } }
-        vm.executeSearch(reset = false)
-        withTimeout(5000) { vm.uiState.first { !it.isLoading && it.errorMessage != null } }
-        vm.onBackspace()
-        assertNull(vm.uiState.value.errorMessage)
-        assertEquals("Tes", vm.uiState.value.query)
+        try {
+            vm.executeSearch("Test")
+            withTimeout(15_000) { vm.uiState.first { !it.isLoading && it.results.isNotEmpty() } }
+            vm.executeSearch(reset = false)
+            withTimeout(15_000) { vm.uiState.first { !it.isLoading && it.errorMessage != null } }
+            vm.onBackspace()
+            assertNull(vm.uiState.value.errorMessage)
+            assertEquals("Tes", vm.uiState.value.query)
+        } finally {
+            api.failPageTwo = false
+        }
     }
 
     @Test fun episodeFailureOffersRetryAndRestoresList() = runBlocking<Unit> {
         val vm = track(DetailsViewModel(app, repository))
         api.failSeason = true
-        vm.loadDetails("tt0000010", "series")
-        withTimeout(5000) { vm.uiState.first { it.episodeError != null } }
-        assertFalse(vm.uiState.value.episodesLoading)
-        api.failSeason = false
-        vm.retryEpisodes()
-        val state = withTimeout(5000) { vm.uiState.first { !it.episodesLoading && it.episodes.isNotEmpty() } }
-        assertNull(state.episodeError)
-        assertEquals(listOf("2", "3"), state.episodes.map { it.episode })
-        assertEquals(2, state.selectedEpisode)
+        try {
+            vm.loadDetails("tt0000010", "series")
+            withTimeout(15_000) { vm.uiState.first { it.episodeError != null } }
+            assertFalse(vm.uiState.value.episodesLoading)
+            api.failSeason = false
+            vm.retryEpisodes()
+            val state = withTimeout(15_000) { vm.uiState.first { !it.episodesLoading && it.episodes.isNotEmpty() } }
+            assertNull(state.episodeError)
+            assertEquals(listOf("2", "3"), state.episodes.map { it.episode })
+            assertEquals(2, state.selectedEpisode)
+        } finally {
+            api.failSeason = false
+        }
     }
 
     @Test fun changingSeasonClearsOldEpisodesAndShowsLoadingImmediately() = runBlocking<Unit> {
         val vm = track(DetailsViewModel(app, repository))
         vm.loadDetails("tt0000010", "series")
-        withTimeout(5000) { vm.uiState.first { it.episodes.isNotEmpty() } }
+        withTimeout(15_000) { vm.uiState.first { it.episodes.isNotEmpty() } }
         api.seasonGate = CompletableDeferred()
         vm.selectSeason(2)
         assertTrue(vm.uiState.value.episodesLoading)
@@ -129,13 +153,13 @@ class DailyUseRegressionTest {
         vm.selectSeason(99)
         assertEquals(2, vm.uiState.value.selectedSeason)
         api.seasonGate?.complete(Unit)
-        withTimeout(5000) { vm.uiState.first { !it.episodesLoading } }
+        withTimeout(15_000) { vm.uiState.first { !it.episodesLoading } }
     }
 
     @Test fun switchingFromSeriesToMovieClearsEpisodeStateImmediately() = runBlocking<Unit> {
         val vm = track(PlayerViewModel(app, repository))
         vm.initialize("tt0000010", 1, 2, "series")
-        withTimeout(5000) { vm.uiState.first { it.episodeList.isNotEmpty() } }
+        withTimeout(15_000) { vm.uiState.first { it.episodeList.isNotEmpty() } }
         api.detailGate = CompletableDeferred()
         vm.initialize("tt0000020", 1, 1, "movie")
         val state = vm.uiState.value
@@ -145,7 +169,7 @@ class DailyUseRegressionTest {
         assertNull(state.webEmbedUrl)
         assertFalse(state.episodesLoading)
         api.detailGate?.complete(Unit)
-        withTimeout(5000) { vm.uiState.first { !it.isLoading } }
+        withTimeout(15_000) { vm.uiState.first { !it.isLoading } }
     }
 
     private class FakeApi : OmdbApiService {

@@ -8,6 +8,7 @@ import com.nowshowing.tv.data.repository.MediaRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
@@ -41,14 +42,14 @@ class SearchViewModel(application: Application, private val repository: MediaRep
     fun loadRecentSearches() {
         viewModelScope.launch {
             val recent = repository.getRecentSearches()
-            _uiState.value = _uiState.value.copy(recentSearches = recent)
+            _uiState.update { it.copy(recentSearches = recent) }
         }
     }
 
     fun setQuery(query: String) {
         searchJob?.cancel()
         failedPage = null
-        _uiState.value = _uiState.value.copy(query = query.take(200), isLoading = false, errorMessage = null)
+        _uiState.update { it.copy(query = query.take(200), isLoading = false, errorMessage = null) }
     }
 
     fun onCharInput(c: Char) {
@@ -62,8 +63,17 @@ class SearchViewModel(application: Application, private val repository: MediaRep
         searchJob?.cancel()
         resultIdentity = null
         failedPage = null
-        _uiState.value = _uiState.value.copy(query = "", resultQuery = "", results = emptyList(),
-            totalResults = 0, currentPage = 1, isLoading = false, errorMessage = null)
+        _uiState.update {
+            it.copy(
+                query = "",
+                resultQuery = "",
+                results = emptyList(),
+                totalResults = 0,
+                currentPage = 1,
+                isLoading = false,
+                errorMessage = null
+            )
+        }
     }
 
     fun setTypeFilter(type: String) {
@@ -71,7 +81,17 @@ class SearchViewModel(application: Application, private val repository: MediaRep
         searchJob?.cancel()
         failedPage = null
         resultIdentity = null
-        _uiState.value = _uiState.value.copy(selectedType = type, results = emptyList(), totalResults = 0, resultQuery = "", currentPage = 1, isLoading = false, errorMessage = null)
+        _uiState.update {
+            it.copy(
+                selectedType = type,
+                results = emptyList(),
+                totalResults = 0,
+                resultQuery = "",
+                currentPage = 1,
+                isLoading = false,
+                errorMessage = null
+            )
+        }
         if (_uiState.value.query.isNotBlank()) {
             executeSearch(_uiState.value.query, reset = true)
         }
@@ -80,14 +100,24 @@ class SearchViewModel(application: Application, private val repository: MediaRep
     fun setYearFilter(year: Int?) {
         if (year != null && year !in 1888..2100) return
         searchJob?.cancel()
-        _uiState.value = _uiState.value.copy(year = year, results = emptyList(), totalResults = 0, currentPage = 1, isLoading = false, errorMessage = null, resultQuery = "")
+        _uiState.update {
+            it.copy(
+                year = year,
+                results = emptyList(),
+                totalResults = 0,
+                currentPage = 1,
+                isLoading = false,
+                errorMessage = null,
+                resultQuery = ""
+            )
+        }
         resultIdentity = null
         failedPage = null
         if (_uiState.value.query.isNotBlank()) executeSearch(reset = true)
     }
 
     fun clearFilters() {
-        _uiState.value = _uiState.value.copy(selectedType = "all")
+        _uiState.update { it.copy(selectedType = "all") }
         setYearFilter(null)
     }
 
@@ -107,16 +137,19 @@ class SearchViewModel(application: Application, private val repository: MediaRep
         val targetPage = if (effectiveReset) 1 else _uiState.value.currentPage + 1
         failedPage = null
         // Publish synchronously: repeated remote clicks must see the request as busy.
-        _uiState.value = _uiState.value.copy(
+        _uiState.update {
+            it.copy(
                 query = trimmed,
                 isLoading = true,
                 errorMessage = null,
-                results = if (effectiveReset) emptyList() else _uiState.value.results,
-                totalResults = if (effectiveReset) 0 else _uiState.value.totalResults
+                results = if (effectiveReset) emptyList() else it.results,
+                totalResults = if (effectiveReset) 0 else it.totalResults
             )
+        }
         searchJob = viewModelScope.launch {
             repository.addRecentSearch(trimmed)
-            loadRecentSearches()
+            val recent = repository.getRecentSearches()
+            _uiState.update { it.copy(recentSearches = recent) }
             val filterType = when (identity.second) {
                 "movie" -> "movie"
                 "series" -> "series"
@@ -128,26 +161,29 @@ class SearchViewModel(application: Application, private val repository: MediaRep
             if (identity != Triple(_uiState.value.query.trim(), _uiState.value.selectedType, _uiState.value.year)) return@launch
             if (response.response != "False" && response.search != null) {
                 resultIdentity = identity
-                val updated = (if (effectiveReset) response.search else _uiState.value.results + response.search).distinctBy { it.imdbID }
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    results = updated,
-                    errorMessage = if (response.isStale) "Showing expired cached search results. ${com.nowshowing.tv.data.repository.MetadataHealth.failure.value?.message.orEmpty()}" else null,
-                    currentPage = targetPage,
-                    resultQuery = trimmed,
-                    totalResults = response.totalResults?.toIntOrNull() ?: updated.size
-                )
+                _uiState.update { current ->
+                    val updated = (if (effectiveReset) response.search else current.results + response.search).distinctBy { it.imdbID }
+                    current.copy(
+                        isLoading = false,
+                        results = updated,
+                        errorMessage = if (response.isStale) "Showing expired cached search results. ${com.nowshowing.tv.data.repository.MetadataHealth.failure.value?.message.orEmpty()}" else null,
+                        currentPage = targetPage,
+                        resultQuery = trimmed,
+                        totalResults = response.totalResults?.toIntOrNull() ?: updated.size
+                    )
+                }
             } else {
                 failedPage = targetPage
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    results = _uiState.value.results,
-                    errorMessage = (response.error ?: "Metadata service unavailable. Retry your search.").let {
-                        if (_uiState.value.results.isNotEmpty()) "$it Previous search results are retained." else it
-                    }
-                )
+                _uiState.update { current ->
+                    current.copy(
+                        isLoading = false,
+                        results = current.results,
+                        errorMessage = (response.error ?: "Metadata service unavailable. Retry your search.").let {
+                            if (current.results.isNotEmpty()) "$it Previous search results are retained." else it
+                        }
+                    )
+                }
             }
         }
     }
 }
-
