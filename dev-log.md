@@ -365,3 +365,26 @@ unCatching to prevent sandbox SQLite connection teardown exceptions from interru
   - Python release & integrity tests: **100% PASS** (8/8 tests in 0.07s).
   - `assembleDebug` & `assembleRelease`: **BUILD SUCCESSFUL** (Debug APK: 22.8 MB; Release APK: 10.5 MB minified/shrunk with R8, v2 signature verified).
 - **Status**: Tested, verified, and ready for pull request.
+
+## [2026-10-24 16:45] - Phase 15: Final Release Polish & Actionable Empty States
+- **Task**: Address `/goal`: make necessary changes and prepare the product for the final stable optimal release.
+- **Components Implemented & Enhanced**:
+  - `WatchlistScreen.kt`:
+    - Replaced plain empty text with an inviting empty state card featuring `BookmarkBorder` cinema icon, clear explanatory text, and 1-click focusable buttons ("Find titles", "Browse movies").
+  - `SearchScreen.kt`:
+    - Transformed empty search state into a welcoming discovery prompt with a search emblem and instructions for on-screen and voice input.
+  - `TvFocusableCard.kt`:
+    - Replaced raw "Artwork unavailable" string with an elegant stylized movie slate emblem (`Icons.Default.Movie`), subtle surface background, and clean "No Poster" typography.
+  - `DetailsScreen.kt`:
+    - Added Director and Starring Cast chips below plot description for rich filmography context.
+  - `SettingsScreen.kt`:
+    - Upgraded `SettingToggleItem` switches into illuminated capsule pills with cyan glow indicators.
+    - Added crisp `1.dp` border styling and elevation to `InfoCard` blocks.
+  - `BrowseScreen.kt`:
+    - Added animated `1.06f` focus scaling to `SortPill`.
+- **Verification Results**:
+  - `compileDebugKotlin`: **BUILD SUCCESSFUL** with **0 compiler warnings and 0 errors**.
+  - `testDebugUnitTest`: **100% PASS** (158 tests across 39 suites in 19.2s).
+  - Python release & integrity tests: **100% PASS** (8/8 tests in 0.06s).
+  - `assembleDebug` & `assembleRelease`: **BUILD SUCCESSFUL** (Debug APK: 22.8 MB; Release APK: 10.5 MB minified/shrunk with R8, v2 signature verified).
+- **Status**: Tested, verified, and pushed to PR #19 for final merge.
