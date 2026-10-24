@@ -1,5 +1,13 @@
 # 1.6.0-rc.5 (16004) — TV player remote keys, voice search, update checker, and privacy shield refinement
 
+## Unreleased — Voice Search & Release Update Checker
+
+- Added Voice Search in `SearchScreen.kt` using `RecognizerIntent.ACTION_RECOGNIZE_SPEECH` via `rememberLauncherForActivityResult`, with a TV-focusable microphone button and graceful fallback when speech recognition services are absent.
+- Added GitHub Releases update checker in `SettingsScreen.kt` (`UpdateChecker.kt`) querying latest release tags against `BuildConfig.VERSION_NAME` with semver comparison and release note dialog without in-app APK downloads.
+- Added unit tests in `UpdateCheckerTest.kt` verifying version comparison heuristics, release candidate progression, stable release precedence, and JSON response parsing.
+
+## Unreleased — QR Overlay Removal & Ad Protection
+## 1.6.0-rc.5 (16004)
 ## Unreleased — Remote Media Keys & 1-Click Next Source
 
 - Added physical remote media key interception in web player (`KEYCODE_MEDIA_PLAY_PAUSE`, `KEYCODE_MEDIA_PLAY`, `KEYCODE_MEDIA_PAUSE`, `KEYCODE_MEDIA_FAST_FORWARD`, `KEYCODE_MEDIA_REWIND`) dispatching guarded video controls and ±10s seeking.
